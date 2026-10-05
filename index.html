@@ -636,23 +636,34 @@ function renderMCH3View(data) {
   // Apply MCH3 filter if any
   const selNhom = new Set(getMSValues('msNhom'));
   
+  // Helper: derive Miền AD string from B/T/N/T flags (indices 17-20)
+  function mienAD(sku) {
+    const parts = [];
+    if (sku[17]) parts.push('B');
+    if (sku[18]) parts.push('T');
+    if (sku[19]) parts.push('N');
+    if (sku[20]) parts.push('Ty');
+    return parts.length ? parts.join('/') : '';
+  }
+
   return `<table style="table-layout:fixed;width:100%">
     <colgroup>
-      <col style="width:24px"><col style="width:90px"><col style="width:auto"><col style="width:45px">
-      <col style="width:90px"><col style="width:90px"><col style="width:120px"><col style="width:80px"><col style="width:80px">
+      <col style="width:26px"><col style="width:80px"><col style="width:auto"><col style="width:40px">
+      <col style="width:80px"><col style="width:80px"><col style="width:180px"><col style="width:70px"><col style="width:70px">
     </colgroup>
-    <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th>Giá thường</th><th>Giá KM</th><th>CTKM áp dụng</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
+    <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th>Giá thường</th><th>Giá KM</th><th>CTKM · Loại · Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
     ${sortedGroups.map(nhom => {
       if (selNhom.size > 0 && !selNhom.has(nhom)) return '';
       const rows = groups[nhom];
       const grpId = 'grp_' + nhom.replace(/[^a-zA-Z0-9]/g,'_');
       const isExp = expandedCT.has(grpId);
       return `
-      <tr class="ct-row" style="background:#eef2ff;font-weight:600;cursor:pointer" onclick="toggleGroupExpand('${grpId}')">
+      <tr class="ct-row" style="background:#eef2ff;font-weight:700;cursor:pointer" onclick="toggleGroupExpand('${grpId}')">
         <td style="text-align:center">${isExp?'▼':'▶'}</td>
-        <td colspan="8">🏷 ${nhom} (${rows.length} SKU)</td>
+        <td colspan="8" style="font-size:13px;color:#1e293b">🏷 ${nhom} <span style="font-weight:400;color:#64748b">(${rows.length} SKU)</span></td>
       </tr>
       ${isExp ? rows.map(sku => {
+        const ctkmInfo = (sku[1]||'') + ' · ' + (sku[2]||'') + (mienAD(sku) ? ' · ' + mienAD(sku) : '');
         return `
         <tr style="border-bottom:1px solid #f0f0f0">
           <td></td>
@@ -661,7 +672,7 @@ function renderMCH3View(data) {
           <td style="font-size:11px">${sku[6]||''}</td>
           <td style="font-size:11px;text-align:right">${Number(sku[8]||0).toLocaleString()}</td>
           <td style="font-size:11px;text-align:right;color:#dc2626">${Number(sku[9]||0).toLocaleString()}</td>
-          <td style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(sku[1]||'')}">${(sku[1]||'').substring(0,35)}</td>
+          <td style="font-size:10px" title="${ctkmInfo}">${ctkmInfo}</td>
           <td style="font-size:10px">${fmtDate(sku[12])}</td>
           <td style="font-size:10px">${fmtDate(sku[13])}</td>
         </tr>`;
