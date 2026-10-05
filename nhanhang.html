@@ -240,18 +240,26 @@ function onStoreChange(){
 
 // ===== SUBMIT =====
 function submitSurvey(){
-  if(!selectedStore)return showToast('⚠️ Vui lòng tìm và chọn cửa hàng','err');
-  let d={
-    ma:selectedStore.ma,ten:selectedStore.ten,gdv:selectedStore.gdv,tinh:selectedStore.tinh,
-    qlkv:selectedStore.qlkv,mien:selectedStore.mien,
-    ngay:document.getElementById('sday').value,
-    meat:document.getElementById('smeat').value,veg:document.getElementById('sveg').value,
-    ts:new Date().toISOString()
-  };
-  if(!d.meat&&!d.veg)return showToast('⚠️ Vui lòng chọn ít nhất 1 khung giờ','err');
+  if(!selectedStore)return showToast('Vui long chon cua hang','err');
+  let meat=document.getElementById('smeat').value, veg=document.getElementById('sveg').value;
+  let ngay=document.getElementById('sday').value;
+  if(!meat&&!veg)return showToast('Vui long chon it nhat 1 khung gio','err');
+  
+  let d={ma:selectedStore.ma,ten:selectedStore.ten,gdv:selectedStore.gdv,tinh:selectedStore.tinh,qlkv:selectedStore.qlkv,mien:selectedStore.mien,ngay:ngay,meat:meat,veg:veg,ts:new Date().toISOString()};
+  
+  let summary=d.ma+' - '+d.ten+'\\n'+d.ngay;
+  if(d.meat)summary+='\\nThit: '+d.meat;
+  if(d.veg)summary+='\\nRau: '+d.veg;
+  if(!confirm('Xac nhan thong tin:\\n\\n'+summary+'\\n\\nDong y gui?'))return;
+  
   SURVEYS.push(d);localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
-  showToast('✅ Đã lưu khảo sát cho '+d.ma);
+  let GAS_URL=localStorage.getItem('ctkm_gas_url')||'';
+  if(GAS_URL){fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'addNhanHang',data:d})}).catch(()=>{});}
+  
   document.getElementById('smeat').value='';document.getElementById('sveg').value='';
+  selectedStore=null;document.getElementById('storeFilled').style.display='none';
+  document.getElementById('smien').value='';onMienChange();
+  showToast('Da hoan thanh khao sat! Cam on ban.');
 }
 
 function showToast(msg,cls){
