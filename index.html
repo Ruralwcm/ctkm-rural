@@ -285,29 +285,9 @@ function renderDashboard() {
     <!-- Chip display for selected -->
     <div id="msChipsBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:0"></div>
     
-    <!-- VIEW: Theo CTKM -->
+    <!-- VIEW: Theo CTKM — Unified table -->
     <div id="viewCTKM">
-    <h3 style="margin:20px 0 8px;color:#28a745;display:none" id="activeHdr">🟢 CTKM ĐANG HIỆU LỰC (<span id="activeCount">${activeNow.length}</span>)</h3>
-    <div class="table-wrap" id="activeCTTable">${renderCTTable(activeNow)}</div>
-    
-    <h3 style="margin:20px 0 8px;color:#F9A825;display:none" id="upcomingHdr">🟡 CTKM SẮP DIỄN RA (<span id="upcomingCount">${upcoming.length}</span>)</h3>
-    <div class="table-wrap" id="upcomingCTTable">${renderCTTable(upcoming)}</div>
-    
-    <h3 style="margin:20px 0 8px;display:none" id="allHdr">📋 TẤT CẢ CTKM (<span id="allCount">${allCT.length}</span>)</h3>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <select id="sortBy" onchange="refreshAllCT()" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px">
-        <option value="ten">Sắp xếp: Theo tên CTKM</option>
-        <option value="nhom">Theo Nhóm hàng (MCH3)</option>
-        <option value="gia">Theo Giá thường</option>
-        <option value="giaKM">Theo Giá KM</option>
-        <option value="pctKM">Theo % Giảm giá</option>
-        <option value="dienGiai">Theo Diễn giải KM</option>
-      </select>
-      <label style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap">
-        <input type="checkbox" id="showExpired" onchange="toggleExpired()" style="width:auto"> Hiện CTKM hết hạn
-      </label>
-    </div>
-    <div class="table-wrap" id="allCTTable">${renderCTTable(allCT.filter(function(r){var kt=r.ngayKT?new Date(r.ngayKT):null;return !kt||isNaN(kt.getTime())||kt>=new Date();}))}</div>
+    <div class="table-wrap" id="ctkmUnifiedTable">${renderUnifiedCTTable(activeNow, upcoming, allCT)}</div>
     </div>
     
     <!-- VIEW: Theo MCH3 -->
@@ -473,34 +453,18 @@ function applyDashFilter() {
     return true;
   };
   
-  const filteredActive = window._activeNow.filter(filterFn);
-  const filteredUpcoming = window._upcoming.filter(filterFn);
-  const filteredAll = window._allCT.filter(filterFn);
+  const filteredActive = (window._activeNow||[]).filter(filterFn);
+  const filteredUpcoming = (window._upcoming||[]).filter(filterFn);
+  const filteredAll = (window._allCT||[]).filter(filterFn);
   
-  document.getElementById('activeCount').textContent = filteredActive.length;
-  document.getElementById('upcomingCount').textContent = filteredUpcoming.length;
-  document.getElementById('allCount').textContent = filteredAll.length;
-  document.getElementById('activeCTTable').innerHTML = renderCTTable(filteredActive);
-  document.getElementById('upcomingCTTable').innerHTML = renderCTTable(filteredUpcoming);
-  allCT_cts = filteredAll;
-  // Filter all table by expired toggle
-  var allVisible = getVisibleAllCT();
-  allVisible = allVisible.filter(function(r) {
-    // Apply same filterFn logic
-    return filteredAll.some(function(fr) { return fr.ten === r.ten && fr.ma === r.ma; });
-  });
-  document.getElementById('allCTTable').innerHTML = renderCTTable(allVisible);
-  
-  document.getElementById('activeHdr').style.display = filteredActive.length > 0 ? '' : 'none';
-  document.getElementById('upcomingHdr').style.display = filteredUpcoming.length > 0 ? '' : 'none';
-  document.getElementById('allHdr').style.display = '';
-  document.getElementById('activeCTTable').style.display = filteredActive.length > 0 ? '' : 'none';
-  document.getElementById('upcomingCTTable').style.display = filteredUpcoming.length > 0 ? '' : 'none';
+  // Update unified CTKM table
+  var ut = document.getElementById('ctkmUnifiedTable');
+  if (ut) ut.innerHTML = renderUnifiedCTTable(filteredActive, filteredUpcoming, filteredAll);
   
   document.getElementById('dashFilterCount').textContent = filteredAll.length + ' CT';
   
   if (window._currentView === 'MCH3') {
-    document.getElementById('mch3CTTable').innerHTML = renderMCH3View(filteredAll);
+    document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData||[]);
   }
 }
 
@@ -544,6 +508,93 @@ function refreshAllCT() {
 }
 
 let allCT_cts = []; // cached for sort
+
+function renderUnifiedCTTable(active, upcoming, all) {
+  // Build one table with section headers
+  var showExpired = document.getElementById('showExpired');
+  var showExp = showExpired ? showExpired.checked : false;
+  if (!showExp) {
+    all = all.filter(function(r) {
+      var kt = r.ngayKT ? new Date(r.ngayKT) : null;
+      return !kt || isNaN(kt.getTime()) || kt >= new Date();
+    });
+  }
+  
+  var html = '<table style="width:100%"><tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>';
+  
+  // Active section
+  if (active.length > 0) {
+    html += '<tr style="background:#f0fdf4"><td colspan="12" style="padding:6px 10px;font-weight:700;color:#16a34a;font-size:13px">🟢 CTKM ĐANG HIỆU LỰC (' + active.length + ')</td></tr>';
+    html += renderCTRows(active);
+  }
+  
+  // Upcoming section
+  if (upcoming.length > 0) {
+    html += '<tr style="background:#fefce8"><td colspan="12" style="padding:6px 10px;font-weight:700;color:#ca8a04;font-size:13px">🟡 CTKM SẮP DIỄN RA (' + upcoming.length + ')</td></tr>';
+    html += renderCTRows(upcoming);
+  }
+  
+  // All section
+  html += '<tr style="background:#f8f9fa"><td colspan="12" style="padding:6px 10px;font-weight:700;color:#1e293b;font-size:13px">📋 TẤT CẢ CTKM (' + all.length + ') ' +
+    '<label style="font-weight:400;font-size:11px;margin-left:10px;cursor:pointer"><input type="checkbox" id="showExpired2" onchange="toggleExpired2()" style="width:auto;margin-right:4px" ' + (showExp?'checked':'') + '>Hiện CTKM hết hạn</label></td></tr>';
+  html += renderCTRows(all);
+  
+  html += '</table>';
+  return html;
+}
+
+function renderCTRows(data) {
+  var skuData = window._skuData || [];
+  var skuByCT = {};
+  skuData.forEach(function(row) {
+    var ctName = (row[1]||'').toString();
+    if (!ctName) return;
+    if (!skuByCT[ctName]) skuByCT[ctName] = [];
+    skuByCT[ctName].push(row);
+  });
+  
+  return data.map(function(r, idx) {
+    var ctKey = r.ten||'';
+    var skus = skuByCT[ctKey] || [];
+    var isExp = expandedCT.has(ctKey);
+    var isExpired = r.ngayKT && (function(){var kt=new Date(r.ngayKT);if(isNaN(kt.getTime()))return false;return kt < new Date();})();
+    
+    var rowHtml = '<tr onclick="toggleCTExpand2(\'' + ctKey.replace(/'/g,"\\'") + '\')" style="cursor:pointer;' + (isExpired?'opacity:.5;background:#f8f9fa':'') + '">' +
+      '<td style="width:20px;text-align:center">' + (isExp?'▼':'▶') + '</td>' +
+      '<td>' + (r.ma||'') + '</td>' +
+      '<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (r.ten||'') + '">' + (r.ten||'').substring(0,50) + '</td>' +
+      '<td>' + (r.loai||'') + '</td><td>' + (r.nhom||'') + '</td><td><b>' + (r.sku||0) + '</b></td>' +
+      '<td>' + fmtDate(r.ngayBD) + '</td><td>' + fmtDate(r.ngayKT) + '</td>' +
+      '<td>' + (r.bac?'✓':'') + '</td><td>' + (r.trung?'✓':'') + '</td><td>' + (r.nam?'✓':'') + '</td><td>' + (r.tay?'✓':'') + '</td>' +
+      '</tr>';
+    
+    if (isExp && skus.length > 0) {
+      rowHtml += '<tr style="background:#f8faff"><td colspan="12" style="padding:8px 12px">' +
+        '<table style="width:100%;font-size:11px;border-collapse:collapse">' +
+        '<tr style="background:#eef2ff"><th style="padding:3px 6px;text-align:left">Mã hàng</th><th style="padding:3px 6px;text-align:left">Tên hàng</th><th style="padding:3px 6px;text-align:left">ĐVT</th><th style="padding:3px 6px;text-align:right">Giá thường</th><th style="padding:3px 6px;text-align:right">Giá KM</th><th style="padding:3px 6px;text-align:left">Diễn giải</th></tr>' +
+        skus.map(function(sku) {
+          return '<tr><td style="padding:2px 6px">'+(sku[4]||'')+'</td><td style="padding:2px 6px">'+(sku[5]||'').substring(0,60)+'</td><td style="padding:2px 6px">'+(sku[6]||'')+'</td><td style="padding:2px 6px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td><td style="padding:2px 6px;text-align:right">'+Number(sku[9]||0).toLocaleString()+'</td><td style="padding:2px 6px;font-size:10px">'+(sku[7]||'').substring(0,80)+'</td></tr>';
+        }).join('') +
+        '</table></td></tr>';
+    }
+    return rowHtml;
+  }).join('');
+}
+
+function toggleCTExpand2(ctKey) {
+  if (expandedCT.has(ctKey)) expandedCT.delete(ctKey);
+  else expandedCT.add(ctKey);
+  applyDashFilter();
+}
+
+function toggleExpired2() {
+  var cb = document.getElementById('showExpired2');
+  if (cb) {
+    var cb2 = document.getElementById('showExpired');
+    if (cb2) cb2.checked = cb.checked;
+  }
+  applyDashFilter();
+}
 let expandedCT = new Set(); // track expanded rows
 
 function renderCTTable(data) {
@@ -712,22 +763,13 @@ function applyQuickFilter(fn) {
   });
   
   const active = baseFiltered.filter(fn);
-  const upcoming = window._upcoming.filter(fn);
+  const upcoming = (window._upcoming||[]).filter(fn);
   const all = baseFiltered.filter(fn);
-  document.getElementById('activeCount').textContent = active.length;
-  document.getElementById('upcomingCount').textContent = upcoming.length;
-  document.getElementById('allCount').textContent = all.length;
-  document.getElementById('activeCTTable').innerHTML = renderCTTable(active);
-  document.getElementById('upcomingCTTable').innerHTML = renderCTTable(upcoming);
-  allCT_cts = all;
-  document.getElementById('allCTTable').innerHTML = renderCTTable(all);
-  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(all);
-  document.getElementById('dashFilterCount').textContent = `${all.length} CT`;
-  // Update allCT table with expired filter
-  var visibleAll = getVisibleAllCT().filter(fn);
-  allCT_cts = visibleAll;
-  document.getElementById('allCTTable').innerHTML = renderCTTable(visibleAll);
-  document.getElementById('allCount').textContent = window._allCT ? window._allCT.filter(fn).length : 0;
+  
+  var ut = document.getElementById('ctkmUnifiedTable');
+  if (ut) ut.innerHTML = renderUnifiedCTTable(active, upcoming, all);
+  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData||[]);
+  document.getElementById('dashFilterCount').textContent = all.length + ' CT';
 }
 function updateCardCounts() {
   // Recalculate card counts based on current filter
