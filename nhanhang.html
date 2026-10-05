@@ -256,7 +256,7 @@ function submitSurvey(){
   
   SURVEYS.push(d);localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
   let GAS_URL=localStorage.getItem('ctkm_gas_url')||'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
-  if(GAS_URL){fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'addNhanHang',data:d})}).catch(()=>{});}
+  if(GAS_URL){fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'addNhanHang',data:d})}).catch(()=>{});}
   
   document.getElementById('smeat').value='';document.getElementById('sveg').value='';
   selectedStore=null;document.getElementById('storeFilled').style.display='none';
