@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTKM RURAL</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
+    .header { background: #1F4E79; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 18px; }
+    .tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; }
+    .tab { padding: 12px 24px; cursor: pointer; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { color: #1F4E79; border-bottom-color: #1F4E79; }
+    .content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+    
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .stat-card .num { font-size: 28px; font-weight: 700; color: #1F4E79; }
+    .stat-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+    
+    /* Table */
+    .table-wrap { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; white-space: nowrap; position: sticky; top: 0; }
+    td { padding: 8px; border-bottom: 1px solid #eee; }
+    tr:hover { background: #f8f9ff; }
+    
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #555; }
+    input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+    textarea { resize: vertical; min-height: 60px; }
+    
+    .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .btn-primary { background: #1F4E79; color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-secondary { background: #6c757d; color: white; }
+    
+    .region-tags { display: flex; gap: 8px; }
+    .region-tag { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; font-size: 12px; }
+    .region-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+    
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 12px 20px; border-radius: 4px; display: none; }
+    .loading { text-align: center; padding: 40px; color: #999; }
+    
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-bar input, .filter-bar select { width: auto; min-width: 150px; }
+    
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <h1>🏷 CTKM RURAL</h1>
+  <span id="userInfo"></span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('data')">📋 Dữ liệu</div>
+  <div class="tab" onclick="switchTab('add')">➕ Thêm CTKM</div>
+  <div class="tab" onclick="switchTab('import')">📥 Import</div>
+</div>
+
+<div class="content" id="mainContent">
+  <div class="loading">Đang tải dữ liệu...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let allData = [];
+let groupedData = [];
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['dashboard','data','add','import'][i] === tab);
+  });
+  if (tab === 'dashboard') renderDashboard();
+  else if (tab === 'data') renderDataTable();
+  else if (tab === 'add') renderAddForm();
+  else if (tab === 'import') renderImport();
+}
+
+function showToast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.background = ok ? '#28a745' : '#dc3545';
+  t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  const byLoai = {}, byNhom = {}, byMien = { bac: 0, trung: 0, nam: 0, tay: 0 };
+  let totalSKU = 0, activeCT = 0;
+  
+  groupedData.forEach(ct => {
+    const loai = ct[2] || 'Khác';
+    byLoai[loai] = (byLoai[loai] || 0) + 1;
+    const nhom = ct[3] || 'Khác';
+    byNhom[nhom] = (byNhom[nhom] || 0) + 1;
+    byMien.bac += ct[10] || 0;
+    byMien.trung += ct[11] || 0;
+    byMien.nam += ct[12] || 0;
+    byMien.tay += ct[13] || 0;
+    totalSKU += ct[4] || 0;
+    activeCT++;
+  });
+  
+  document.getElementById('mainContent').innerHTML = `
+    <div class="stats">
+      <div class="stat-card"><div class="num">${activeCT}</div><div class="label">CTKM đang chạy</div></div>
+      <div class="stat-card"><div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div></div>
+      <div class="stat-card"><div class="num">${byMien.bac}</div><div class="label">CT phủ BẮC</div></div>
+      <div class="stat-card"><div class="num">${byMien.trung}</div><div class="label">CT phủ TRUNG</div></div>
+      <div class="stat-card"><div class="num">${byMien.nam}</div><div class="label">CT phủ NAM</div></div>
+      <div class="stat-card"><div class="num">${byMien.tay}</div><div class="label">CT phủ TÂY</div></div>
+    </div>
+    
+    <h3 style="margin:16px 0 8px">Theo Phân loại KM</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Phân loại MH</th><th>Số CT</th></tr>
+      ${Object.entries(byLoai).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+    </table></div>
+    
+    <h3 style="margin:16px 0 8px">Theo Nhóm hàng</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Nhóm hàng (MCH3)</th><th>Số CT</th></tr>
+      ${Object.entries(byNhom).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+    </table></div>
+  `;
+}
+
+// ============ DATA TABLE ============
+function renderDataTable() {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="filter-bar">
+      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()">
+      <select id="filterLoai" onchange="filterTable()">
+        <option value="">Tất cả Phân loại</option>
+        ${[...new Set(groupedData.map(r=>r[2]))].filter(Boolean).sort().map(v=>`<option>${v}</option>`).join('')}
+      </select>
+      <select id="filterNhom" onchange="filterTable()">
+        <option value="">Tất cả Nhóm hàng</option>
+        ${[...new Set(groupedData.map(r=>r[3]))].filter(Boolean).sort().map(v=>`<option>${v}</option>`).join('')}
+      </select>
+      <select id="filterMien" onchange="filterTable()">
+        <option value="">Tất cả Miền</option>
+        <option value="bac">BẮC</option><option value="trung">TRUNG</option>
+        <option value="nam">NAM</option><option value="tay">TÂY</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="dataTable"></div>
+  `;
+  filterTable();
+}
+
+function filterTable() {
+  const search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+  const loai = document.getElementById('filterLoai')?.value || '';
+  const nhom = document.getElementById('filterNhom')?.value || '';
+  const mienFilter = document.getElementById('filterMien')?.value || '';
+  const mienIdx = {bac:10, trung:11, nam:12, tay:13}[mienFilter];
+  
+  let filtered = groupedData.filter(r => {
+    const rowStr = Object.values(r).join(' ').toLowerCase();
+    if (search && !rowStr.includes(search)) return false;
+    if (loai && r[2] !== loai) return false;
+    if (nhom && r[3] !== nhom) return false;
+    if (mienIdx && !r[mienIdx]) return false;
+    return true;
+  });
+  
+  document.getElementById('dataTable').innerHTML = `
+    <table>
+      <tr><th>Mã CT</th><th>Tên CTKM</th><th>Phân loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>
+      ${filtered.map(r => `
+        <tr>
+          <td>${r[0]||''}</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r[1]||''}">${(r[1]||'').substring(0,50)}</td>
+          <td>${r[2]||''}</td><td>${r[3]||''}</td><td>${r[4]||0}</td>
+          <td>${r[6]||''}</td><td>${r[7]||''}</td>
+          <td>${r[10]?'✓':''}</td><td>${r[11]?'✓':''}</td><td>${r[12]?'✓':''}</td><td>${r[13]?'✓':''}</td>
+        </tr>
+      `).join('')}
+    </table>
+    <p style="padding:12px;color:#888">Hiển thị ${filtered.length}/${groupedData.length} CT</p>
+  `;
+}
+
+// ============ ADD FORM ============
+function renderAddForm() {
+  const loaiMH = ['1-ON POST','10-ADHOC','13-GIẢM TỒN','17-EDLP','6-KHAI TRƯƠNG',
+    '8-BRAND WEEK','9-BOOMING DAYS','MBDOY_2026_20%_WEC','24-WEEKLY DEAL',
+    '4-KM CUỐI TUẦN','5-ONE SHOT','17-GIẢI TỒN'];
+  const nhomHang = ['Thực phẩm khô','Bánh kẹo','Bơ, sữa, trứng','Đông lạnh',
+    'Mỹ phẩm, chăm sóc cá nhân','Đồ uống, thuốc lá','Hóa phẩm','Thịt',
+    'Thịt nguội, xúc xích, hàng chua','Rau củ','Giấy và bông','Gia dụng',
+    'Trái cây','Bánh mỳ','Thức ăn nấu sẵn','Thủy hải sản',
+    'Đồ dùng Dân dụng/Trang trí','Đồ chơi/Giải trí thể thao','Văn phòng phẩm','Phụ kiện','Bông Vải Sợi'];
+  
+  document.getElementById('mainContent').innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+    <!-- CỘT TRÁI: Thông tin chung -->
+    <div style="flex:1;min-width:350px;background:white;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+      <h3 style="margin:0 0 16px;color:#1F4E79">📋 Thông tin CTKM</h3>
+      <div style="display:grid;gap:10px">
+        <div><label>Mã CT</label><input id="maCT" placeholder="VD: 731"></div>
+        <div><label>Tên CTKM</label><input id="tenCTKM" placeholder="VD: ADHOC09_0126..."></div>
+        <div><label>Phân loại MH</label><select id="phanLoaiMH">${['<option value="">Chọn...</option>',...loaiMH.map(v=>`<option>${v}</option>`)].join('')}</select></div>
+        <div><label>Nhóm hàng (MCH3)</label><select id="nhomHang">${['<option value="">Chọn...</option>',...nhomHang.map(v=>`<option>${v}</option>`)].join('')}</select></div>
+        <div><label>Mã hàng (SKU)</label><input id="maHang" placeholder="VD: 10172025"></div>
+        <div><label>Tên hàng</label><input id="tenHang" placeholder="Tên sản phẩm"></div>
+        <div><label>ĐVT</label><input id="dvt" placeholder="G1, CAI, LOC..."></div>
+        <div><label>Diễn giải KM</label><textarea id="dienGiai" placeholder="VD: Mua 1 tặng 1 (Bó kèm)" rows="2"></textarea></div>
+      </div>
+    </div>
+    
+    <!-- CỘT PHẢI: Giá & Thời gian + Phạm vi -->
+    <div style="flex:1;min-width:350px;display:flex;flex-direction:column;gap:16px">
+      <!-- Giá & Thời gian -->
+      <div style="background:white;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+        <h3 style="margin:0 0 16px;color:#1F4E79">💰 Giá & Thời gian</h3>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;gap:10px">
+            <div style="flex:1"><label>Giá thường</label><input id="giaThuong" type="number" step="0.01"></div>
+            <div style="flex:1"><label>Giá KM</label><input id="giaKM" type="number" step="0.01"></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="flex:1"><label>Ngày HL Giá mua</label><input id="ngayHLGiaMua" placeholder="dd/mm/yy hoặc text"></div>
+            <div style="flex:1"><label>Ngày KT Giá mua</label><input id="ngayKTGiaMua" placeholder="dd/mm/yy hoặc text"></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="flex:1"><label>Ngày BĐ KM</label><input id="ngayBDKM" placeholder="dd/mm/yy hoặc text"></div>
+            <div style="flex:1"><label>Ngày KT KM</label><input id="ngayKTKM" placeholder="dd/mm/yy hoặc text"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- PHẠM VI ÁP DỤNG -->
+      <div style="background:#FFF8E1;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:4px solid #F9A825">
+        <h3 style="margin:0 0 12px;color:#E65100">📍 Phạm vi áp dụng</h3>
+        <p style="font-size:11px;color:#888;margin:-8px 0 12px">Khai báo đầy đủ nếu CTKM chỉ áp dụng theo site/tỉnh cụ thể</p>
+        
+        <div style="margin-bottom:12px">
+          <label>🌍 Miền</label>
+          <div class="region-tags" id="regionTags">
+            <span class="region-tag" onclick="this.classList.toggle('active')">BẮC</span>
+            <span class="region-tag" onclick="this.classList.toggle('active')">TRUNG</span>
+            <span class="region-tag" onclick="this.classList.toggle('active')">NAM</span>
+            <span class="region-tag" onclick="this.classList.toggle('active')">TÂY</span>
+          </div>
+          <span style="font-size:10px;color:#999">(Nếu chọn hết 4 = Toàn Quốc)</span>
+        </div>
+        
+        <div style="display:grid;gap:10px">
+          <div>
+            <label>🏙 Tỉnh/TP áp dụng <span style="color:#999;font-weight:400">(nếu có giới hạn)</span></label>
+            <textarea id="tinhApDung" rows="2" placeholder="VD: TP. Hà Nội, T. Bắc Ninh, H. Hưng Yên...&#10;Để trống nếu áp dụng toàn Miền đã chọn"></textarea>
+          </div>
+          <div>
+            <label>🏪 Nhóm Store <span style="color:#999;font-weight:400">(nếu có giới hạn)</span></label>
+            <input id="nhomStore" placeholder="VD: DS CH ko áp dụng, hoặc mã nhóm store">
+          </div>
+          <div>
+            <label>🚫 Tỉnh/TP loại trừ <span style="color:#999;font-weight:400">(nếu có)</span></label>
+            <input id="tinhLoaiTru" placeholder="VD: DS CH ko áp dụng">
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+    
+    <div style="margin-top:16px">
+      <button class="btn btn-primary" onclick="submitForm()">✅ Thêm CTKM</button>
+      <button class="btn btn-secondary" style="margin-left:8px" onclick="switchTab('dashboard')">Hủy</button>
+    </div>
+  `;
+}
+
+function submitForm() {
+  const regions = document.querySelectorAll('#regionTags .region-tag.active');
+  const allRegions = document.querySelectorAll('#regionTags .region-tag');
+  
+  // Auto-detect Toàn Quốc nếu chọn cả 4
+  if (regions.length === 4) {
+    const mienGoc = '1-TOÀN QUỐC';
+  }
+  
+  const mienParts = [];
+  if ([...regions].some(r=>r.textContent==='BẮC')) mienParts.push('BẮC');
+  if ([...regions].some(r=>r.textContent==='TRUNG')) mienParts.push('TRUNG');
+  if ([...regions].some(r=>r.textContent==='NAM')) mienParts.push('NAM');
+  if ([...regions].some(r=>r.textContent==='TÂY')) mienParts.push('TÂY');
+  
+  let mienGoc = mienParts.length === 4 ? '1-TOÀN QUỐC' : mienParts.join(', ');
+  
+  const data = {
+    maCT: document.getElementById('maCT').value,
+    tenCTKM: document.getElementById('tenCTKM').value,
+    phanLoaiMH: document.getElementById('phanLoaiMH').value,
+    nhomHang: document.getElementById('nhomHang').value,
+    maHang: document.getElementById('maHang').value,
+    tenHang: document.getElementById('tenHang').value,
+    dvt: document.getElementById('dvt').value,
+    dienGiai: document.getElementById('dienGiai').value,
+    giaThuong: document.getElementById('giaThuong').value,
+    giaKM: document.getElementById('giaKM').value,
+    ngayHLGiaMua: document.getElementById('ngayHLGiaMua').value,
+    ngayKTGiaMua: document.getElementById('ngayKTGiaMua').value,
+    ngayBDKM: document.getElementById('ngayBDKM').value,
+    ngayKTKM: document.getElementById('ngayKTKM').value,
+    tinhApDung: document.getElementById('tinhApDung').value,
+    nhomStore: document.getElementById('nhomStore').value,
+    tinhLoaiTru: document.getElementById('tinhLoaiTru').value,
+    bac: [...regions].some(r=>r.textContent==='BẮC')?1:0,
+    trung: [...regions].some(r=>r.textContent==='TRUNG')?1:0,
+    nam: [...regions].some(r=>r.textContent==='NAM')?1:0,
+    tay: [...regions].some(r=>r.textContent==='TÂY')?1:0,
+    mienGoc: ''
+  };
+  
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({action: 'addNewCTKM', data: data})
+  })
+    .then(r => r.json())
+    .then(resp => { showToast(resp.message || 'OK'); setTimeout(() => location.reload(), 1000); })
+    .catch(err => showToast('Lỗi: ' + err, false));
+}
+
+// ============ IMPORT ============
+function renderImport() {
+  document.getElementById('mainContent').innerHTML = `
+    <div style="background:white;border-radius:8px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+      <h3>📥 Import dữ liệu từ file</h3>
+      <p style="color:#666;margin:8px 0 20px">Upload file Excel (.xlsx) đã parse từ MsT để import vào Sheet.</p>
+      <input type="file" id="importFile" accept=".xlsx,.xls" style="margin-bottom:12px">
+      <br>
+      <button class="btn btn-primary" onclick="doImport()">Import File</button>
+      <div id="importStatus" style="margin-top:12px"></div>
+    </div>
+  `;
+}
+
+function doImport() {
+  document.getElementById('importStatus').innerHTML = '⏳ Đang xử lý...';
+  const file = document.getElementById('importFile').files[0];
+  if (!file) { document.getElementById('importStatus').innerHTML = '❌ Chưa chọn file'; return; }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Note: Full XLSX parsing in browser requires SheetJS library
+    // For now, use the server-side GAS import
+    google.script.run
+      .withSuccessHandler(msg => document.getElementById('importStatus').innerHTML = msg)
+      .processUploadedFile(file.name);
+    document.getElementById('importStatus').innerHTML = '✅ File đã nhận. Đang import... kiểm tra Sheet sau vài giây.';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Init — dùng fetch() đến GAS Web App URL
+const GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
+if (!GAS_URL) {
+  const url = prompt('Nhập GAS Web App URL (chỉ cần nhập 1 lần):', 'https://script.google.com/macros/s/.../exec');
+  if (url) { localStorage.setItem('ctkm_gas_url', url); location.reload(); }
+  else { document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">⚠️ Cần URL GAS Web App để kết nối.<br><button class="btn btn-primary" onclick="localStorage.removeItem('ctkm_gas_url');location.reload()">Nhập URL</button></p>'; }
+} else {
+  fetch(GAS_URL + '?action=getGroupedData')
+    .then(r => r.json())
+    .then(data => { groupedData = data; renderDashboard(); })
+    .catch(e => { document.getElementById('mainContent').innerHTML = '<p>Lỗi kết nối GAS. Kiểm tra URL.</p>'; });
+}
+</script>
+</body>
+</html>
