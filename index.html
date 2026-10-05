@@ -908,34 +908,34 @@ function getFilteredCT(data) {
 
 // ============ DATA TABLE ============
 function renderDataTable() {
+  var skuData = window._skuData || [];
   document.getElementById('mainContent').innerHTML = `
     <div class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:150px;max-width:250px;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">
       
       <div class="ms-wrap" id="msLoaiD">
         <button class="ms-btn" data-title="Phân loại" onclick="toggleMS('msLoaiD')" style="min-width:100px">Phân loại ▾</button>
-        <div class="ms-drop" id="msLoaiDDrop">${[...new Set(groupedData.map(r=>r[2]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msLoaiD');filterTable()">${v}</div>`).join('')}</div>
+        <div class="ms-drop" id="msLoaiDDrop">${[...new Set(skuData.map(r=>r[2]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msLoaiD',event);filterTable()">${v}</div>`).join('')}</div>
       </div>
       
       <div class="ms-wrap" id="msNhomD">
         <button class="ms-btn" data-title="Nhóm hàng" onclick="toggleMS('msNhomD')" style="min-width:100px">Nhóm hàng ▾</button>
-        <div class="ms-drop" id="msNhomDDrop">${[...new Set(groupedData.map(r=>r[3]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhomD');filterTable()">${v}</div>`).join('')}</div>
+        <div class="ms-drop" id="msNhomDDrop">${[...new Set(skuData.map(r=>r[3]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhomD',event);filterTable()">${v}</div>`).join('')}</div>
       </div>
       
       <div class="ms-wrap" id="msMienD">
         <button class="ms-btn" data-title="Miền" onclick="toggleMS('msMienD')" style="min-width:90px">Miền ▾</button>
         <div class="ms-drop" id="msMienDDrop">
-          <div class="ms-item" data-val="bac" onclick="toggleMSItem(this,'msMienD');filterTable()">BẮC</div>
-          <div class="ms-item" data-val="trung" onclick="toggleMSItem(this,'msMienD');filterTable()">TRUNG</div>
-          <div class="ms-item" data-val="nam" onclick="toggleMSItem(this,'msMienD');filterTable()">NAM</div>
-          <div class="ms-item" data-val="tay" onclick="toggleMSItem(this,'msMienD');filterTable()">TÂY</div>
+          <div class="ms-item" data-val="bac" onclick="toggleMSItem(this,'msMienD',event);filterTable()">BẮC</div>
+          <div class="ms-item" data-val="trung" onclick="toggleMSItem(this,'msMienD',event);filterTable()">TRUNG</div>
+          <div class="ms-item" data-val="nam" onclick="toggleMSItem(this,'msMienD',event);filterTable()">NAM</div>
+          <div class="ms-item" data-val="tay" onclick="toggleMSItem(this,'msMienD',event);filterTable()">TÂY</div>
         </div>
       </div>
       
-      <input id="filterDateFrom" type="date" onchange="filterTable()" style="width:125px;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:11px">
-      <span style="font-size:11px;color:#888">→</span>
-      <input id="filterDateTo" type="date" onchange="filterTable()" style="width:125px;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:11px">
+      <button class="btn" style="padding:6px 14px;background:#16a34a;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;flex-shrink:0" onclick="exportDataCSV()">📥 Export CSV</button>
     </div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px" id="dataCount"></div>
     <div class="table-wrap" id="dataTable"></div>
   `;
   filterTable();
@@ -974,45 +974,101 @@ function doSKUFilter() {
   filterTable(matched.size > 0 ? matched : null);
 }
 
-function filterTable(skuMatchedCTs = null) {
-  const search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
-  const selLoai = new Set(getMSValues('msLoaiD'));
-  const selNhom = new Set(getMSValues('msNhomD'));
-  const selMien = new Set(getMSValues('msMienD'));
-  const dateFrom = document.getElementById('filterDateFrom')?.value || '';
-  const dateTo = document.getElementById('filterDateTo')?.value || '';
+function filterTable() {
+  var skuData = window._skuData || [];
+  var search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+  var selLoai = new Set(getMSValues('msLoaiD'));
+  var selNhom = new Set(getMSValues('msNhomD'));
+  var selMien = new Set(getMSValues('msMienD'));
   
-  let filtered = groupedData.filter(r => {
-    const rowStr = Object.values(r).join(' ').toLowerCase();
+  var filtered = skuData.filter(function(r) {
+    var rowStr = Object.values(r).join(' ').toLowerCase();
     if (search && !rowStr.includes(search)) return false;
     if (selLoai.size > 0 && !selLoai.has(r[2])) return false;
     if (selNhom.size > 0 && !selNhom.has(r[3])) return false;
     if (selMien.size > 0) {
-      const mienMap = {bac:10, trung:11, nam:12, tay:13};
-      let ok = false;
-      for (const m of selMien) { if (r[mienMap[m]]) { ok = true; break; } }
+      var ok = false;
+      if (selMien.has('bac') && r[17]) ok = true;
+      if (selMien.has('trung') && r[18]) ok = true;
+      if (selMien.has('nam') && r[19]) ok = true;
+      if (selMien.has('tay') && r[20]) ok = true;
       if (!ok) return false;
-    }
-    if (skuMatchedCTs && !skuMatchedCTs.has(r[1]?.toString())) return false;
-    if (dateFrom && r[6]) {
-      const d = new Date(r[6]);
-      if (!isNaN(d) && d < new Date(dateFrom)) return false;
-    }
-    if (dateTo && r[7]) {
-      const d = new Date(r[7]);
-      if (!isNaN(d) && d > new Date(dateTo)) return false;
     }
     return true;
   });
   
-  const ctData = filtered.map(r => ({
-    ma: r[0]||'', ten: r[1]||'', loai: r[2]||'', nhom: r[3]||'',
-    sku: r[4]||0, skuList: r[5]||'',
-    ngayBD: r[6], ngayKT: r[7],
-    bac: r[10]||0, trung: r[11]||0, nam: r[12]||0, tay: r[13]||0
-  }));
-  document.getElementById('dataTable').innerHTML = renderCTTable(ctData) +
-    `<p style="padding:12px;color:#888">Hiển thị ${filtered.length}/${groupedData.length} CT</p>`;
+  // Show count
+  var countEl = document.getElementById('dataCount');
+  if (countEl) countEl.textContent = filtered.length + ' / ' + skuData.length + ' dòng';
+  
+  // Render table
+  document.getElementById('dataTable').innerHTML = '<table style="width:100%"><tr>' +
+    '<th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Diễn giải</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>' +
+    filtered.map(function(r) {
+      var mien = [];
+      if (r[17]) mien.push('B');
+      if (r[18]) mien.push('T');
+      if (r[19]) mien.push('N');
+      if (r[20]) mien.push('Ty');
+      if (mien.length===4) mien=['ALL'];
+      return '<tr>' +
+        '<td style="font-size:11px">'+(r[0]||'')+'</td>' +
+        '<td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[1]||'')+'">'+(r[1]||'').substring(0,40)+'</td>' +
+        '<td style="font-size:11px">'+(r[2]||'')+'</td>' +
+        '<td style="font-size:11px">'+(r[3]||'')+'</td>' +
+        '<td style="font-size:11px">'+(r[4]||'')+'</td>' +
+        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[5]||'')+'">'+(r[5]||'').substring(0,35)+'</td>' +
+        '<td style="font-size:11px">'+(r[6]||'')+'</td>' +
+        '<td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[7]||'')+'">'+(r[7]||'').substring(0,30)+'</td>' +
+        '<td style="font-size:11px;text-align:right">'+Number(r[8]||0).toLocaleString()+'</td>' +
+        '<td style="font-size:11px;text-align:right;color:#dc2626">'+Number(r[9]||0).toLocaleString()+'</td>' +
+        '<td style="font-size:10px">'+fmtDate(r[12])+'</td>' +
+        '<td style="font-size:10px">'+fmtDate(r[13])+'</td>' +
+        '<td style="font-size:10px">'+mien.join('/')+'</td>' +
+        '</tr>';
+    }).join('') + '</table>';
+}
+
+// Export CSV
+function exportDataCSV() {
+  var skuData = window._skuData || [];
+  var selLoai = new Set(getMSValues('msLoaiD'));
+  var selNhom = new Set(getMSValues('msNhomD'));
+  var selMien = new Set(getMSValues('msMienD'));
+  var search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+  
+  var filtered = skuData.filter(function(r) {
+    var rowStr = Object.values(r).join(' ').toLowerCase();
+    if (search && !rowStr.includes(search)) return false;
+    if (selLoai.size > 0 && !selLoai.has(r[2])) return false;
+    if (selNhom.size > 0 && !selNhom.has(r[3])) return false;
+    if (selMien.size > 0) {
+      var ok = false;
+      if (selMien.has('bac') && r[17]) ok = true;
+      if (selMien.has('trung') && r[18]) ok = true;
+      if (selMien.has('nam') && r[19]) ok = true;
+      if (selMien.has('tay') && r[20]) ok = true;
+      if (!ok) return false;
+    }
+    return true;
+  });
+  
+  var csv = 'Mã CT,Tên CTKM,Phân loại,Nhóm hàng,Mã hàng,Tên hàng,ĐVT,Diễn giải,Giá thường,Giá KM,Ngày BĐ,Ngày KT,Miền\n';
+  filtered.forEach(function(r) {
+    var mien = [];
+    if (r[17]) mien.push('BẮC');
+    if (r[18]) mien.push('TRUNG');
+    if (r[19]) mien.push('NAM');
+    if (r[20]) mien.push('TÂY');
+    csv += '"'+(r[0]||'')+'","'+(r[1]||'')+'","'+(r[2]||'')+'","'+(r[3]||'')+'","'+(r[4]||'')+'","'+(r[5]||'')+'","'+(r[6]||'')+'","'+(r[7]||'').replace(/"/g,'""')+'","'+(r[8]||'')+'","'+(r[9]||'')+'","'+fmtDate(r[12])+'","'+fmtDate(r[13])+'","'+mien.join('; ')+'"\n';
+  });
+  
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'CTKM_Rural_Data_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('✅ Đã export ' + filtered.length + ' dòng');
 }
 
 // ============ ADD FORM ============
