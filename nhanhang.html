@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Khảo sát giờ nhận Rau - Thịt · 05-11.10</title>
+<title>Khảo sát giờ nhận Rau - Thịt</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
@@ -54,7 +54,7 @@ input:focus,select:focus{border-color:#2e7d32;outline:none}
 <body>
 <div class="header">
   <h1>🥩🥬 Khảo sát giờ nhận Rau - Thịt</h1>
-  <p>Thịt MDL & Rau-Trái cây · 05.10 → 11.10.2026</p>
+  <p>Thịt MDL & Rau-Trái cây · Chỉ khảo sát Hôm qua & Hôm nay</p>
 </div>
 <div class="container">
   <div class="loading" id="loading"><span class="spinner"></span>Đang tải dữ liệu cửa hàng...</div>
@@ -100,16 +100,17 @@ const SHEET_ID = '1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A';
 const SHEET_NAME = 'Store_list';
 // Dynamic: chỉ hiện Hôm qua (D-1) & Hôm nay
 const WEEKDAYS = ['CN','T2','T3','T4','T5','T6','T7'];
-function getAvailableDays() {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+function getAvailableDays(){
+  var now=new Date();
+  var pad=function(x){return String(x).padStart(2,'0')};
+  var fmt=function(d){return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()};
+  var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var yesterday=new Date(today);yesterday.setDate(today.getDate()-1);
   return [
-    { value: yesterday.toLocaleDateString('vi-VN'), label: WEEKDAYS[yesterday.getDay()] + ' Hôm qua ' + yesterday.toLocaleDateString('vi-VN') },
-    { value: today.toLocaleDateString('vi-VN'), label: WEEKDAYS[today.getDay()] + ' Hôm nay ' + today.toLocaleDateString('vi-VN') }
+    {value:fmt(yesterday),label:WEEKDAYS[yesterday.getDay()]+' Hom qua '+fmt(yesterday)},
+    {value:fmt(today),label:WEEKDAYS[today.getDay()]+' Hom nay '+fmt(today)}
   ];
-}
-const AVAIL_DAYS = getAvailableDays();
+}const AVAIL_DAYS = getAvailableDays();
 const DAYS = AVAIL_DAYS.map(d => d.value);
 const DAY_LABELS = AVAIL_DAYS.map(d => d.label);
 
