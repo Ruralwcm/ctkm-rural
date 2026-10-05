@@ -22,9 +22,9 @@
     .stat-card.active-card { box-shadow: 0 0 0 2px #1F4E79; transform: translateY(-1px); }
     
     /* Table */
-    .table-wrap { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); overflow: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; white-space: nowrap; position: sticky; top: 0; }
+    .table-wrap { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); overflow: auto; max-height: 70vh; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; table-layout: auto; }
+    th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; white-space: nowrap; position: sticky; top: 0; z-index: 5; }
     td { padding: 8px; border-bottom: 1px solid #eee; }
     tr:hover { background: #f8f9ff; }
     .ct-row:hover { background: #eef2ff !important; }
@@ -52,9 +52,9 @@
     
     /* Multi-select dropdown */
     .ms-wrap { position: relative; display: inline-block; flex-shrink: 0; }
-    .ms-btn { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 90px; max-width: 150px; text-align: left; overflow: hidden; text-overflow: ellipsis; width: auto; }
+    .ms-btn { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 110px; max-width: 160px; text-align: left; overflow: hidden; text-overflow: ellipsis; width: auto; }
     .ms-btn:hover { border-color: #1F4E79; }
-    .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 99; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 300px; overflow-y: auto; min-width: 200px; max-width: 320px; white-space: nowrap; }
+    .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 999; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 300px; overflow-y: auto; min-width: 200px; max-width: 320px; white-space: nowrap; }
     .ms-wrap.right .ms-drop { left: auto; right: 0; }
     .ms-drop.open { display: block; }
     .ms-item { padding: 5px 12px; cursor: pointer; font-size: 11px; white-space: nowrap; user-select: none; border-left: 3px solid transparent; }
@@ -62,7 +62,8 @@
     @media (max-width: 768px) {
       .ms-drop { min-width: 170px; max-width: 250px; max-height: 250px; font-size: 10px; }
       .ms-item { font-size: 10px; padding: 4px 10px; }
-      .ms-btn { font-size: 10px; min-width: 70px; max-width: 120px; padding: 5px 6px; }
+      .ms-btn { font-size: 10px; min-width: 90px; max-width: 130px; padding: 5px 6px; }
+      /* table */
     }
     @media (max-width: 480px) {
       .ms-drop { min-width: 160px; max-width: calc(100vw - 24px); max-height: 220px; }
