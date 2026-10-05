@@ -207,7 +207,7 @@ function renderDashboard() {
     </div>
     
     <!-- BỘ LỌC DASHBOARD (View + Filter combined) -->
-    <div style="background:white;border-radius:8px;padding:8px 12px;margin:0 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:6px;align-items:center;overflow-x:auto;overflow-y:visible">
+    <div style="background:white;border-radius:8px;padding:8px 12px;margin:0 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:6px;align-items:center;">
       <button id="btnViewCTKM" class="view-btn active" onclick="switchView('CTKM')" style="flex-shrink:0">📋 CTKM</button>
       <button id="btnViewMCH3" class="view-btn" onclick="switchView('MCH3')" style="flex-shrink:0">🏷 MCH3</button>
       <span style="color:#cbd5e1;flex-shrink:0">|</span>
@@ -255,7 +255,7 @@ function renderDashboard() {
       </div>
       
       <!-- Thời gian -->
-      <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:4px 4px;border:1px solid #ddd;border-radius:4px;font-size:10px;width:90px;flex-shrink:0">
+      <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;min-width:115px;flex-shrink:0">
         <option value="">Thời gian hiệu lực</option>
         <option value="homNay">Hôm nay</option>
         <option value="7ngay">7 ngày tới</option>
@@ -379,7 +379,8 @@ function removeChip(groupId, label) {
 function onTimeFilterChange() {
   const val = document.getElementById('dashFilterTime2').value;
   const custom = document.getElementById('customDateRange');
-  custom.style.display = val === 'custom' ? 'flex' : 'none';
+  custom.style.display = val === 'custom' ? 'inline-flex' : 'none';
+  if (val !== 'custom') { document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value=''; }
   applyDashFilter();
 }
 
