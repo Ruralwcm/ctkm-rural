@@ -211,12 +211,9 @@ async function loadFromGAS(){
         if(!localMap[key]){ localMap[key]=s; } // Only add if not already in localStorage
       });
       SURVEYS=Object.values(localMap);
-      // Chi giu lai D-1 & Hom nay, huy data tuong lai
-      var availDates=DAYS;
-      SURVEYS=SURVEYS.filter(function(s){return availDates.indexOf(s.ngay)>=0;});
       localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
       gasLoaded=true;
-      console.log('GAS loaded: '+raw.length+' rows, filtered '+SURVEYS.length);
+      console.log('GAS loaded: '+raw.length+' rows, total '+SURVEYS.length);
     }
   }catch(e){console.warn('GAS load failed:',e.message);}
 }
@@ -238,6 +235,11 @@ function getAvailDays(){
 var AVAIL_DAYS=getAvailDays();
 var DAYS=AVAIL_DAYS.map(function(d){return d.value});
 var DAY_LABELS=AVAIL_DAYS.map(function(d){return d.label});
+// Get all unique dates from data for filter
+function getAllDates(){
+  var dates={}; SURVEYS.forEach(function(s){if(s.ngay)dates[s.ngay]=true;});
+  return Object.keys(dates).sort();
+}
 function genTimes(){let s=[];for(let h=6;h<=18;h++)for(let m of[0,30]){if(h===18&&m===30)continue;s.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'))}return s}
 const TIMES = genTimes();
 
@@ -299,10 +301,12 @@ function submitSurvey(){
 
 // ===== TAB 1: DASHBOARD =====
 function renderDashboard(){
-  let total=SURVEYS.length, meat=SURVEYS.filter(s=>s.meat).length, veg=SURVEYS.filter(s=>s.veg).length;
-  let byDay={}; DAYS.forEach(d=>{byDay[d]={total:0,meat:0,veg:0}});
-  SURVEYS.forEach(s=>{let d=byDay[s.ngay];if(d){d.total++;if(s.meat)d.meat++;if(s.veg)d.veg++}});
-  let maxTotal=Math.max(1,...Object.values(byDay).map(d=>d.total));
+  var total=SURVEYS.length, meat=SURVEYS.filter(function(s){return s.meat}).length, veg=SURVEYS.filter(function(s){return s.veg}).length;
+  // Collect ALL dates from data for progress bars
+  var allDates=getAllDates();
+  var byDay={}; allDates.forEach(function(d){byDay[d]={total:0,meat:0,veg:0}});
+  SURVEYS.forEach(function(s){var d=byDay[s.ngay];if(d){d.total++;if(s.meat)d.meat++;if(s.veg)d.veg++}});
+  var maxTotal=Math.max.apply(null,[1].concat(allDates.map(function(d){return byDay[d].total})));
   
   let gdvs=[...new Set(SURVEYS.map(s=>s.gdv))].sort();
   let tinhs=[...new Set(SURVEYS.map(s=>s.tinh))].sort();
@@ -318,24 +322,20 @@ function renderDashboard(){
     </div>
     
     <div class="card"><h3>📈 Tiến độ theo ngày</h3>
-      ${DAYS.map((d,i)=>{
-        let dd=byDay[d];
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px">
-            <span>${DAY_LABELS[i]}</span>
-            <span>🥩${dd.meat} 🥬${dd.veg} / ${dd.total} CH</span>
-          </div>
-          <div class="pbar"><div class="pbar-fill" style="width:${dd.total/maxTotal*100}%"></div></div>
-        </div>`;
+      ${allDates.map(function(d){
+        var dd=byDay[d];
+        return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span>'+d+'</span><span>🥩'+dd.meat+' 🥬'+dd.veg+' / '+dd.total+' CH</span></div><div class="pbar"><div class="pbar-fill" style="width:'+(dd.total/maxTotal*100)+'%"></div></div></div>';
       }).join('')}
+      ${allDates.length===0?'<p style="color:#888;font-size:12px">Chua co du lieu</p>':''}
     </div>
     
     <div class="card"><h3>📋 Kết quả khảo sát</h3>
       <div class="fbar">
-        <select id="fMien" onchange="renderResultTable()"><option value="">Tất cả Miền</option>${miens.map(m=>`<option>${m}</option>`).join('')}</select>
-        <select id="fTinh" onchange="renderResultTable()"><option value="">Tất cả Tỉnh</option>${tinhs.map(t=>`<option>${t}</option>`).join('')}</select>
-        <select id="fGdv" onchange="renderResultTable()"><option value="">Tất cả GĐV</option>${gdvs.map(g=>`<option>${g}</option>`).join('')}</select>
-        <select id="fQlkv" onchange="renderResultTable()"><option value="">Tất cả QLKV</option>${qlkvs.map(q=>`<option>${q}</option>`).join('')}</select>
+        <select id="fNgay" onchange="renderResultTable()"><option value="">Tất cả ngày</option>'+allDates.map(function(d){return '<option>'+d+'</option>'}).join('')+'</select>
+        <select id="fMien" onchange="renderResultTable()"><option value="">Tất cả Miền</option>'+miens.map(function(m){return '<option>'+m+'</option>'}).join('')+'</select>
+        <select id="fTinh" onchange="renderResultTable()"><option value="">Tất cả Tỉnh</option>'+tinhs.map(function(t){return '<option>'+t+'</option>'}).join('')+'</select>
+        <select id="fGdv" onchange="renderResultTable()"><option value="">Tất cả GĐV</option>'+gdvs.map(function(g){return '<option>'+g+'</option>'}).join('')+'</select>
+        <select id="fQlkv" onchange="renderResultTable()"><option value="">Tất cả QLKV</option>'+qlkvs.map(function(q){return '<option>'+q+'</option>'}).join('')+'</select>
       </div>
       <div class="tbl-wrap" id="barChart" style="margin-bottom:12px"></div>
       <div class="tbl-wrap" id="resultTable"></div>
@@ -344,10 +344,11 @@ function renderDashboard(){
   renderResultTable();setTimeout(()=>{let d=document.getElementById('scheduleTable');if(d)d.innerHTML=renderScheduleTable();},100);
 }
 function renderScheduleTable(){
-  let data=SURVEYS;
-  let fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
-  let fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
-  data=data.filter(s=>(!fm||s.mien===fm)&&(!ft||s.tinh===ft)&&(!fg||s.gdv===fg)&&(!fq||s.qlkv===fq));
+  var data=SURVEYS;
+  var fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
+  var fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
+  var fd=document.getElementById('fNgay')?.value||'';
+  data=data.filter(function(s){return (!fm||s.mien===fm)&&(!ft||s.tinh===ft)&&(!fg||s.gdv===fg)&&(!fq||s.qlkv===fq)&&(!fd||s.ngay===fd)});
   
   // Build time slot grid: for each time, list stores
   let meatSlots={}, vegSlots={};
@@ -365,9 +366,10 @@ function renderScheduleTable(){
 }
 
 function renderResultTable(){
-  let fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
-  let fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
-  let data=SURVEYS.filter(s=>(!fm||s.mien===fm)&&(!ft||s.tinh===ft)&&(!fg||s.gdv===fg)&&(!fq||s.qlkv===fq));
+  var fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
+  var fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
+  var fd=document.getElementById('fNgay')?.value||'';
+  var data=SURVEYS.filter(function(s){return (!fm||s.mien===fm)&&(!ft||s.tinh===ft)&&(!fg||s.gdv===fg)&&(!fq||s.qlkv===fq)&&(!fd||s.ngay===fd)});
   // Group by store
   let grp={}; data.forEach(s=>{let k=s.ma;if(!grp[k])grp[k]={ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh,qlkv:s.qlkv,mien:s.mien,meat:0,veg:0,days:new Set()};grp[k].meat+=s.meat?1:0;grp[k].veg+=s.veg?1:0;grp[k].days.add(s.ngay)});
   let rows=Object.values(grp).sort((a,b)=>a.ten.localeCompare(b.ten,'vi'));
@@ -480,13 +482,7 @@ function exportCSV(){
 
 // ===== INIT =====
 function render(i){[renderSurvey,renderDashboard,renderList][i]()}
-function cleanOldData(){
-  var availDates=DAYS;
-  var before=SURVEYS.length;
-  SURVEYS=SURVEYS.filter(function(s){return availDates.indexOf(s.ngay)>=0;});
-  if(SURVEYS.length<before) localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
-}
-async function initApp(){cleanOldData();await loadFromGAS();render(0);}
+async function initApp(){await loadFromGAS();render(0);}
 initApp();
 </script>
 </body>
