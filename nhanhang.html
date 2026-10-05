@@ -243,16 +243,32 @@ function submitSurvey(){
   if(!selectedStore)return showToast('Vui long chon cua hang','err');
   let meat=document.getElementById('smeat').value, veg=document.getElementById('sveg').value;
   let ngay=document.getElementById('sday').value;
-  // Allow empty = Khong co lich giao
   if(!meat){showToast('Vui long chon gio nhan Thit (hoac Khong co lich giao)','err');return;}
   if(!veg){showToast('Vui long chon gio nhan Rau (hoac Khong co lich giao)','err');return;}
   
   let d={ma:selectedStore.ma,ten:selectedStore.ten,gdv:selectedStore.gdv,tinh:selectedStore.tinh,qlkv:selectedStore.qlkv,mien:selectedStore.mien,ngay:ngay,meat:meat,veg:veg,ts:new Date().toISOString()};
   
-  let summary=d.ma+' - '+d.ten+'\\n'+d.ngay;
-  if(d.meat)summary+='\\nThit: '+d.meat;
-  if(d.veg)summary+='\\nRau: '+d.veg;
-  if(!confirm('Xac nhan thong tin:\\n\\n'+summary+'\\n\\nDong y gui?'))return;
+  // Show confirmation card
+  let html='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center" id="confirmModal">';
+  html+='<div style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">';
+  html+='<h3 style="margin:0 0 16px;color:#2e7d32">Xac nhan thong tin</h3>';
+  html+='<table style="width:100%;font-size:13px;border-collapse:collapse">';
+  html+='<tr><td style="padding:6px 0;color:#888;width:80px">Cua hang</td><td style="padding:6px 0;font-weight:600">'+d.ma+' - '+d.ten+'</td></tr>';
+  html+='<tr><td style="padding:6px 0;color:#888">GDV</td><td style="padding:6px 0">'+d.gdv+'</td></tr>';
+  html+='<tr><td style="padding:6px 0;color:#888">Ngay</td><td style="padding:6px 0;font-weight:600">'+d.ngay+'</td></tr>';
+  html+='<tr><td style="padding:6px 0;color:#888">Thit MDL</td><td style="padding:6px 0;color:#c62828;font-weight:600">'+(d.meat||'Khong co')+'</td></tr>';
+  html+='<tr><td style="padding:6px 0;color:#888">Rau-Trai cay</td><td style="padding:6px 0;color:#2e7d32;font-weight:600">'+(d.veg||'Khong co')+'</td></tr>';
+  html+='</table>';
+  html+='<div style="display:flex;gap:10px;margin-top:18px">';
+  html+='<button onclick="doSubmitSurvey()" style="flex:1;padding:12px;background:#2e7d32;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">Dong y gui</button>';
+  html+='<button onclick="document.getElementById(\'confirmModal\').remove()" style="flex:1;padding:12px;background:#eee;color:#333;border:none;border-radius:6px;font-weight:600;cursor:pointer">Huy</button>';
+  html+='</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+  window._pendingSurvey=d;
+}
+function doSubmitSurvey(){
+  let d=window._pendingSurvey;if(!d)return;
+  document.getElementById('confirmModal').remove();
   
   SURVEYS.push(d);localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
   let GAS_URL=localStorage.getItem('ctkm_gas_url')||'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
