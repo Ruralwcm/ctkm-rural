@@ -26,6 +26,7 @@
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
     td { padding: 8px; border-bottom: 1px solid #eee; }
+    #dataTable td { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
     tr:hover { background: #f8f9ff; }
     .ct-row:hover { background: #eef2ff !important; }
     .ct-detail td { border-top: 2px solid #1F4E79; }
@@ -982,9 +983,7 @@ function filterTable() {
   if (countEl) countEl.textContent = filtered.length + ' / ' + skuData.length + ' dòng';
   
   // Render table
-  document.getElementById('dataTable').innerHTML = '<table style="width:100%"><colgroup>' +
-    '<col style="min-width:50px"><col style="min-width:120px"><col style="min-width:80px"><col style="min-width:100px"><col style="min-width:70px"><col style="min-width:120px"><col style="min-width:35px">' +
-    '<col style="min-width:90px"><col style="min-width:80px"><col style="min-width:80px"><col style="min-width:70px"><col style="min-width:70px"><col style="min-width:50px"></colgroup>' +
+  document.getElementById('dataTable').innerHTML = '<table style="width:100%;table-layout:auto">' +
     '<tr>' +
     '<th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Diễn giải</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>' +
     filtered.map(function(r) {
