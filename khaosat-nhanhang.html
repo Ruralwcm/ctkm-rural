@@ -113,9 +113,13 @@ let gasLoaded = false;
 function parseVal(v,type){
   if(v==null||v===undefined||v==='')return '';
   
-  // Normalize plain time strings: "6:30" → "06:30", "6:5" → "06:05"
-  if(typeof v==='string'&&v.indexOf('T')<0&&v.indexOf('/')<0&&v.indexOf(':')>-1){
-    var parts=v.split(':'); if(parts.length>=2) return String(parseInt(parts[0])).padStart(2,'0')+':'+String(parseInt(parts[1])).padStart(2,'0');
+  // If already a clean DD/MM/YYYY or HH:MM string, pass through immediately
+  if(typeof v==='string'&&v.indexOf('T')<0){
+    if(v.indexOf(':')>-1&&v.indexOf('/')<0){
+      // Time string → normalize "6:30" → "06:30"
+      var parts=v.split(':'); if(parts.length>=2) return String(parseInt(parts[0])).padStart(2,'0')+':'+String(parseInt(parts[1])).padStart(2,'0');
+    }
+    if(v.indexOf('/')>-1) return v; // Already DD/MM/YYYY, pass through
   }
   
   // Case 1: Google Sheets serial NUMBER
@@ -195,14 +199,16 @@ async function loadFromGAS(){
     var raw=await resp.json();
     if(Array.isArray(raw)&&raw.length>0){
       console.log('GAS raw data sample:', JSON.stringify(raw.slice(0,2)));
+      // Build map from localStorage first (correct data format)
       var localMap={}; SURVEYS.forEach(function(s){localMap[s.ma+'|'+s.ngay]=s;});
+      // GAS only fills in missing entries — never overrides localStorage
       raw.forEach(function(r){
         var s={
           gdv:r[0]||'', tinh:r[1]||'', ma:r[2]||'', ten:r[3]||'', qlkv:r[4]||'', mien:r[5]||'',
           ngay:parseVal(r[6],'date'), meat:parseVal(r[7],'time'), veg:parseVal(r[8],'time'), ts:r[9]||''
         };
-        console.log('Parsed:', s.ma, s.ngay, s.meat, s.veg, '(raw:', r[6], r[7], r[8]+')');
-        localMap[s.ma+'|'+s.ngay]=s;
+        var key=s.ma+'|'+s.ngay;
+        if(!localMap[key]){ localMap[key]=s; } // Only add if not already in localStorage
       });
       SURVEYS=Object.values(localMap);
       localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
