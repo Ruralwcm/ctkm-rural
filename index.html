@@ -136,6 +136,7 @@ const APP_VERSION = "2.3";
 let allData = [];
 let groupedData = [];
 
+function dayOnly(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((t, i) => {
     t.classList.toggle('active', ['dashboard','data','add','import'][i] === tab);
@@ -178,25 +179,16 @@ function renderDashboard() {
     if (bd && isNaN(bd.getTime())) bd = null;
     if (kt && isNaN(kt.getTime())) kt = null;
     
-    if (bd && kt && bd <= now && kt >= now) {
-      activeNow.push(ctInfo);
-    } else if (bd && bd > now && bd <= next30d) {
-      upcoming.push(ctInfo);
-    } else if (!bd || !kt) {
+    if (bd && kt) { var bdD=dayOnly(bd),ktD=dayOnly(kt),todayD=dayOnly(now); if (bdD <= todayD && ktD >= todayD) { activeNow.push(ctInfo); } if (ktD >= todayD && ktD <= dayOnly(twoDaysLater)) { endingSoon.push(ctInfo); } if (ktD < todayD) { expired.push(ctInfo); } }
+    if (bd) { var bdD2=dayOnly(bd); if (bdD2 > todayD && bdD2 <= dayOnly(next30d)) { upcoming.push(ctInfo); } }
+    else if (!bd || !kt) {
       // Text-based dates: check if text suggests ongoing
       const ktStr = (ct[7]||'').toString().toLowerCase();
       if (ktStr.includes('đến khi có tb') || ktStr.includes('31.12.2026') || ktStr.includes('31/12/2026') || ktStr.includes('31.12.26')) {
         activeNow.push(ctInfo);
       }
     }
-    // Ending soon: active CTKM ending within 2 days
-    if (kt && kt >= now && kt <= twoDaysLater) {
-      endingSoon.push(ctInfo);
-    }
-    // Expired: already ended
-    if (kt && kt < now) {
-      expired.push(ctInfo);
-    }
+
   });
   
   document.getElementById('mainContent').innerHTML = `
