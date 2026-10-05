@@ -649,8 +649,8 @@ function renderMCH3View(data) {
 
   return `<table style="table-layout:fixed;width:100%">
     <colgroup>
-      <col style="width:26px"><col style="width:80px"><col style="width:190px"><col style="width:40px">
-      <col style="width:85px"><col style="width:85px"><col style="width:auto"><col style="width:70px"><col style="width:70px">
+      <col style="width:26px"><col style="width:80px"><col style="width:170px"><col style="width:40px">
+      <col style="width:85px"><col style="width:85px"><col style="width:260px"><col style="width:70px"><col style="width:70px">
     </colgroup>
     <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th>Giá thường</th><th>Giá KM</th><th>CTKM · Loại · Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
     ${sortedGroups.map(nhom => {
@@ -661,12 +661,12 @@ function renderMCH3View(data) {
       return `
       <tr class="ct-row" style="background:#eef2ff;font-weight:700;cursor:pointer" onclick="toggleGroupExpand('${grpId}')">
         <td style="text-align:center">${isExp?'▼':'▶'}</td>
-        <td colspan="8" style="font-size:13px;color:#1e293b">🏷 ${nhom} <span style="font-weight:400;color:#64748b">(${rows.length} SKU)</span></td>
+        <td colspan="8" style="font-size:13px;color:#1e293b;white-space:nowrap">🏷 ${nhom} <span style="font-weight:400;color:#64748b">(${rows.length} SKU)</span></td>
       </tr>
       ${isExp ? rows.map(sku => {
         const ctkmInfo = (sku[1]||'') + ' · ' + (sku[2]||'') + (mienAD(sku) ? ' · ' + mienAD(sku) : '');
         return `
-        <tr style="border-bottom:1px solid #f0f0f0">
+        <tr style="border-bottom:1px solid #f0f0f0;white-space:nowrap">
           <td></td>
           <td style="font-size:11px">${sku[4]||''}</td>
           <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(sku[5]||'')}">${(sku[5]||'')}</td>
