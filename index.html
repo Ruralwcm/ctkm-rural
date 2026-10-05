@@ -1002,31 +1002,36 @@ function fmtDate(v) { if (!v) return ""; const d = new Date(v); if (isNaN(d.getT
 const GAS_URL = localStorage.getItem('ctkm_gas_url') || 'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
 
 async function loadData() {
+  const ts = Date.now();
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#1F4E79">⏳ Đang tải dữ liệu từ GitHub Pages...</p>';
+  
   // Step 1: Try GitHub Pages static JSON
   try {
     const [grouped, sku] = await Promise.all([
-      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('GH 404');return r.json();}),
-      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('GH 404');return r.json();})
+      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json?_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}),
+      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json?_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     ]);
-    console.log('Data loaded from GitHub Pages');
+    console.log('✅ Data loaded from GitHub Pages');
     return {grouped, sku};
   } catch(ghErr) {
-    console.warn('GitHub Pages failed, trying GAS API:', ghErr.message);
-    // Step 2: Fallback to GAS API
-    if (GAS_URL) {
-      try {
-        const [grouped, sku] = await Promise.all([
-          fetch(GAS_URL + '?action=getGroupedData').then(r=>{if(!r.ok)throw new Error('GAS grouped failed');return r.json();}),
-          fetch(GAS_URL + '?action=getSKUData').then(r=>{if(!r.ok)throw new Error('GAS SKU failed');return r.json();})
-        ]);
-        console.log('Data loaded from GAS API');
-        return {grouped, sku};
-      } catch(gasErr) {
-        console.error('GAS API also failed:', gasErr.message);
-      }
-    }
-    throw new Error('All data sources failed');
+    console.warn('⚠️ GitHub Pages:', ghErr.message, '→ trying GAS API');
+    document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#F9A825">⏳ Đang tải từ Google Sheets...</p>';
   }
+  
+  // Step 2: Fallback to GAS API
+  if (GAS_URL) {
+    try {
+      const [grouped, sku] = await Promise.all([
+        fetch(GAS_URL + '?action=getGroupedData&_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}),
+        fetch(GAS_URL + '?action=getSKUData&_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      ]);
+      console.log('✅ Data loaded from GAS API');
+      return {grouped, sku};
+    } catch(gasErr) {
+      console.error('❌ GAS API:', gasErr.message);
+    }
+  }
+  throw new Error('Không thể tải dữ liệu từ cả 2 nguồn');
 }
 
 loadData().then(({grouped, sku}) => {
@@ -1035,7 +1040,9 @@ loadData().then(({grouped, sku}) => {
   renderDashboard();
 }).catch(e => {
   console.error(e);
-  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#dc3545">❌ Lỗi tải dữ liệu.<br><small>Kiểm tra kết nối mạng hoặc F5 thử lại.</small></p>';
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#dc3545;font-size:14px">❌ Không tải được dữ liệu<br><small style="color:#888">Thử: (1) F5 cứng Ctrl+Shift+R (2) Mở Console F12 xem lỗi<br>Nếu vẫn lỗi → kiểm tra GAS URL trong localStorage: ctkm_gas_url</small><br><br><button onclick="location.reload(true)" style="padding:8px 20px;background:#1F4E79;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px">🔄 Thử lại</button></p>';
+  // Save GAS_URL to localStorage for next time
+  if (GAS_URL) localStorage.setItem('ctkm_gas_url', GAS_URL);
 });
 </script>
 <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#1F4E79;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
