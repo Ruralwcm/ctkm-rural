@@ -211,8 +211,29 @@ function renderDashboard(){
       <div class="tbl-wrap" id="resultTable"></div>
     </div>
   `;
-  renderResultTable();
+  renderResultTable();setTimeout(()=>{let d=document.getElementById('scheduleTable');if(d)d.innerHTML=renderScheduleTable();},100);
 }
+function renderScheduleTable(){
+  let data=SURVEYS;
+  let fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
+  let fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
+  data=data.filter(s=>(!fm||s.mien===fm)&&(!ft||s.tinh===ft)&&(!fg||s.gdv===fg)&&(!fq||s.qlkv===fq));
+  
+  // Build time slot grid: for each time, list stores
+  let meatSlots={}, vegSlots={};
+  data.forEach(s=>{
+    if(s.meat){let k=s.meat;if(!meatSlots[k])meatSlots[k]=[];meatSlots[k].push(s.ma);}
+    if(s.veg){let k=s.veg;if(!vegSlots[k])vegSlots[k]=[];vegSlots[k].push(s.ma);}
+  });
+  
+  let allTimes=[...new Set([...Object.keys(meatSlots),...Object.keys(vegSlots)])].sort();
+  if(!allTimes.length) return '<p style="padding:12px;color:#888">Chua co lich giao hang</p>';
+  
+  return '<table><tr><th>Gio</th><th>Thit MDL ('+Object.keys(meatSlots).length+' slot)</th><th>Rau-Trai cay ('+Object.keys(vegSlots).length+' slot)</th></tr>'+
+    allTimes.map(t=>`<tr><td style="font-weight:600">${t}</td><td>${(meatSlots[t]||[]).map(m=>'<span class="badge badge-meat">'+m+'</span>').join(' ')||'-'}</td><td>${(vegSlots[t]||[]).map(m=>'<span class="badge badge-veg">'+m+'</span>').join(' ')||'-'}</td></tr>`).join('')+
+    '</table>';
+}
+
 function renderResultTable(){
   let fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
   let fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
