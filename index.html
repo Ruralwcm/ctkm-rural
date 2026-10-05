@@ -269,6 +269,9 @@ function renderDashboard() {
         </div>
       </div>
       
+      <!-- SKU Key -->
+      <input id="skuKeyFilter" placeholder="🔑 SKU Key..." oninput="applyDashFilter()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;width:90px;flex-shrink:0">
+      
       <!-- Thời gian -->
       <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;width:130px;flex-shrink:0">
         <option value="">Thời gian hiệu lực</option>
@@ -426,6 +429,17 @@ function applyDashFilter() {
       if (selMien.has('nam') && r.nam) ok = true;
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
+    }
+    const skuKey = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
+    if (skuKey) {
+      const skuData = window._skuData || [];
+      const matchingCT = new Set();
+      skuData.forEach(sku => {
+        if ((sku[4]||'').toString().toLowerCase().includes(skuKey)) {
+          matchingCT.add((sku[1]||'').toString());
+        }
+      });
+      if (!matchingCT.has(r.ten||'')) return false;
     }
     if (selStatus.size > 0) {
       const now2 = new Date(); const twoDays2 = new Date(now2); twoDays2.setDate(twoDays2.getDate()+2);
@@ -926,12 +940,25 @@ function getFilteredSKU(skuData) {
   const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
   const in30d = new Date(now); in30d.setDate(in30d.getDate()+30);
   
+  const skuKey2 = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
   return skuData.filter(sku => {
+    if (skuKey2 && !(sku[4]||'').toString().toLowerCase().includes(skuKey2)) return false;
     const loai = (sku[2]||'').toString();
     const nhom = (sku[3]||'').toString();
     if (selLoai.size > 0 && !selLoai.has(loai)) return false;
     if (selNhom.size > 0 && !selNhom.has(nhom)) return false;
     const selStatus = new Set(getMSValues('msStatus'));
+    const skuKey = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
+    if (skuKey) {
+      const skuData = window._skuData || [];
+      const matchingCT = new Set();
+      skuData.forEach(sku => {
+        if ((sku[4]||'').toString().toLowerCase().includes(skuKey)) {
+          matchingCT.add((sku[1]||'').toString());
+        }
+      });
+      if (!matchingCT.has(r.ten||'')) return false;
+    }
     if (selStatus.size > 0) {
       const nowS = new Date(); const twoDaysS = new Date(nowS); twoDaysS.setDate(twoDaysS.getDate()+2);
       let bdS = sku[12] ? new Date(sku[12]) : null; let ktS = sku[13] ? new Date(sku[13]) : null;
@@ -994,6 +1021,17 @@ function getFilteredCT(data) {
       if (selMien.has('nam') && r.nam) ok = true;
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
+    }
+    const skuKey = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
+    if (skuKey) {
+      const skuData = window._skuData || [];
+      const matchingCT = new Set();
+      skuData.forEach(sku => {
+        if ((sku[4]||'').toString().toLowerCase().includes(skuKey)) {
+          matchingCT.add((sku[1]||'').toString());
+        }
+      });
+      if (!matchingCT.has(r.ten||'')) return false;
     }
     if (selStatus.size > 0) {
       const now2 = new Date(); const twoDays2 = new Date(now2); twoDays2.setDate(twoDays2.getDate()+2);
