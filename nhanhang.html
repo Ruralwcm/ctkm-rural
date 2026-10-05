@@ -119,59 +119,45 @@ function initTimeSlots() {
   });
 }
 
-// ===== Load store data from chi-phi-dinh-ky (same origin) =====
+// ===== Store data =====
+const SAMPLE_STORES = [
+  {ma:'2797',ten:'WM+ HNI TTTM Cho Sui',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra'},
+  {ma:'2924',ten:'WM+ HNI 391 Ngo Xuan Quang',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra'},
+  {ma:'3088',ten:'WM+ HNI 38 Dao Cam Moc',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thi Hanh'},
+  {ma:'3089',ten:'WM+ HNI 44 Lam Tien',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thi Hanh'},
+  {ma:'3275',ten:'WM+ HNI 254 Co Bi',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra'},
+  {ma:'3659',ten:'WM+ HNI Xom 8, Ninh Hiep',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thu Ha'},
+  {ma:'3131',ten:'WM+ HNI Gian 1, Cho Giay',gdv:'Ta Cong Nhan',tinh:'TP. Ha Noi',qlkv:'QLKV1'},
+  {ma:'3132',ten:'WM+ HNI Gian 2, Cho Giay',gdv:'Ta Cong Nhan',tinh:'TP. Ha Noi',qlkv:'QLKV1'},
+  {ma:'5820',ten:'WM+ HNI 12 Nguyen Trai',gdv:'Ta Quoc Huy',tinh:'TP. Ha Noi',qlkv:'QLKV2'},
+  {ma:'5821',ten:'WM+ HNI 88 Tran Duy Hung',gdv:'Ta Quoc Huy',tinh:'TP. Ha Noi',qlkv:'QLKV2'},
+];
+
 async function loadStores() {
   GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
-
-  // Try loading from chi-phi-dinh-ky first
-  try {
-    const resp = await fetch('https://ruralwcm.github.io/chi-phi-dinh-ky/index.html');
-    const html = await resp.text();
-    
-    // Extract store data from the chi-phi-dinh-ky app
-    // The store data is embedded as a JS object
-    const match = html.match(/window\.__STORE_DATA__\s*=\s*({[^}]+})/);
-    if (!match) {
-      // Try to find store list in the DOM/JS
-      console.log('Store data not found in chi-phi-dinh-ky, trying GAS...');
-    } else {
-      const storeObj = JSON.parse(match[1]);
-      STORES = Object.values(storeObj).flatMap(g => 
-        Object.values(g).flatMap(q => q || [])
-      ).map(s => ({
-        ma: s.maSAP || '',
-        ten: s.tenCH || '',
-        gdv: s.gdv || '',
-        tinh: s.tinh || '',
-        qlkv: s.qlkv || ''
-      }));
-      console.log('Loaded', STORES.length, 'stores from chi-phi-dinh-ky');
-    }
-  } catch(e) {
-    console.log('chi-phi-dinh-ky not available:', e.message);
-  }
+  STORES = SAMPLE_STORES;
   
-  // Also try GAS if available
-  if (GAS_URL && !STORES.length) {
+  // Try loading full store list from GAS
+  if (GAS_URL) {
     try {
       const resp = await fetch(GAS_URL + '?action=getStores');
-      STORES = await resp.json();
+      const data = await resp.json();
+      if (data && data.length > 0) STORES = data;
     } catch(e) {}
   }
-
-  if (STORES.length > 0) {
-    const gdvs = [...new Set(STORES.map(s => s.gdv).filter(Boolean))].sort();
-    const gdvSel = document.getElementById('gdv');
-    gdvs.forEach(g => gdvSel.innerHTML += `<option value="${g}">${g}</option>`);
-    
-    const tinhs = [...new Set(STORES.map(s => s.tinh).filter(Boolean))].sort();
-    const tinhSel = document.getElementById('tinh');
-    tinhs.forEach(t => tinhSel.innerHTML += `<option value="${t}">${t}</option>`);
-    
-    filterStores();
-  } else {
-    showManualMode();
-  }
+  
+  // Populate dropdowns
+  const gdvs = [...new Set(STORES.map(s => s.gdv).filter(Boolean))].sort();
+  const gdvSel = document.getElementById('gdv');
+  gdvSel.innerHTML = '<option value="">-- Chon GDV --</option>';
+  gdvs.forEach(g => gdvSel.innerHTML += '<option value="'+g+'">'+g+'</option>');
+  
+  const tinhs = [...new Set(STORES.map(s => s.tinh).filter(Boolean))].sort();
+  const tinhSel = document.getElementById('tinh');
+  tinhSel.innerHTML = '<option value="">-- Chon Tinh/TP --</option>';
+  tinhs.forEach(t => tinhSel.innerHTML += '<option value="'+t+'">'+t+'</option>');
+  
+  filterStores();
 }
 
 function showManualMode() {
