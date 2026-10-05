@@ -15,7 +15,7 @@
     .content { padding: 20px; max-width: 1400px; margin: 0 auto; }
     
     /* Stats */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .stat-card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
     .stat-card .num { font-size: 28px; font-weight: 700; color: #1F4E79; }
     .stat-card .label { font-size: 12px; color: #666; margin-top: 4px; }
@@ -159,7 +159,7 @@ function renderDashboard() {
   const next7d = new Date(now); next7d.setDate(next7d.getDate() + 7);
   const next30d = new Date(now); next30d.setDate(next30d.getDate() + 30);
   
-  let totalSKU = 0, activeNow = [], upcoming = [], endingSoon = [], allCT = [];
+  let totalSKU = 0, activeNow = [], upcoming = [], endingSoon = [], expired = [], allCT = [];
   const twoDaysLater = new Date(now); twoDaysLater.setDate(twoDaysLater.getDate() + 2);
   
   groupedData.forEach(ct => {
@@ -193,6 +193,10 @@ function renderDashboard() {
     if (kt && kt >= now && kt <= twoDaysLater) {
       endingSoon.push(ctInfo);
     }
+    // Expired: already ended
+    if (kt && kt < now) {
+      expired.push(ctInfo);
+    }
   });
   
   document.getElementById('mainContent').innerHTML = `
@@ -208,6 +212,9 @@ function renderDashboard() {
       </div>
       <div class="stat-card" id="cardEnding" onclick="quickFilter('ending')" style="cursor:pointer;transition:all .15s;border-left:3px solid #dc2626" title="Lọc: CTKM sắp kết thúc (≤2 ngày)">
         <div class="num" style="color:#dc2626">${endingSoon.length}</div><div class="label">🔴 Sắp kết thúc</div>
+      </div>
+      <div class="stat-card" id="cardExpired" onclick="quickFilter('expired')" style="cursor:pointer;transition:all .15s;border-left:3px solid #94a3b8" title="Lọc: CTKM đã hết hạn">
+        <div class="num" style="color:#94a3b8">${expired.length}</div><div class="label">⏹ Đã hết hạn</div>
       </div>
       <div class="stat-card" id="cardSKU" onclick="quickFilter('mch3')" style="cursor:pointer;transition:all .15s" title="Xem theo MCH3">
         <div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div>
@@ -318,6 +325,7 @@ function renderDashboard() {
   window._activeNow = activeNow;
   window._upcoming = upcoming;
   window._endingSoon = endingSoon;
+  window._expired = expired;
   window._currentView = 'CTKM';
 }
 
@@ -544,8 +552,9 @@ function renderCTTable(data) {
       const skus = skuByCT[ctKey] || [];
       const expId = 'exp_' + idx;
       const isExp = expandedCT.has(ctKey);
+      const isExpired = r.ngayKT && (function(){let kt=new Date(r.ngayKT);if(isNaN(kt.getTime()))return false;return kt < new Date();})();
       return `
-      <tr class="ct-row" onclick="toggleCTExpand('${ctKey.replace(/'/g,"\\'")}', this)" style="cursor:pointer">
+      <tr class="ct-row" onclick="toggleCTExpand('${ctKey.replace(/'/g,"\'")}', this)" style="cursor:pointer;${isExpired?'opacity:.5;background:#f8f9fa':''}">
         <td style="width:20px;text-align:center">${isExp ? '▼' : '▶'}</td>
         <td>${r.ma||''}</td>
         <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.ten||''}">${(r.ten||'').substring(0,50)}</td>
@@ -621,6 +630,13 @@ function quickFilter(type) {
     });
   } else if (type === 'mch3') {
     switchView('MCH3');
+  } else if (type === 'expired') {
+    switchView('CTKM');
+    applyQuickFilter(r => {
+      let kt = r.ngayKT ? new Date(r.ngayKT) : null;
+      if (kt && isNaN(kt.getTime())) kt = null;
+      return kt && kt < new Date();
+    });
   } else if (type === 'ending') {
     switchView('CTKM');
     const twoDaysLater2 = new Date(); twoDaysLater2.setDate(twoDaysLater2.getDate() + 2);
