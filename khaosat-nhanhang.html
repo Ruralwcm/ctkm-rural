@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Khảo Sát Nhận Hàng · 05-11.10.2026</title>
+<title>Khảo Sát Nhận Hàng</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333}
@@ -76,7 +76,7 @@ tr:hover{background:#f8fdf8}
 </head>
 <body>
 <div class="header">
-  <div><h1>🥩🥬 Khảo Sát Nhận Hàng</h1><p>Thịt MDL & Rau-Trái cây · 05.10 → 11.10.2026</p></div>
+  <div><h1>🥩🥬 Khảo Sát Nhận Hàng</h1><p>Thịt MDL & Rau-Trái cây · Chỉ khảo sát Hôm qua & Hôm nay</p></div>
 </div>
 
 <div class="tabs">
@@ -192,8 +192,22 @@ async function loadFromGAS(){
 }
 
 // ===== COMMON =====
-const DAYS = ['05/10/2026','06/10/2026','07/10/2026','08/10/2026','09/10/2026','10/10/2026','11/10/2026'];
-const DAY_LABELS = ['T2 05/10','T3 06/10','T4 07/10','T5 08/10','T6 09/10','T7 10/10','CN 11/10'];
+// Dynamic: chi hien thi Hom qua (D-1) & Hom nay (tranh khao sat nham ngay)
+var WEEKDAYS=['CN','T2','T3','T4','T5','T6','T7'];
+function getAvailDays(){
+  var n=new Date();
+  var pad=function(x){return String(x).padStart(2,'0')};
+  var fmt=function(d){return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()};
+  var today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  var yest=new Date(today);yest.setDate(today.getDate()-1);
+  return [
+    {value:fmt(yest),label:WEEKDAYS[yest.getDay()]+' Hom qua '+fmt(yest)},
+    {value:fmt(today),label:WEEKDAYS[today.getDay()]+' Hom nay '+fmt(today)}
+  ];
+}
+var AVAIL_DAYS=getAvailDays();
+var DAYS=AVAIL_DAYS.map(function(d){return d.value});
+var DAY_LABELS=AVAIL_DAYS.map(function(d){return d.label});
 function genTimes(){let s=[];for(let h=6;h<=18;h++)for(let m of[0,30]){if(h===18&&m===30)continue;s.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'))}return s}
 const TIMES = genTimes();
 
@@ -340,24 +354,27 @@ function renderResultTable(){
   
   var chartH=180, barW=5, gap=1, colW=barW*2+gap+2;
   var svgW=allSlots.length*colW+20;
-  var bars='';
+  var bars='', hasData=maxCnt>0 && (Object.values(meatCounts).some(function(v){return v>0}) || Object.values(vegCounts).some(function(v){return v>0}));
   allSlots.forEach(function(t,i){
     var mc=meatCounts[t], vc=vegCounts[t];
-    var mh=mc?Math.max(2,Math.round(mc/maxCnt*chartH)):0;
-    var vh=vc?Math.max(2,Math.round(vc/maxCnt*chartH)):0;
-    var x=i*colW+4;
-    bars+='<rect x="'+x+'" y="'+(chartH-mh)+'" width="'+barW+'" height="'+mh+'" fill="#ef5350" rx="1"><title>Thit '+t+' ('+mc+' CH)</title></rect>';
-    bars+='<rect x="'+(x+barW+gap)+'" y="'+(chartH-vh)+'" width="'+barW+'" height="'+vh+'" fill="#66bb6a" rx="1"><title>Rau '+t+' ('+vc+' CH)</title></rect>';
-    if(i%4===0)bars+='<text x="'+(x+4)+'" y="'+(chartH+14)+'" font-size="9" fill="#888" text-anchor="middle">'+(t.slice(0,2).replace(/^0/,'')+'h')+'</text>';
+    if(mc>0||vc>0){
+      var mh=Math.max(2,Math.round(mc/maxCnt*chartH));
+      var vh=Math.max(2,Math.round(vc/maxCnt*chartH));
+      var x=i*colW+4;
+      if(mc>0)bars+='<rect x="'+x+'" y="'+(chartH-mh)+'" width="'+barW+'" height="'+mh+'" fill="#ef5350" rx="1"><title>Thit '+t+' ('+mc+' CH)</title></rect>';
+      if(vc>0)bars+='<rect x="'+(x+barW+gap)+'" y="'+(chartH-vh)+'" width="'+barW+'" height="'+vh+'" fill="#66bb6a" rx="1"><title>Rau '+t+' ('+vc+' CH)</title></rect>';
+    }
+    if(i%4===0)bars+='<text x="'+(i*colW+8)+'" y="'+(chartH+14)+'" font-size="9" fill="#888" text-anchor="middle">'+(t.slice(0,2).replace(/^0/,'')+'h')+'</text>';
   });
   
   var svgHtml='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:8px">';
-  svgHtml+='<div style="font-size:11px;font-weight:600;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:12px"><span>&#x1F4CA; So CH xac nhan theo khung gio (0h-23h)</span><span style="font-size:10px;font-weight:400"><span style="display:inline-block;width:10px;height:10px;background:#ef5350;border-radius:2px;vertical-align:middle;margin-right:2px"></span>Thit <span style="display:inline-block;width:10px;height:10px;background:#66bb6a;border-radius:2px;vertical-align:middle;margin:0 2px 0 8px"></span>Rau</span></div>';
+  svgHtml+='<div style="font-size:11px;font-weight:600;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:12px"><span>&#x1F4CA; So CH duoc giao rau/thit theo khung gio (0h-23h)</span><span style="font-size:10px;font-weight:400"><span style="display:inline-block;width:10px;height:10px;background:#ef5350;border-radius:2px;vertical-align:middle;margin-right:2px"></span>Thit <span style="display:inline-block;width:10px;height:10px;background:#66bb6a;border-radius:2px;vertical-align:middle;margin:0 2px 0 8px"></span>Rau</span></div>';
   svgHtml+='<svg width="'+svgW+'" height="'+(chartH+24)+'" style="display:block;font-family:Segoe UI,Arial,sans-serif">';
   for(var gy=0;gy<=chartH;gy+=chartH/4){
     svgHtml+='<line x1="0" y1="'+(chartH-gy)+'" x2="'+svgW+'" y2="'+(chartH-gy)+'" stroke="#eee" stroke-width="0.5"/>';
     svgHtml+='<text x="2" y="'+(chartH-gy+3)+'" font-size="8" fill="#ccc">'+Math.round(gy/chartH*maxCnt)+'</text>';
   }
+  if(!hasData)svgHtml+='<text x="'+Math.round(svgW/2)+'" y="'+(chartH/2)+'" font-size="14" fill="#aaa" text-anchor="middle">Chua co du lieu</text>';
   svgHtml+=bars;
   svgHtml+='</svg></div>';
   
