@@ -109,49 +109,86 @@ const GAS_URL_NH = 'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3Z
 let SURVEYS = JSON.parse(localStorage.getItem('ks_nhanhang')||'[]');
 let gasLoaded = false;
 
+// ===== ROBUST parseVal — handles all GAS/Sheets date-time formats =====
+function parseVal(v,type){
+  if(v==null||v===undefined||v==='')return '';
+  
+  // Case 1: Google Sheets serial NUMBER
+  if(typeof v==='number'){
+    if(v>59){
+      // Date serial: days since Dec 30, 1899 → offset 25569 to Unix epoch
+      var d=new Date((v-25569)*86400000);
+      if(isNaN(d.getTime()))return String(v);
+      var dd=new Date(d.getTime()+7*3600000);
+      return String(dd.getUTCDate()).padStart(2,'0')+'/'+String(dd.getUTCMonth()+1).padStart(2,'0')+'/'+dd.getUTCFullYear();
+    } else {
+      var tm=Math.round(v*24*60);
+      return String(Math.floor(tm/60)).padStart(2,'0')+':'+String(tm%60).padStart(2,'0');
+    }
+  }
+  
+  if(typeof v==='string'){
+    // Case 2a: Google Sheets time "1899-12-30T..." or "1899-12-29T..."
+    if(v.indexOf('1899-12-')>-1){
+      var mt=v.match(/T(\d{2}):(\d{2})/);
+      if(mt){
+        var hh=parseInt(mt[1],10), mm=parseInt(mt[2],10);
+        if(v.indexOf('1899-12-29T')>-1){hh=(hh+7)%24;}
+        else {hh+=7; if(hh>=24)hh-=24;}
+        return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+      }
+    }
+    
+    // Case 2b: ISO date string (NOT 1899)
+    if(v.indexOf('T')>-1){
+      var dt=new Date(v);
+      if(!isNaN(dt.getTime())){
+        if(type==='time'){
+          var h3=dt.getUTCHours()+7, m3=dt.getUTCMinutes();
+          if(h3>=24)h3-=24;
+          return String(h3).padStart(2,'0')+':'+String(m3).padStart(2,'0');
+        }
+        var dd2=new Date(dt.getTime()+7*3600000);
+        return String(dd2.getUTCDate()).padStart(2,'0')+'/'+String(dd2.getUTCMonth()+1).padStart(2,'0')+'/'+dd2.getUTCFullYear();
+      }
+    }
+    return v;
+  }
+  
+  // Case 3: JS Date object
+  var d3=new Date(v);
+  if(isNaN(d3.getTime()))return String(v);
+  if(type==='time'){
+    var h4=d3.getUTCHours()+7, m4=d3.getUTCMinutes();
+    if(h4>=24)h4-=24;
+    return String(h4).padStart(2,'0')+':'+String(m4).padStart(2,'0');
+  }
+  var dd3=new Date(d3.getTime()+7*3600000);
+  return String(dd3.getUTCDate()).padStart(2,'0')+'/'+String(dd3.getUTCMonth()+1).padStart(2,'0')+'/'+dd3.getUTCFullYear();
+}
+
 async function loadFromGAS(){
   try{
-    let resp=await fetch(GAS_URL_NH,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getNhanHang'})});
+    var resp=await fetch(GAS_URL_NH,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getNhanHang'})});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
-    let raw=await resp.json();
+    var raw=await resp.json();
     if(Array.isArray(raw)&&raw.length>0){
-      // Map from GAS: [gdv,tinh,ma,ten,qlkv,mien,ngay,meat,veg,ts]
-      let gasData=raw.map(r=>({gdv:r[0]||'',tinh:r[1]||'',ma:r[2]||'',ten:r[3]||'',qlkv:r[4]||'',mien:r[5]||'',ngay:parseVal(r[6],'date'),meat:parseVal(r[7],'time'),veg:parseVal(r[8],'time'),ts:r[9]||''}));
-      // Merge GAS data with local (prefer GAS, dedupe by ma+ngay)
-      let localMap={}; SURVEYS.forEach(s=>{localMap[s.ma+'|'+s.ngay]=s});
-      gasData.forEach(s=>{localMap[s.ma+'|'+s.ngay]=s});
+      console.log('GAS raw data sample:', JSON.stringify(raw.slice(0,2)));
+      var localMap={}; SURVEYS.forEach(function(s){localMap[s.ma+'|'+s.ngay]=s;});
+      raw.forEach(function(r){
+        var s={
+          gdv:r[0]||'', tinh:r[1]||'', ma:r[2]||'', ten:r[3]||'', qlkv:r[4]||'', mien:r[5]||'',
+          ngay:parseVal(r[6],'date'), meat:parseVal(r[7],'time'), veg:parseVal(r[8],'time'), ts:r[9]||''
+        };
+        console.log('Parsed:', s.ma, s.ngay, s.meat, s.veg, '(raw:', r[6], r[7], r[8]+')');
+        localMap[s.ma+'|'+s.ngay]=s;
+      });
       SURVEYS=Object.values(localMap);
       localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
       gasLoaded=true;
-      console.log('Loaded '+gasData.length+' from GAS, total '+SURVEYS.length);
+      console.log('GAS loaded: '+raw.length+' rows, total '+SURVEYS.length);
     }
-  }catch(e){console.warn('GAS load failed, using localStorage:',e.message)}
-}
-function parseVal(v,type){
-  // type: 'date' | 'time' | 'text'
-  if(!v)return'';
-  if(typeof v==='string'){
-    // Already a string — check if it looks like an ISO datetime from Sheets
-    if(v.includes('T')||v.includes('1899')){
-      let d=new Date(v); if(!isNaN(d.getTime())){
-        if(type==='time') return String(d.getUTCHours()+7).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
-        return String(d.getUTCDate()).padStart(2,'0')+'/'+String(d.getUTCMonth()+1).padStart(2,'0')+'/'+d.getUTCFullYear();
-      }
-    }
-    // Already a display string like '06:30' or '05/10/2026'
-    return v;
-  }
-  // Date object from Sheets
-  let d=new Date(v); if(isNaN(d.getTime()))return String(v);
-  if(type==='time'){
-    // Google Sheets time → add 7h for Vietnam TZ
-    let h=d.getUTCHours()+7, m=d.getUTCMinutes();
-    if(h>=24)h-=24;
-    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
-  }
-  // Date → DD/MM/YYYY (UTC+7)
-  let dd=new Date(d.getTime()+7*3600000);
-  return String(dd.getUTCDate()).padStart(2,'0')+'/'+String(dd.getUTCMonth()+1).padStart(2,'0')+'/'+dd.getUTCFullYear();
+  }catch(e){console.warn('GAS load failed:',e.message);}
 }
 
 // ===== COMMON =====
@@ -344,7 +381,7 @@ function exportCSV(){
 
 // ===== INIT =====
 function render(i){[renderSurvey,renderDashboard,renderList][i]()}
-async function initApp(){await loadFromGAS();render(0)}
+async function initApp(){await loadFromGAS();render(0);}
 initApp();
 </script>
 </body>
