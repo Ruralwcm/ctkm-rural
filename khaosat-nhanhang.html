@@ -105,7 +105,33 @@ let STORES = [
   {ma:'7101',ten:'WM+ BNI 8 Tran Hung Dao',gdv:'Ho Nam',tinh:'T. Bac Ninh',qlkv:'Le Thi C',mien:'Mien Bac'},
   {ma:'8200',ten:'WM+ HCM 22 Nguyen Hue',gdv:'Nguyen Thi Thu',tinh:'TP. HCM',qlkv:'Pham Van D',mien:'Mien Nam'},
 ];
+const GAS_URL_NH = 'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
 let SURVEYS = JSON.parse(localStorage.getItem('ks_nhanhang')||'[]');
+let gasLoaded = false;
+
+async function loadFromGAS(){
+  try{
+    let resp=await fetch(GAS_URL_NH,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getNhanHang'})});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    let raw=await resp.json();
+    if(Array.isArray(raw)&&raw.length>0){
+      // Map from GAS: [gdv,tinh,ma,ten,qlkv,mien,ngay,meat,veg,ts]
+      let gasData=raw.map(r=>({gdv:r[0]||'',tinh:r[1]||'',ma:r[2]||'',ten:r[3]||'',qlkv:r[4]||'',mien:r[5]||'',ngay:formatDate(r[6]),meat:r[7]||'',veg:r[8]||'',ts:r[9]||''}));
+      // Merge GAS data with local (prefer GAS, dedupe by ma+ngay)
+      let localMap={}; SURVEYS.forEach(s=>{localMap[s.ma+'|'+s.ngay]=s});
+      gasData.forEach(s=>{localMap[s.ma+'|'+s.ngay]=s});
+      SURVEYS=Object.values(localMap);
+      localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
+      gasLoaded=true;
+      console.log('Loaded '+gasData.length+' from GAS, total '+SURVEYS.length);
+    }
+  }catch(e){console.warn('GAS load failed, using localStorage:',e.message)}
+}
+function formatDate(v){
+  if(!v)return '';
+  let d=new Date(v); if(isNaN(d.getTime()))return String(v);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
 
 // ===== COMMON =====
 const DAYS = ['05/10/2026','06/10/2026','07/10/2026','08/10/2026','09/10/2026','10/10/2026','11/10/2026'];
@@ -297,7 +323,8 @@ function exportCSV(){
 
 // ===== INIT =====
 function render(i){[renderSurvey,renderDashboard,renderList][i]()}
-render(0);
+async function initApp(){await loadFromGAS();render(0)}
+initApp();
 </script>
 </body>
 </html>
