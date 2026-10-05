@@ -107,7 +107,7 @@ let SURVEYS = JSON.parse(localStorage.getItem('ks_nhanhang')||'[]');
 // ===== TIME SLOTS =====
 function genTimes(){
   let s=[];
-  for(let h=6;h<18;h++)for(let m of[0,30]){
+  for(let h=6;h<22;h++)for(let m of[0,30]){
     let start=h+'h'+String(m).padStart(2,'0');
     let endH=m===30?h+1:h;
     let endM=m===30?'00':'30';
