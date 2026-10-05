@@ -466,22 +466,18 @@ function renderResultTable(){
   });
 
   var vegTimes=Object.keys(vegSlotsDetail).sort();
-  var vegTable='<div style="margin-top:16px"><h4 style="font-size:13px;color:#2e7d32;margin-bottom:8px">🥬 Bảng 1: Khung giờ giao Rau</h4>';
+  var vegTable='<div style="margin-top:12px"><table><tr><th style="color:#2e7d32">🥬 Khung giờ giao Rau</th><th style="color:#2e7d32">Số CH</th></tr>';
   if(vegTimes.length){
-    vegTable+='<table><tr><th>Khung giờ</th><th>Số CH</th><th>Danh sách CH</th></tr>';
-    vegTimes.forEach(function(t){var st=vegSlotsDetail[t];vegTable+='<tr><td style="font-weight:600;white-space:nowrap">'+t+'</td><td class="green">'+st.length+'</td><td style="font-size:11px">'+st.map(function(s){return '<span class="badge badge-veg" title="'+s.ten+' | '+s.gdv+' | '+s.tinh+'">'+s.ma+'</span>';}).join(' ')+'</td></tr>';});
-    vegTable+='</table>';
-  }else{vegTable+='<p style="color:#888;font-size:12px;padding:8px">Chưa có dữ liệu</p>';}
-  vegTable+='</div>';
+    vegTimes.forEach(function(t){vegTable+='<tr><td style="font-weight:600">'+t+'</td><td class="green">'+vegSlotsDetail[t].length+'</td></tr>';});
+  }else{vegTable+='<tr><td colspan="2" style="color:#888;text-align:center;padding:12px">Chưa có dữ liệu</td></tr>';}
+  vegTable+='</table></div>';
 
   var meatTimes=Object.keys(meatSlotsDetail).sort();
-  var meatTable='<div style="margin-top:16px"><h4 style="font-size:13px;color:#c62828;margin-bottom:8px">🥩 Bảng 2: Khung giờ giao Thịt</h4>';
+  var meatTable='<div style="margin-top:12px"><table><tr><th style="color:#c62828">🥩 Khung giờ giao Thịt</th><th style="color:#c62828">Số CH</th></tr>';
   if(meatTimes.length){
-    meatTable+='<table><tr><th>Khung giờ</th><th>Số CH</th><th>Danh sách CH</th></tr>';
-    meatTimes.forEach(function(t){var st=meatSlotsDetail[t];meatTable+='<tr><td style="font-weight:600;white-space:nowrap">'+t+'</td><td class="red">'+st.length+'</td><td style="font-size:11px">'+st.map(function(s){return '<span class="badge badge-meat" title="'+s.ten+' | '+s.gdv+' | '+s.tinh+'">'+s.ma+'</span>';}).join(' ')+'</td></tr>';});
-    meatTable+='</table>';
-  }else{meatTable+='<p style="color:#888;font-size:12px;padding:8px">Chưa có dữ liệu</p>';}
-  meatTable+='</div>';
+    meatTimes.forEach(function(t){meatTable+='<tr><td style="font-weight:600">'+t+'</td><td class="red">'+meatSlotsDetail[t].length+'</td></tr>';});
+  }else{meatTable+='<tr><td colspan="2" style="color:#888;text-align:center;padding:12px">Chưa có dữ liệu</td></tr>';}
+  meatTable+='</table></div>';
 
   document.getElementById('barChart').innerHTML=vegChart+meatChart+vegTable+meatTable;
   document.getElementById('resultTable').innerHTML=`
