@@ -160,7 +160,8 @@ function renderDashboard() {
   const next7d = new Date(now); next7d.setDate(next7d.getDate() + 7);
   const next30d = new Date(now); next30d.setDate(next30d.getDate() + 30);
   
-  let totalSKU = 0, activeNow = [], upcoming = [], endingSoon = [], expired = [], allCT = [];
+  let totalSKU = 0, activeSKU = 0, upcomingSKU = 0, endingSKU = 0, expiredSKU = 0;
+  let activeNow = [], upcoming = [], endingSoon = [], expired = [], allCT = [];
   const twoDaysLater = new Date(now); twoDaysLater.setDate(twoDaysLater.getDate() + 2);
   
   groupedData.forEach(ct => {
@@ -194,19 +195,19 @@ function renderDashboard() {
   document.getElementById('mainContent').innerHTML = `
     <div class="stats">
       <div class="stat-card" id="cardAll" onclick="quickFilter('all')" style="cursor:pointer;transition:all .15s" title="Lọc: Tất cả CTKM">
-        <div class="num">${allCT.length}</div><div class="label">Tổng CTKM</div>
+        <div class="num">${allCT.length}</div><div class="label">🔢 Tổng SKU</div>
       </div>
       <div class="stat-card" id="cardActive" onclick="quickFilter('active')" style="cursor:pointer;transition:all .15s;border-left:3px solid #28a745" title="Lọc: CTKM đang hiệu lực">
-        <div class="num" style="color:#28a745">${activeNow.length}</div><div class="label">🟢 Đang hiệu lực</div>
+        <div class="num" style="color:#28a745">${activeSKU.toLocaleString()}</div><div class="label">🟢 Đang hiệu lực</div>
       </div>
       <div class="stat-card" id="cardUpcoming" onclick="quickFilter('upcoming')" style="cursor:pointer;transition:all .15s;border-left:3px solid #F9A825" title="Lọc: CTKM sắp diễn ra">
-        <div class="num" style="color:#F9A825">${upcoming.length}</div><div class="label">🟡 Sắp diễn ra</div>
+        <div class="num" style="color:#F9A825">${upcomingSKU.toLocaleString()}</div><div class="label">🟡 Sắp diễn ra</div>
       </div>
       <div class="stat-card" id="cardEnding" onclick="quickFilter('ending')" style="cursor:pointer;transition:all .15s;border-left:3px solid #dc2626" title="Lọc: CTKM sắp kết thúc (≤2 ngày)">
-        <div class="num" style="color:#dc2626">${endingSoon.length}</div><div class="label">🔴 Sắp kết thúc</div>
+        <div class="num" style="color:#dc2626">${endingSKU.toLocaleString()}</div><div class="label">🔴 Sắp kết thúc</div>
       </div>
       <div class="stat-card" id="cardExpired" onclick="quickFilter('expired')" style="cursor:pointer;transition:all .15s;border-left:3px solid #94a3b8" title="Lọc: CTKM đã hết hạn">
-        <div class="num" style="color:#94a3b8">${expired.length}</div><div class="label">⏹ Đã hết hạn</div>
+        <div class="num" style="color:#94a3b8">${expiredSKU.toLocaleString()}</div><div class="label">⏹ Đã hết hạn</div>
       </div>
       <div class="stat-card" id="cardSKU" onclick="quickFilter('mch3')" style="cursor:pointer;transition:all .15s" title="Xem theo MCH3">
         <div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div>
