@@ -264,7 +264,7 @@ function renderDashboard() {
         <option value="quyNay">Quý này</option>
         <option value="custom">📅 Khoảng ngày...</option>
       </select>
-      <span id="customDateRange" style="display:none;display:flex;gap:4px;align-items:center;flex-shrink:0">
+      <span id="customDateRange" style="display:none;gap:4px;align-items:center;flex-shrink:0">
         <input type="date" id="dateFrom" onchange="applyDashFilter()" style="padding:3px 3px;border:1px solid #ddd;border-radius:4px;font-size:9px;width:85px">
         <span style="font-size:10px;color:#888">→</span>
         <input type="date" id="dateTo" onchange="applyDashFilter()" style="padding:3px 3px;border:1px solid #ddd;border-radius:4px;font-size:9px;width:85px">
@@ -379,7 +379,7 @@ function removeChip(groupId, label) {
 function onTimeFilterChange() {
   const val = document.getElementById('dashFilterTime2').value;
   const custom = document.getElementById('customDateRange');
-  custom.style.display = val === 'custom' ? 'inline-flex' : 'none';
+  custom.style.display = val === 'custom' ? 'flex' : 'none';
   if (val !== 'custom') { document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value=''; }
   applyDashFilter();
 }
