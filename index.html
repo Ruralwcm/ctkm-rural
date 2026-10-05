@@ -185,7 +185,7 @@ function renderDashboard() {
       
       <!-- Loại CTKM -->
       <div class="ms-wrap" id="msLoai">
-        <button class="ms-btn" onclick="toggleMS('msLoai')">Loại CTKM ▾</button>
+        <button class="ms-btn" data-title="Loại CTKM" onclick="toggleMS('msLoai')">Loại CTKM ▾</button>
         <div class="ms-drop" id="msLoaiDrop">
           ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<label class="ms-item"><input type="checkbox" value="${v}" onchange="updateMSChips('msLoai')">${v}</label>`).join('')}
         </div>
@@ -193,7 +193,7 @@ function renderDashboard() {
       
       <!-- Ngành MCH3 -->
       <div class="ms-wrap" id="msNhom">
-        <button class="ms-btn" onclick="toggleMS('msNhom')">Ngành MCH3 ▾</button>
+        <button class="ms-btn" data-title="Ngành MCH3" onclick="toggleMS('msNhom')">Ngành MCH3 ▾</button>
         <div class="ms-drop" id="msNhomDrop">
           ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<label class="ms-item"><input type="checkbox" value="${v}" onchange="updateMSChips('msNhom')">${v}</label>`).join('')}
         </div>
@@ -201,7 +201,7 @@ function renderDashboard() {
       
       <!-- Miền AD -->
       <div class="ms-wrap" id="msMien">
-        <button class="ms-btn" onclick="toggleMS('msMien')">Miền AD ▾</button>
+        <button class="ms-btn" data-title="Miền AD" onclick="toggleMS('msMien')">Miền AD ▾</button>
         <div class="ms-drop" id="msMienDrop">
           <label class="ms-item"><input type="checkbox" value="bac" onchange="updateMSChips('msMien')">BẮC</label>
           <label class="ms-item"><input type="checkbox" value="trung" onchange="updateMSChips('msMien')">TRUNG</label>
@@ -251,71 +251,68 @@ function renderDashboard() {
   window._upcoming = upcoming;
 }
 
-// Multi-select dropdown
+// ============ MULTI-SELECT DROPDOWN ============
+let activeMS = null;
+
 function toggleMS(id) {
   const drop = document.getElementById(id + 'Drop');
-  drop.classList.toggle('open');
-  // Close other dropdowns
-  document.querySelectorAll('.ms-drop.open').forEach(d => {
-    if (d !== drop) d.classList.remove('open');
-  });
+  if (activeMS === id) { drop.classList.remove('open'); activeMS = null; return; }
+  if (activeMS) document.getElementById(activeMS + 'Drop').classList.remove('open');
+  drop.classList.add('open');
+  activeMS = id;
 }
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
+
+document.addEventListener('click', e => {
   if (!e.target.closest('.ms-wrap')) {
-    document.querySelectorAll('.ms-drop.open').forEach(d => d.classList.remove('open'));
+    if (activeMS) { document.getElementById(activeMS + 'Drop').classList.remove('open'); activeMS = null; }
   }
 });
 
 function updateMSChips(id) {
   const wrap = document.getElementById(id);
-  const checks = wrap.querySelectorAll('input[type=checkbox]:checked');
-  const values = [...checks].map(c => c.value);
-  const labels = [...checks].map(c => c.parentElement.textContent.trim());
-  
-  // Update button text
+  const checks = [...wrap.querySelectorAll('input[type=checkbox]:checked')];
+  const labels = checks.map(c => c.parentElement.textContent.trim());
   const btn = wrap.querySelector('.ms-btn');
-  if (labels.length === 0) {
-    btn.textContent = btn.textContent.split('(')[0].trim() + ' ▾';
-  } else if (labels.length <= 2) {
-    btn.textContent = labels.join(', ') + ' ▾';
-  } else {
-    btn.textContent = labels.length + ' đã chọn ▾';
-  }
   
+  if (labels.length === 0) {
+    btn.innerHTML = btn.getAttribute('data-title') + ' ▾';
+    btn.style.color = '';
+  } else if (labels.length <= 2) {
+    btn.innerHTML = labels.join(', ') + ' ▾';
+    btn.style.color = '#1F4E79';
+  } else {
+    btn.innerHTML = `<b>${labels.length}</b> đã chọn ▾`;
+    btn.style.color = '#1F4E79';
+  }
   refreshChipsBar();
   applyDashFilter();
 }
 
 function getMSValues(id) {
   const wrap = document.getElementById(id);
+  if (!wrap) return [];
   return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
 }
 function getMSLabels(id) {
   const wrap = document.getElementById(id);
+  if (!wrap) return [];
   return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(c => c.parentElement.textContent.trim());
 }
 
+let chipBarHTML = '';
 function refreshChipsBar() {
-  const loaiLbls = getMSLabels('msLoai');
-  const nhomLbls = getMSLabels('msNhom');
-  const mienLbls = getMSLabels('msMien');
-  const all = [
-    ...loaiLbls.map(l => ({txt:l, group:'msLoai', color:'#dbeafe'})),
-    ...nhomLbls.map(l => ({txt:l, group:'msNhom', color:'#dcfce7'})),
-    ...mienLbls.map(l => ({txt:l, group:'msMien', color:'#fef3c7'}))
-  ];
+  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien');
+  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'}))];
   const bar = document.getElementById('msChipsBar');
-  if (all.length === 0) { bar.innerHTML = ''; return; }
-  bar.innerHTML = all.map(c => 
-    `<span class="ms-chip" style="background:${c.color}">${c.txt}<span class="x" onclick="removeChip('${c.group}','${c.txt}')">×</span></span>`
-  ).join('');
+  if (!bar) return;
+  chipBarHTML = all.map(x => `<span class="ms-chip" style="background:${x.c}">${x.t}<span class="x" onclick="event.stopPropagation();removeChip('${x.g}','${x.t}')">×</span></span>`).join('');
+  bar.innerHTML = chipBarHTML;
 }
 
 function removeChip(groupId, label) {
   const wrap = document.getElementById(groupId);
-  const checks = wrap.querySelectorAll('input[type=checkbox]');
-  checks.forEach(c => {
+  if (!wrap) return;
+  wrap.querySelectorAll('input[type=checkbox]').forEach(c => {
     if (c.parentElement.textContent.trim() === label) c.checked = false;
   });
   updateMSChips(groupId);
