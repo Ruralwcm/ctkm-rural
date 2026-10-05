@@ -103,6 +103,10 @@
       .btn { padding: 8px 14px; font-size: 12px; }
       .table-wrap { -webkit-overflow-scrolling: touch; }
     }
+    @media (max-width: 768px) {
+      .ms-btn { font-size: 10px !important; min-width: 70px !important; max-width: 110px !important; padding: 4px 6px !important; }
+      .view-btn { font-size: 10px !important; padding: 4px 8px !important; }
+    }
     @media (max-width: 480px) {
       .tabs { overflow-x: auto; white-space: nowrap; }
       .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -110,6 +114,9 @@
       .filter-bar { flex-direction: column; gap: 4px; }
       .filter-bar input, .filter-bar select { width: 100%; min-width: auto; }
       .btn { width: 100%; }
+      .ms-btn { font-size: 10px !important; min-width: 60px !important; max-width: 90px !important; padding: 4px 5px !important; }
+      .view-btn { font-size: 10px !important; padding: 4px 6px !important; }
+      .ms-drop { min-width: 150px !important; max-width: 200px !important; font-size: 10px; }
     }
   </style>
 </head>
@@ -220,7 +227,7 @@ function renderDashboard() {
       <button id="btnViewMCH3" class="view-btn" onclick="switchView('MCH3')" style="flex-shrink:0">🏷 MCH3</button>
       <span style="color:#cbd5e1;flex-shrink:0">|</span>
       <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap;flex-shrink:0">🔍</span>
-      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:nowrap">
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       
       <!-- Loại CTKM -->
       <div class="ms-wrap" id="msLoai">
@@ -1003,7 +1010,7 @@ function getFilteredCT(data) {
 function renderDataTable() {
   var skuData = window._skuData || [];
   document.getElementById('mainContent').innerHTML = `
-    <div class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <div class="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:150px;max-width:250px;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">
       
       <div class="ms-wrap" id="msLoaiD">
