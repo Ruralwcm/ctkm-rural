@@ -364,6 +364,23 @@ function renderResultTable(){
   let rows=Object.values(grp).sort((a,b)=>a.ten.localeCompare(b.ten,'vi'));
   
   // ===== TWO SEPARATE SVG COLUMN CHARTS: Rau + Thit =====
+  var allSlots=[]; for(var hh=0;hh<24;hh++)for(var mm of[0,30])allSlots.push(String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'));
+  
+  var meatCounts={}, vegCounts={}; allSlots.forEach(function(k){meatCounts[k]=0;vegCounts[k]=0;});
+  data.forEach(function(s){
+    if(s.meat && s.meat!=='Không có lịch giao' && meatCounts.hasOwnProperty(s.meat)) meatCounts[s.meat]++;
+    if(s.veg && s.veg!=='Không có lịch giao' && vegCounts.hasOwnProperty(s.veg)) vegCounts[s.veg]++;
+    // Also try with normalized key (handle "6:30" vs "06:30")
+    if(s.meat && s.meat!=='Không có lịch giao'){
+      var nk=String(parseInt(s.meat.split(':')[0])).padStart(2,'0')+':'+String(parseInt(s.meat.split(':')[1]||'0')).padStart(2,'0');
+      if(nk!==s.meat && meatCounts.hasOwnProperty(nk)) meatCounts[nk]++;
+    }
+    if(s.veg && s.veg!=='Không có lịch giao'){
+      var nk2=String(parseInt(s.veg.split(':')[0])).padStart(2,'0')+':'+String(parseInt(s.veg.split(':')[1]||'0')).padStart(2,'0');
+      if(nk2!==s.veg && vegCounts.hasOwnProperty(nk2)) vegCounts[nk2]++;
+    }
+  });
+
   var chartH=160, barW=10, colGap=2, colW=barW+colGap;
   var svgW=allSlots.length*colW+30;
 
