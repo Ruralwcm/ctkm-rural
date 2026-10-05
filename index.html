@@ -563,7 +563,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
     skuByCT[ctName].push(row);
   });
 
-  function mienAD(sku) {
+  function mienAD2(sku) {
     var p = [];
     if (sku[17]) p.push('B');
     if (sku[18]) p.push('T');
@@ -573,42 +573,30 @@ function renderUnifiedCTTable(active, upcoming, all) {
     return p.length ? p.join('/') : '';
   }
   
-  function renderCTGroup(items, title, color) {
+  function renderCTGroup2(items, title, color) {
     if (!items.length) return '';
-    var html = '<tr style="background:'+color+'"><td colspan="9" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
+    var html = '<tr style="background:'+color+'"><td colspan="11" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
     items.forEach(function(r) {
       var ctKey = r.ten||'';
       _ctKeys.push(ctKey);
       var ctIdx = _ctKeys.length - 1;
       var skus = skuByCT[ctKey] || [];
-      var grpId = 'ct_' + ctKey.replace(/[^a-zA-Z0-9]/g,'_');
       var isExp = expandedCT.has(ctKey);
       var isExpired = r.ngayKT && (function(){var kt=new Date(r.ngayKT);if(isNaN(kt.getTime()))return false;return kt<new Date();})();
       
-      // Build Miền string
-      var mienCT = [];
-      if (r.bac) mienCT.push('B');
-      if (r.trung) mienCT.push('T');
-      if (r.nam) mienCT.push('N');
-      if (r.tay) mienCT.push('Ty');
-      if (mienCT.length === 4) mienCT = ['ALL'];
+      // Compact summary line: Loại - Tên CTKM - SKU count
+      var summary = (r.loai||'') + ' — ' + (r.ten||'').substring(0,60) + ' <b>(' + skus.length + ' SKU)</b>';
       
-      html += '<tr onclick="toggleCTExpand2(' + ctIdx + ')" style="cursor:pointer;'
-        + (isExpired?'opacity:.5;background:#f8f9fa':'')+'font-weight:600">'
-        + '<td style="text-align:center">'+(isExp?'▼':'▶')+'</td>'
-        + '<td>'+(r.ma||'')+'</td>'
-        + '<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r.ten||'')+'">'+(r.ten||'').substring(0,50)+'</td>'
-        + '<td>'+(r.loai||'')+'</td>'
-        + '<td>'+(r.nhom||'')+'</td>'
-        + '<td style="text-align:right;font-weight:700">'+(r.sku||0)+'</td>'
-        + '<td>'+fmtDate(r.ngayBD)+'</td>'
-        + '<td>'+fmtDate(r.ngayKT)+'</td>'
-        + '<td>'+mienCT.join('/')+'</td>'
+      html += '<tr onclick="toggleCTExpand2(' + ctIdx + ')" style="cursor:pointer;' + (isExpired?'opacity:.5;background:#f8f9fa':'')+'font-weight:600">'
+        + '<td style="text-align:center;width:26px">'+(isExp?'▼':'▶')+'</td>'
+        + '<td colspan="10" style="font-size:12px">' + summary + '</td>'
         + '</tr>';
       
       if (isExp && skus.length > 0) {
-        html += '<tr style="background:#f8faff"><td></td><td colspan="8" style="padding:4px 8px">'
-          + '<table style="width:100%;font-size:11px;border-collapse:collapse">'
+        html += '<tr style="background:#f8faff"><td></td><td colspan="10" style="padding:4px 8px">'
+          + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
+          + '<col style="width:80px"><col style="width:auto"><col style="width:40px"><col style="width:85px"><col style="width:85px">'
+          + '<col style="width:80px"><col style="width:100px"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
           + '<tr style="background:#eef2ff"><th style="padding:3px 6px;text-align:left">Mã SP</th><th style="padding:3px 6px;text-align:left">Tên SP</th><th style="padding:3px 6px">ĐVT</th><th style="padding:3px 6px;text-align:right">Giá thường</th><th style="padding:3px 6px;text-align:right">Giá KM</th><th style="padding:3px 6px">Loại CTKM</th><th style="padding:3px 6px">Diễn giải</th><th style="padding:3px 6px">Miền AD</th><th style="padding:3px 6px">Ngày BĐ</th><th style="padding:3px 6px">Ngày KT</th></tr>'
           + skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
@@ -618,7 +606,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
             + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
             + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
-            + '<td style="padding:2px 4px">'+mienAD(sku)+'</td>'
+            + '<td style="padding:2px 4px">'+mienAD2(sku)+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
             + '</tr>';}).join('')
@@ -628,233 +616,18 @@ function renderUnifiedCTTable(active, upcoming, all) {
     return html;
   }
   
-  var html = '<table style="table-layout:fixed;width:100%;min-width:800px"><colgroup>'
-    + '<col style="width:26px"><col style="width:50px"><col style="width:auto"><col style="width:90px">'
-    + '<col style="width:120px"><col style="width:55px"><col style="width:80px"><col style="width:80px">'
-    + '<col style="width:55px"></colgroup>'
-    + '<tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>';
+  var minW = window.innerWidth < 600 ? '400px' : '600px';
+  var html = '<table style="table-layout:fixed;width:100%;min-width:'+minW+'"><colgroup>'
+    + '<col style="width:26px"><col style="width:auto"></colgroup>'
+    + '<tr><th></th><th>CTKM</th></tr>';
   
-  html += renderCTGroup(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
-  html += renderCTGroup(upcoming, '🟡 CTKM SẮP DIỄN RA', '#fefce8');
-  html += renderCTGroup(all, '📋 TẤT CẢ CTKM', '#f8f9fa');
+  html += renderCTGroup2(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
+  html += renderCTGroup2(upcoming, '🟡 CTKM SẮP DIỄN RA', '#fefce8');
+  html += renderCTGroup2(all, '📋 TẤT CẢ CTKM', '#f8f9fa');
   html += '</table>';
   return html;
 }
 
-function toggleExpired2() {
-  var cb = document.getElementById('showExpired2');
-  if (cb) {
-    var cb2 = document.getElementById('showExpired');
-    if (cb2) cb2.checked = cb.checked;
-  }
-  applyDashFilter();
-}
-let expandedCT = new Set(); // track expanded rows
-
-function renderCTTable(data) {
-  if (!data.length) return '<p style="padding:12px;color:#888">Không có CTKM nào</p>';
-  allCT_cts = data;
-  const skuData = window._skuData || [];
-  
-  // Build SKU lookup by CT name
-  const skuByCT = {};
-  skuData.forEach(row => {
-    const ctName = (row[1]||'').toString();
-    if (!ctName) return;
-    if (!skuByCT[ctName]) skuByCT[ctName] = [];
-    skuByCT[ctName].push(row);
-  });
-  
-  return `<table style="width:100%">
-    <tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>
-    ${data.map((r, idx) => {
-      const ctKey = r.ten||'';
-      const skus = skuByCT[ctKey] || [];
-      const expId = 'exp_' + idx;
-      const isExp = expandedCT.has(ctKey);
-      const isExpired = r.ngayKT && (function(){let kt=new Date(r.ngayKT);if(isNaN(kt.getTime()))return false;return kt < new Date();})();
-      return `
-      <tr class="ct-row" onclick="toggleCTExpand('${ctKey.replace(/'/g,"\'")}', this)" style="cursor:pointer;${isExpired?'opacity:.5;background:#f8f9fa':''}">
-        <td style="width:20px;text-align:center">${isExp ? '▼' : '▶'}</td>
-        <td>${r.ma||''}</td>
-        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.ten||''}">${(r.ten||'').substring(0,50)}</td>
-        <td>${r.loai||''}</td><td>${r.nhom||''}</td><td><b>${r.sku||0}</b></td>
-        <td>${fmtDate(r.ngayBD)}</td><td>${fmtDate(r.ngayKT)}</td>
-        <td>${r.bac?'✓':''}</td><td>${r.trung?'✓':''}</td><td>${r.nam?'✓':''}</td><td>${r.tay?'✓':''}</td>
-      </tr>
-      <tr class="ct-detail" id="${expId}" style="display:${isExp?'table-row':'none'};background:#f8faff">
-        <td colspan="12" style="padding:8px 12px">
-          ${skus.length > 0 ? `
-          <table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:auto">
-            <tr style="background:#eef2ff"><th style="padding:3px 6px;text-align:left">Mã hàng</th><th style="padding:3px 6px;text-align:left">Tên hàng</th><th style="padding:3px 6px;text-align:left">ĐVT</th><th style="padding:3px 6px;text-align:right">Giá thường</th><th style="padding:3px 6px;text-align:right">Giá KM</th><th style="padding:3px 6px;text-align:left">Diễn giải</th></tr>
-            ${skus.map(sku => `
-              <tr>
-                <td style="padding:2px 6px">${sku[4]||''}</td>
-                <td style="padding:2px 6px">${(sku[5]||'').substring(0,60)}</td>
-                <td style="padding:2px 6px">${sku[6]||''}</td>
-                <td style="padding:2px 6px;text-align:right">${Number(sku[8]||0).toLocaleString()}</td>
-                <td style="padding:2px 6px;text-align:right">${Number(sku[9]||0).toLocaleString()}</td>
-                <td style="padding:2px 6px;font-size:10px">${(sku[7]||'').substring(0,80)}</td>
-              </tr>
-            `).join('')}
-          </table>` : '<span style="color:#888;font-size:11px">Không có dữ liệu mã hàng chi tiết</span>'}
-        </td>
-      </tr>`;
-    }).join('')}
-  </table>`;
-}
-
-function toggleCTExpand(ctKey, rowEl) {
-  if (expandedCT.has(ctKey)) {
-    expandedCT.delete(ctKey);
-  } else {
-    expandedCT.add(ctKey);
-  }
-  // Toggle inline detail div
-  var detailEl = document.getElementById('exp_' + allCT_cts.indexOf(allCT_cts.find(function(r){return (r.ten||'')===ctKey;})));
-  // Re-render to update icons
-  applyDashFilter();
-}
-
-// ============ QUICK FILTER CARDS ============
-function quickFilter(type) {
-  // Reset card highlighting
-  document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-card'));
-  if (type !== 'none') {
-    var cardId = type==='all'?'All':type==='active'?'Active':type==='upcoming'?'Upcoming':type==='ending'?'Ending':type==='expired'?'Expired':'SKU';
-    var card = document.getElementById('card' + cardId);
-    if (card) card.classList.add('active-card');
-  }
-  
-  const now = new Date();
-  if (type === 'all') {
-    // Reset all filters + show all
-    ['msLoai','msNhom','msMien'].forEach(id => {
-      document.querySelectorAll('#'+id+' .ms-item.selected').forEach(s => s.classList.remove('selected'));
-      updateMSBtn(id);
-    });
-    document.getElementById('dashFilterTime2').value = '';
-    refreshChipsBar();
-    switchView('CTKM');
-  } else if (type === 'active') {
-    switchView('CTKM');
-    applyQuickFilter(r => {
-      let bd = r.ngayBD ? new Date(r.ngayBD) : null;
-      let kt = r.ngayKT ? new Date(r.ngayKT) : null;
-      if (bd && isNaN(bd.getTime())) bd = null;
-      if (kt && isNaN(kt.getTime())) kt = null;
-      if (bd && kt && bd <= now && kt >= now) return true;
-      const ktStr = (r.ngayKT||'').toString().toLowerCase();
-      return ktStr.includes('đến khi có tb') || ktStr.includes('31.12.2026') || ktStr.includes('31/12/2026');
-    });
-  } else if (type === 'upcoming') {
-    switchView('CTKM');
-    const next30d = new Date(now); next30d.setDate(next30d.getDate() + 30);
-    applyQuickFilter(r => {
-      let bd = r.ngayBD ? new Date(r.ngayBD) : null;
-      if (bd && isNaN(bd.getTime())) bd = null;
-      return bd && bd > now && bd <= next30d;
-    });
-  } else if (type === 'mch3') {
-    switchView('MCH3');
-  } else if (type === 'expired') {
-    switchView('CTKM');
-    applyQuickFilter(r => {
-      let kt = r.ngayKT ? new Date(r.ngayKT) : null;
-      if (kt && isNaN(kt.getTime())) kt = null;
-      return kt && kt < new Date();
-    });
-  } else if (type === 'ending') {
-    switchView('CTKM');
-    const twoDaysLater2 = new Date(); twoDaysLater2.setDate(twoDaysLater2.getDate() + 2);
-    applyQuickFilter(r => {
-      let kt = r.ngayKT ? new Date(r.ngayKT) : null;
-      if (kt && isNaN(kt.getTime())) kt = null;
-      return kt && kt >= new Date() && kt <= twoDaysLater2;
-    });
-  }
-}
-
-function toggleExpired() {
-  applyDashFilter();
-}
-
-// Override the all CT display to respect showExpired checkbox
-let _allCTRenderCache = null;
-function getVisibleAllCT() {
-  var all = window._allCT || [];
-  var cb = document.getElementById('showExpired');
-  if (cb && !cb.checked) {
-    var now = new Date();
-    all = all.filter(function(r) {
-      var kt = r.ngayKT ? new Date(r.ngayKT) : null;
-      return !kt || isNaN(kt.getTime()) || kt >= now;
-    });
-  }
-  return all;
-}
-
-function applyQuickFilter(fn) {
-  // Apply to currently filtered data (respect existing dropdown filters)
-  var allCT = window._allCT || [];
-  // Apply existing dropdown filters first
-  var selLoai = new Set(getMSValues('msLoai'));
-  var selNhom = new Set(getMSValues('msNhom'));
-  var selMien = new Set(getMSValues('msMien'));
-  
-  var baseFiltered = allCT.filter(function(r) {
-    if (selLoai.size > 0 && !selLoai.has(r.loai)) return false;
-    if (selNhom.size > 0 && !selNhom.has(r.nhom)) return false;
-    if (selMien.size > 0) {
-      var ok=false;
-      if (selMien.has('bac') && r.bac) ok=true;
-      if (selMien.has('trung') && r.trung) ok=true;
-      if (selMien.has('nam') && r.nam) ok=true;
-      if (selMien.has('tay') && r.tay) ok=true;
-      if (!ok) return false;
-    }
-    return true;
-  });
-  
-  const active = baseFiltered.filter(fn);
-  const upcoming = (window._upcoming||[]).filter(fn);
-  const all = baseFiltered.filter(fn);
-  
-  var ut = document.getElementById('ctkmUnifiedTable');
-  if (ut) ut.innerHTML = renderUnifiedCTTable(active, upcoming, all);
-  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData||[]);
-  document.getElementById('dashFilterCount').textContent = all.length + ' CT';
-}
-function updateCardCounts() {
-  // Recalculate card counts based on current filter
-  var allCT = window._allCT || [];
-  var now = new Date();
-  var twoDays = new Date(now); twoDays.setDate(twoDays.getDate()+2);
-  
-  var active=0, upcoming=0, ending=0, expired=0;
-  allCT.forEach(function(r) {
-    var bd = r.ngayBD ? new Date(r.ngayBD) : null;
-    var kt = r.ngayKT ? new Date(r.ngayKT) : null;
-    if (bd && isNaN(bd.getTime())) bd = null;
-    if (kt && isNaN(kt.getTime())) kt = null;
-    if (bd && kt) {
-      var bD = dayOnly(bd), kD = dayOnly(kt), tD = dayOnly(now), twoD = dayOnly(twoDays);
-      if (bD <= tD && kD >= tD) { active++; if (kD <= twoD) ending++; }
-      else if (kD < tD) expired++;
-    }
-  });
-  
-  var cards = document.querySelectorAll('.stat-card .num');
-  if (cards.length >= 5) {
-    // cards[0]=total, cards[1]=active, cards[2]=upcoming, cards[3]=ending, cards[4]=expired
-    var total = allCT.length;
-    cards[0].textContent = total;
-    cards[1].textContent = active;
-    cards[2].textContent = upcoming; // This is from the pre-computed filtered set
-    cards[3].textContent = ending;
-    cards[4].textContent = expired;
-  }
-}
 
 function toggleCTExpand2(idx) {
   var ctKey = _ctKeys[idx];
