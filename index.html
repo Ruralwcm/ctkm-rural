@@ -844,6 +844,14 @@ function updateCardCounts() {
   }
 }
 
+function toggleCTExpand2(idx) {
+  var ctKey = _ctKeys[idx];
+  if (!ctKey) return;
+  if (expandedCT.has(ctKey)) expandedCT.delete(ctKey);
+  else expandedCT.add(ctKey);
+  applyDashFilter();
+}
+
 function switchView(view) {
   window._currentView = view;
   document.getElementById('btnViewCTKM').classList.toggle('active', view==='CTKM');
