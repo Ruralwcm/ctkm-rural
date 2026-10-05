@@ -321,7 +321,10 @@ function renderDashboard() {
   window._upcoming = upcoming;
   window._endingSoon = endingSoon;
   window._expired = expired;
+  window._allCT = allCT;
   window._currentView = 'CTKM';
+  // Update card counts based on current filtered view
+  updateCardCounts();
 }
 
 // ============ MULTI-SELECT DROPDOWN (click-to-select) ============
@@ -594,9 +597,13 @@ function toggleCTExpand(ctKey, rowEl) {
 
 // ============ QUICK FILTER CARDS ============
 function quickFilter(type) {
-  // Highlight card
+  // Reset card highlighting
   document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-card'));
-  if (type !== 'none') document.getElementById('card' + (type==='all'?'All':type==='active'?'Active':type==='upcoming'?'Upcoming':'SKU')).classList.add('active-card');
+  if (type !== 'none') {
+    var cardId = type==='all'?'All':type==='active'?'Active':type==='upcoming'?'Upcoming':type==='ending'?'Ending':type==='expired'?'Expired':'SKU';
+    var card = document.getElementById('card' + cardId);
+    if (card) card.classList.add('active-card');
+  }
   
   const now = new Date();
   if (type === 'all') {
@@ -667,9 +674,30 @@ function getVisibleAllCT() {
 }
 
 function applyQuickFilter(fn) {
-  const active = window._activeNow.filter(fn);
+  // Apply to currently filtered data (respect existing dropdown filters)
+  var allCT = window._allCT || [];
+  // Apply existing dropdown filters first
+  var selLoai = new Set(getMSValues('msLoai'));
+  var selNhom = new Set(getMSValues('msNhom'));
+  var selMien = new Set(getMSValues('msMien'));
+  
+  var baseFiltered = allCT.filter(function(r) {
+    if (selLoai.size > 0 && !selLoai.has(r.loai)) return false;
+    if (selNhom.size > 0 && !selNhom.has(r.nhom)) return false;
+    if (selMien.size > 0) {
+      var ok=false;
+      if (selMien.has('bac') && r.bac) ok=true;
+      if (selMien.has('trung') && r.trung) ok=true;
+      if (selMien.has('nam') && r.nam) ok=true;
+      if (selMien.has('tay') && r.tay) ok=true;
+      if (!ok) return false;
+    }
+    return true;
+  });
+  
+  const active = baseFiltered.filter(fn);
   const upcoming = window._upcoming.filter(fn);
-  const all = window._allCT.filter(fn);
+  const all = baseFiltered.filter(fn);
   document.getElementById('activeCount').textContent = active.length;
   document.getElementById('upcomingCount').textContent = upcoming.length;
   document.getElementById('allCount').textContent = all.length;
@@ -685,6 +713,37 @@ function applyQuickFilter(fn) {
   document.getElementById('allCTTable').innerHTML = renderCTTable(visibleAll);
   document.getElementById('allCount').textContent = window._allCT ? window._allCT.filter(fn).length : 0;
 }
+function updateCardCounts() {
+  // Recalculate card counts based on current filter
+  var allCT = window._allCT || [];
+  var now = new Date();
+  var twoDays = new Date(now); twoDays.setDate(twoDays.getDate()+2);
+  
+  var active=0, upcoming=0, ending=0, expired=0;
+  allCT.forEach(function(r) {
+    var bd = r.ngayBD ? new Date(r.ngayBD) : null;
+    var kt = r.ngayKT ? new Date(r.ngayKT) : null;
+    if (bd && isNaN(bd.getTime())) bd = null;
+    if (kt && isNaN(kt.getTime())) kt = null;
+    if (bd && kt) {
+      var bD = dayOnly(bd), kD = dayOnly(kt), tD = dayOnly(now), twoD = dayOnly(twoDays);
+      if (bD <= tD && kD >= tD) { active++; if (kD <= twoD) ending++; }
+      else if (kD < tD) expired++;
+    }
+  });
+  
+  var cards = document.querySelectorAll('.stat-card .num');
+  if (cards.length >= 5) {
+    // cards[0]=total, cards[1]=active, cards[2]=upcoming, cards[3]=ending, cards[4]=expired
+    var total = allCT.length;
+    cards[0].textContent = total;
+    cards[1].textContent = active;
+    cards[2].textContent = upcoming; // This is from the pre-computed filtered set
+    cards[3].textContent = ending;
+    cards[4].textContent = expired;
+  }
+}
+
 function switchView(view) {
   window._currentView = view;
   document.getElementById('btnViewCTKM').classList.toggle('active', view==='CTKM');
