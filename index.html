@@ -517,23 +517,17 @@ function fmtDate(v) { if (!v) return ""; const d = new Date(v); if (isNaN(d.getT
 
 // Init — dùng fetch() đến GAS Web App URL
 const GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
-if (!GAS_URL) {
-  const url = prompt('Nhập GAS Web App URL:', 'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec');
-  if (url) { localStorage.setItem('ctkm_gas_url', url); location.reload(); }
-  else { document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">⚠️ Cần URL GAS Web App để kết nối.<br><button class="btn btn-primary" onclick="localStorage.removeItem('ctkm_gas_url');location.reload()">Nhập URL</button></p>'; }
-} else {
-  // Load directly from GitHub JSON (no GAS needed)
-  Promise.all([
-    fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json').then(r=>r.json()),
-    fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json').then(r=>r.json())
-  ]).then(([grouped, sku]) => {
-    groupedData = grouped;
-    window._skuData = sku;
-    renderDashboard();
-  }).catch(e => {
-    document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">Loi tai du lieu. F5 thu lai.</p>';
-  });
-}
+// Load directly from GitHub JSON (always works, no GAS needed)
+Promise.all([
+  fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json').then(r=>r.json()),
+  fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json').then(r=>r.json())
+]).then(([grouped, sku]) => {
+  groupedData = grouped;
+  window._skuData = sku;
+  renderDashboard();
+}).catch(e => {
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">Loi tai du lieu. F5 thu lai.</p>';
+});
 </script>
 <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#1F4E79;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
 <script>
