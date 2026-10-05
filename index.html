@@ -71,6 +71,7 @@
     }
     .ms-item:hover { background: #f0f4ff; }
     .ms-item.selected { background: #dbeafe; color: #1F4E79; font-weight: 600; border-left-color: #1F4E79; }
+    .ms-grp-hdr { padding: 4px 12px; font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; background: #f8f9fa; border-top: 1px solid #eee; }
     .ms-chips { display: inline-flex; gap: 3px; flex-wrap: wrap; vertical-align: middle; }
     .ms-chip { display: inline-flex; align-items: center; gap: 2px; background: #e8f0fe; color: #1F4E79; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
     .ms-chip .x { cursor: pointer; font-weight: bold; margin-left: 2px; }
@@ -227,7 +228,20 @@ function renderDashboard() {
       <div class="ms-wrap" id="msNhom">
         <button class="ms-btn" data-title="Ngành MCH3" onclick="toggleMS('msNhom')">Ngành MCH3 ▾</button>
         <div class="ms-drop" id="msNhomDrop">
-          ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhom')">${v}</div>`).join('')}
+          ${(()=>{
+            const m = {'Fresh & Chill':['Thịt','Thịt nguội, xúc xích, hàng chua','Rau củ','Trái cây','Thủy hải sản','Bơ, sữa, trứng','Đông lạnh','Thức ăn nấu sẵn','Bánh mỳ'],'Ambient':['Thực phẩm khô','Bánh kẹo','Đồ uống, thuốc lá','Hóa phẩm','Mỹ phẩm, chăm sóc cá nhân','Gia dụng','Giấy và bông','Đồ dùng Dân dụng/Trang trí','Đồ chơi/Giải trí thể thao','Văn phòng phẩm','Phụ kiện','Bông Vải Sợi']};
+            const nhomSet = [...new Set(allCT.map(r=>r.nhom))].filter(Boolean);
+            const used = new Set();
+            let h = '';
+            for(const [g,items] of Object.entries(m)){
+              const found = items.filter(i=>nhomSet.includes(i));
+              if(!found.length) continue;
+              h += `<div class="ms-grp-hdr">${g}</div>`;
+              found.forEach(v=>{h+=`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhom')">${v}</div>`; used.add(v);});
+            }
+            nhomSet.filter(n=>!used.has(n)).forEach(v=>h+=`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhom')">${v}</div>`);
+            return h;
+          })()}
         </div>
       </div>
       
