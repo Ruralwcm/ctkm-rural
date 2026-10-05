@@ -524,8 +524,25 @@ if (!GAS_URL) {
 } else {
   fetch(GAS_URL + '?action=getGroupedData')
     .then(r => r.json())
-    .then(data => { groupedData = data; renderDashboard(); })
-    .catch(e => { document.getElementById('mainContent').innerHTML = '<p>Lỗi kết nối GAS. Kiểm tra URL.</p>'; });
+    .then(data => {
+      if (data && data.length > 0) { groupedData = data; renderDashboard(); }
+      else { loadFromGitHub(); }
+    })
+    .catch(e => { loadFromGitHub(); });
+}
+
+function loadFromGitHub() {
+  Promise.all([
+    fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json').then(r=>r.json()),
+    fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json').then(r=>r.json())
+  ]).then(([grouped, sku]) => {
+    groupedData = grouped;
+    // Store SKU data for search
+    window._skuData = sku;
+    renderDashboard();
+  }).catch(e => {
+    document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">Không thể tải dữ liệu. Vui lòng thử lại.</p>';
+  });
 }
 </script>
 <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#1F4E79;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
