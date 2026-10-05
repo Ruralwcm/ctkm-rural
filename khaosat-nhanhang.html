@@ -136,8 +136,8 @@ function renderSurvey(){
       <label>Ngày nhận hàng</label>
       <select id="sday">${DAYS.map((d,i)=>`<option value="${d}">${DAY_LABELS[i]}</option>`).join('')}</select>
       <div class="row">
-        <div><label>🥩 Nhận Thịt MDL</label><select id="smeat"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
-        <div><label>🥬 Nhận Rau - Trái cây</label><select id="sveg"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
+        <div><label>🥩 Nhận Thịt MDL</label><select id="smeat"><option value="">Không có lịch giao</option>${TIMES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
+        <div><label>🥬 Nhận Rau - Trái cây</label><select id="sveg"><option value="">Không có lịch giao</option>${TIMES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
       </div>
     </div>
     <button class="btn btn-primary" onclick="submitSurvey()">✅ Hoàn thành khảo sát</button>
@@ -157,12 +157,13 @@ function onStoreSel(){
 function submitSurvey(){
   let o=document.getElementById('sstore')?.selectedOptions[0];
   if(!o||!o.dataset.ten) return showToast('⚠️ Vui lòng chọn cửa hàng');
+  let meat=document.getElementById('smeat').value, veg=document.getElementById('sveg').value;
+  if(!meat){showToast('⚠️ Vui lòng chọn giờ nhận Thịt (hoặc Không có lịch giao)','err');return;}
+  if(!veg){showToast('⚠️ Vui lòng chọn giờ nhận Rau (hoặc Không có lịch giao)','err');return;}
   let d={
     ma:o.value, ten:o.dataset.ten, gdv:o.dataset.gdv, tinh:o.dataset.tinh, qlkv:o.dataset.qlkv, mien:o.dataset.mien,
-    ngay:document.getElementById('sday').value, meat:document.getElementById('smeat').value, veg:document.getElementById('sveg').value,
-    ts:new Date().toISOString()
+    ngay:document.getElementById('sday').value, meat:meat, veg:veg, ts:new Date().toISOString()
   };
-  if(!d.meat&&!d.veg) return showToast('⚠️ Vui lòng chọn ít nhất 1 khung giờ');
   SURVEYS.push(d); localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
   showToast('✅ Đã lưu!');
   document.getElementById('smeat').value=''; document.getElementById('sveg').value='';
