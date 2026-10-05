@@ -63,8 +63,8 @@ input:focus,select:focus{border-color:#2e7d32;outline:none}
     <h3>🏪 Chọn cửa hàng</h3>
     <label>Miền</label>
     <select id="smien" onchange="onMienChange()"><option value="">-- Chọn Miền --</option></select>
-    <label>GĐV / QLKV</label>
-    <select id="sgdv" onchange="onGdvChange()"><option value="">-- Chọn GĐV trước --</option></select>
+    <label>QLKV</label>
+    <select id="sgdv" onchange="onGdvChange()"><option value="">-- Chọn QLKV trước --</option></select>
     <label>Cửa hàng</label>
     <select id="sstore" onchange="onStoreChange()"><option value="">-- Chọn CH trước --</option></select>
     <div class="store-filled" id="storeFilled">
@@ -196,36 +196,36 @@ function loadStores(){
 function onMienChange(){
   let m=document.getElementById('smien').value;
   let sel=document.getElementById('sgdv');
-  sel.innerHTML='<option value="">-- Chọn GĐV --</option>';
+  sel.innerHTML='<option value="">-- Chọn QLKV --</option>';
   document.getElementById('sstore').innerHTML='<option value="">-- Chọn CH trước --</option>';
   document.getElementById('storeFilled').style.display='none';
   selectedStore=null;
   if(!m)return;
   
-  // Group stores by GĐV, count stores per GĐV
-  let gdvMap={};
+  // Group stores by QLKV, count stores per QLKV
+  let qlkvMap={};
   STORES.filter(s=>s.mien===m).forEach(s=>{
-    let k=s.gdv||'Không rõ';
-    if(!gdvMap[k])gdvMap[k]={stores:[],qlkvs:new Set()};
-    gdvMap[k].stores.push(s);
-    if(s.qlkv)gdvMap[k].qlkvs.add(s.qlkv);
+    let k=s.qlkv||'Không rõ';
+    if(!qlkvMap[k])qlkvMap[k]={stores:[],gdvs:new Set()};
+    qlkvMap[k].stores.push(s);
+    if(s.gdv)qlkvMap[k].gdvs.add(s.gdv);
   });
   
-  Object.keys(gdvMap).sort().forEach(g=>{
-    let d=gdvMap[g];
-    sel.innerHTML+=`<option value="${g}">${g} (${d.stores.length} CH)</option>`;
+  Object.keys(qlkvMap).sort().forEach(q=>{
+    let d=qlkvMap[q];
+    sel.innerHTML+=`<option value="${q}">${q} (${d.stores.length} CH)</option>`;
   });
 }
 function onGdvChange(){
   let m=document.getElementById('smien').value;
-  let g=document.getElementById('sgdv').value;
+  let q=document.getElementById('sgdv').value;
   let sel=document.getElementById('sstore');
   sel.innerHTML='<option value="">-- Chọn cửa hàng --</option>';
   document.getElementById('storeFilled').style.display='none';
   selectedStore=null;
-  if(!g)return;
+  if(!q)return;
   
-  STORES.filter(s=>s.mien===m&&s.gdv===g).sort((a,b)=>a.ma.localeCompare(b.ma,'vi')).forEach(s=>{
+  STORES.filter(s=>s.mien===m&&s.qlkv===q).sort((a,b)=>a.ma.localeCompare(b.ma,'vi')).forEach(s=>{
     sel.innerHTML+=`<option value="${s.ma}" data-ten="${s.ten}" data-gdv="${s.gdv}" data-qlkv="${s.qlkv}" data-tinh="${s.tinh}" data-mien="${s.mien}">${s.ma} - ${s.ten}</option>`;
   });
 }
