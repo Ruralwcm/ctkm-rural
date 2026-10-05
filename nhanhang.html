@@ -244,6 +244,8 @@ function submitSurvey(){
   let meat=document.getElementById('smeat').value, veg=document.getElementById('sveg').value;
   let ngay=document.getElementById('sday').value;
   // Allow empty = Khong co lich giao
+  if(!meat){showToast('Vui long chon gio nhan Thit (hoac Khong co lich giao)','err');return;}
+  if(!veg){showToast('Vui long chon gio nhan Rau (hoac Khong co lich giao)','err');return;}
   
   let d={ma:selectedStore.ma,ten:selectedStore.ten,gdv:selectedStore.gdv,tinh:selectedStore.tinh,qlkv:selectedStore.qlkv,mien:selectedStore.mien,ngay:ngay,meat:meat,veg:veg,ts:new Date().toISOString()};
   
