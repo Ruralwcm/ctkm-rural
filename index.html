@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.6</title>
+  <title>CTKM RURAL v2.7</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.6</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.7</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.6";
+const APP_VERSION = "2.7";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -314,7 +314,7 @@ function renderDashboard() {
     
     <!-- VIEW: Theo MCH3 -->
     <div id="viewMCH3" style="display:none">
-      <h3 style="margin:20px 0 8px">🏷 CTKM THEO NHÓM HÀNG (MCH3)</h3>
+      
       <div class="table-wrap" id="mch3CTTable">${renderMCH3View(allCT)}</div>
     </div>
   `;
@@ -598,8 +598,8 @@ function renderUnifiedCTTable(active, upcoming, all) {
       if (isExp && skus.length > 0) {
         html += '<tr style="background:#f8faff"><td></td><td colspan="10" style="padding:4px 8px">'
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
-          + '<col style="width:65px"><col style="width:auto"><col style="width:35px"><col style="width:75px"><col style="width:75px">'
-          + '<col style="width:85px"><col style="width:120px"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
+          + '<col style="width:65px"><col style="width:auto"><col style="width:30px"><col style="width:68px"><col style="width:68px">'
+          + '<col style="width:78px"><col style="width:100px"><col style="width:40px"><col style="width:65px"><col style="width:65px"></colgroup>'
           + skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
@@ -620,8 +620,8 @@ function renderUnifiedCTTable(active, upcoming, all) {
   
   var minW = window.innerWidth < 600 ? '700px' : '900px';
   var html = '<table style="table-layout:fixed;width:100%;min-width:'+minW+';font-size:12px"><colgroup>'
-    + '<col style="width:24px"><col style="width:65px"><col style="width:auto"><col style="width:35px"><col style="width:75px"><col style="width:75px">'
-    + '<col style="width:85px"><col style="width:120px"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
+    + '<col style="width:24px"><col style="width:65px"><col style="width:auto"><col style="width:30px"><col style="width:68px"><col style="width:68px">'
+    + '<col style="width:78px"><col style="width:100px"><col style="width:40px"><col style="width:65px"><col style="width:65px"></colgroup>'
     + '<tr><th style="font-size:11px;padding:6px 4px"></th><th style="font-size:11px;padding:6px 4px">Mã SP</th><th style="font-size:11px;padding:6px 4px">Tên SP / CTKM</th><th style="font-size:11px;padding:6px 4px">ĐVT</th><th style="font-size:11px;padding:6px 4px;text-align:right">Giá thường</th><th style="font-size:11px;padding:6px 4px;text-align:right">Giá KM</th><th style="font-size:11px;padding:6px 4px">Loại CTKM</th><th style="font-size:11px;padding:6px 4px">Diễn giải</th><th style="font-size:11px;padding:6px 4px">Miền AD</th><th style="font-size:11px;padding:6px 4px">Ngày BĐ</th><th style="font-size:11px;padding:6px 4px">Ngày KT</th></tr>';
   
   html += renderCTGroup2(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
@@ -678,8 +678,8 @@ function renderMCH3View(data) {
 
   return `<table style="table-layout:fixed;width:100%;min-width:700px">
     <colgroup>
-      <col style="width:24px"><col style="width:65px"><col style="width:auto"><col style="width:35px">
-      <col style="width:75px"><col style="width:75px"><col style="width:85px"><col style="width:120px"><col style="width:45px"><col style="width:70px"><col style="width:70px">
+      <col style="width:24px"><col style="width:65px"><col style="width:auto"><col style="width:30px">
+      <col style="width:68px"><col style="width:68px"><col style="width:78px"><col style="width:100px"><col style="width:40px"><col style="width:65px"><col style="width:65px">
     </colgroup>
     <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th style="text-align:right">Giá thường</th><th style="text-align:right">Giá KM</th><th>Loại CTKM</th><th>Diễn giải</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
     ${sortedGroups.map(nhom => {
@@ -864,7 +864,7 @@ function renderDataTable() {
   var skuData = window._skuData || [];
   document.getElementById('mainContent').innerHTML = `
     <div class="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:120px;max-width:200px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px">
+      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:100px;max-width:200px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px">
       
       <div class="ms-wrap" id="msLoaiD">
         <button class="ms-btn" data-title="Phân loại" onclick="toggleMS('msLoaiD')">Phân loại ▾</button>
@@ -982,7 +982,7 @@ function filterTable() {
   if (countEl) countEl.textContent = filtered.length + ' / ' + skuData.length + ' dòng';
   
   // Render table
-  document.getElementById('dataTable').innerHTML = '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:50px"><col style="width:auto"><col style="width:100px"><col style="width:120px"><col style="width:80px"><col style="width:auto"><col style="width:40px"><col style="width:110px"><col style="width:85px"><col style="width:85px"><col style="width:75px"><col style="width:75px"><col style="width:55px"></colgroup>' +
+  document.getElementById('dataTable').innerHTML = '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:50px"><col style="width:auto"><col style="width:100px"><col style="width:100px"><col style="width:80px"><col style="width:auto"><col style="width:40px"><col style="width:110px"><col style="width:78px"><col style="width:78px"><col style="width:68px"><col style="width:68px"><col style="width:55px"></colgroup>' +
     '<tr>' +
     '<th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Diễn giải</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>' +
     filtered.map(function(r) {
