@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.3</title>
+  <title>CTKM RURAL v2.4</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -123,7 +123,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.3</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.4</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -140,7 +140,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.3";
+const APP_VERSION = "2.4";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -601,7 +601,6 @@ function renderUnifiedCTTable(active, upcoming, all) {
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
           + '<col style="width:65px"><col style="width:auto"><col style="width:35px"><col style="width:75px"><col style="width:75px">'
           + '<col style="width:85px"><col style="width:auto"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
-          '
           + skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
