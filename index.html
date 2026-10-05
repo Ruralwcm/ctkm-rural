@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v1.3</title>
+  <title>CTKM RURAL v1.5</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -42,6 +42,10 @@
     .region-tags { display: flex; gap: 8px; }
     .region-tag { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; font-size: 12px; }
     .region-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+    
+    .filter-tag { padding: 3px 10px; border: 1px solid #ddd; border-radius: 14px; cursor: pointer; font-size: 11px; white-space: nowrap; user-select: none; transition: all .15s; }
+    .filter-tag:hover { border-color: #1F4E79; background: #eef2ff; }
+    .filter-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
     
     .toast { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 12px 20px; border-radius: 4px; display: none; }
     .loading { text-align: center; padding: 40px; color: #999; }
@@ -160,13 +164,50 @@ function renderDashboard() {
       <div class="stat-card"><div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div></div>
     </div>
     
-    <h3 style="margin:20px 0 8px;color:#28a745">🟢 CTKM ĐANG HIỆU LỰC (${activeNow.length})</h3>
-    <div class="table-wrap">${renderCTTable(activeNow)}</div>
+    <!-- BỘ LỌC DASHBOARD (multi-select bằng tag) -->
+    <div style="background:white;border-radius:8px;padding:10px 14px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+      <!-- Loại CTKM -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;min-width:60px">Loại CTKM:</span>
+        <div id="dashFilterLoai" style="display:flex;gap:4px;flex-wrap:wrap">
+          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<span class="filter-tag" data-val="${v}" onclick="toggleFilterTag(this,'loai')">${v}</span>`).join('')}
+        </div>
+      </div>
+      <!-- Ngành MCH3 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;min-width:60px">Ngành:</span>
+        <div id="dashFilterNhom" style="display:flex;gap:4px;flex-wrap:wrap">
+          ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<span class="filter-tag" data-val="${v}" onclick="toggleFilterTag(this,'nhom')">${v}</span>`).join('')}
+        </div>
+      </div>
+      <!-- Miền + Thời gian -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;min-width:60px">Miền AD:</span>
+        <div id="dashFilterMien" style="display:flex;gap:4px">
+          <span class="filter-tag" data-val="bac" onclick="toggleFilterTag(this,'mien')">BẮC</span>
+          <span class="filter-tag" data-val="trung" onclick="toggleFilterTag(this,'mien')">TRUNG</span>
+          <span class="filter-tag" data-val="nam" onclick="toggleFilterTag(this,'mien')">NAM</span>
+          <span class="filter-tag" data-val="tay" onclick="toggleFilterTag(this,'mien')">TÂY</span>
+        </div>
+        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;margin-left:12px">Thời gian:</span>
+        <div id="dashFilterTime" style="display:flex;gap:4px">
+          <span class="filter-tag" data-val="homNay" onclick="toggleFilterTag(this,'time',true)">Hôm nay</span>
+          <span class="filter-tag" data-val="7ngay" onclick="toggleFilterTag(this,'time',true)">7 ngày</span>
+          <span class="filter-tag" data-val="30ngay" onclick="toggleFilterTag(this,'time',true)">30 ngày</span>
+          <span class="filter-tag" data-val="thangNay" onclick="toggleFilterTag(this,'time',true)">Tháng này</span>
+          <span class="filter-tag" data-val="quyNay" onclick="toggleFilterTag(this,'time',true)">Quý này</span>
+        </div>
+        <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto"></span>
+      </div>
+    </div>
     
-    <h3 style="margin:20px 0 8px;color:#F9A825">🟡 CTKM SẮP DIỄN RA (${upcoming.length})</h3>
-    <div class="table-wrap">${renderCTTable(upcoming)}</div>
+    <h3 style="margin:20px 0 8px;color:#28a745">🟢 CTKM ĐANG HIỆU LỰC (<span id="activeCount">${activeNow.length}</span>)</h3>
+    <div class="table-wrap" id="activeCTTable">${renderCTTable(activeNow)}</div>
     
-    <h3 style="margin:20px 0 8px">📋 TẤT CẢ CTKM (${allCT.length})</h3>
+    <h3 style="margin:20px 0 8px;color:#F9A825">🟡 CTKM SẮP DIỄN RA (<span id="upcomingCount">${upcoming.length}</span>)</h3>
+    <div class="table-wrap" id="upcomingCTTable">${renderCTTable(upcoming)}</div>
+    
+    <h3 style="margin:20px 0 8px">📋 TẤT CẢ CTKM (<span id="allCount">${allCT.length}</span>)</h3>
     <div style="margin-bottom:12px">
       <select id="sortBy" onchange="refreshAllCT()" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px">
         <option value="ten">Sắp xếp: Theo tên CTKM</option>
@@ -179,6 +220,76 @@ function renderDashboard() {
     </div>
     <div class="table-wrap" id="allCTTable">${renderCTTable(allCT)}</div>
   `;
+  // Store for filter
+  window._allCT = allCT;
+  window._activeNow = activeNow;
+  window._upcoming = upcoming;
+}
+
+function toggleFilterTag(el, group, exclusive) {
+  if (exclusive) {
+    // Radio behavior: deselect all others in group
+    document.querySelectorAll(`#dashFilterTime .filter-tag`).forEach(t => t.classList.remove('active'));
+  }
+  el.classList.toggle('active');
+  applyDashFilter();
+}
+
+function getActiveTags(groupId) {
+  return new Set([...document.querySelectorAll(`#${groupId} .filter-tag.active`)].map(t => t.dataset.val));
+}
+
+function applyDashFilter() {
+  const selLoai = getActiveTags('dashFilterLoai');
+  const selNhom = getActiveTags('dashFilterNhom');
+  const selMien = getActiveTags('dashFilterMien');
+  const selTime = [...getActiveTags('dashFilterTime')][0] || '';
+  
+  const now = new Date();
+  const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
+  const in30d = new Date(now); in30d.setDate(in30d.getDate()+30);
+  
+  const filterFn = r => {
+    if (selLoai.size > 0 && !selLoai.has(r.loai)) return false;
+    if (selNhom.size > 0 && !selNhom.has(r.nhom)) return false;
+    if (selMien.size > 0) {
+      let ok = false;
+      if (selMien.has('bac') && r.bac) ok = true;
+      if (selMien.has('trung') && r.trung) ok = true;
+      if (selMien.has('nam') && r.nam) ok = true;
+      if (selMien.has('tay') && r.tay) ok = true;
+      if (!ok) return false;
+    }
+    if (selTime) {
+      let bd = r.ngayBD ? new Date(r.ngayBD) : null;
+      if (bd && isNaN(bd.getTime())) bd = null;
+      if (!bd) return false;
+      if (selTime === 'homNay' && !(bd <= now && r.ngayKT && new Date(r.ngayKT) >= now)) return false;
+      if (selTime === '7ngay' && bd > in7d) return false;
+      if (selTime === '30ngay' && bd > in30d) return false;
+      if (selTime === 'thangNay' && (bd.getMonth()!==now.getMonth()||bd.getFullYear()!==now.getFullYear())) return false;
+      if (selTime === 'quyNay' && (Math.floor(bd.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd.getFullYear()!==now.getFullYear())) return false;
+    }
+    return true;
+  };
+  
+  const filteredActive = window._activeNow.filter(filterFn);
+  const filteredUpcoming = window._upcoming.filter(filterFn);
+  const filteredAll = window._allCT.filter(filterFn);
+  
+  document.getElementById('activeCount').textContent = filteredActive.length;
+  document.getElementById('upcomingCount').textContent = filteredUpcoming.length;
+  document.getElementById('allCount').textContent = filteredAll.length;
+  document.getElementById('activeCTTable').innerHTML = renderCTTable(filteredActive);
+  document.getElementById('upcomingCTTable').innerHTML = renderCTTable(filteredUpcoming);
+  allCT_cts = filteredAll;
+  document.getElementById('allCTTable').innerHTML = renderCTTable(filteredAll);
+  
+  const parts = [];
+  if (selLoai.size) parts.push(`${selLoai.size} loại`);
+  if (selNhom.size) parts.push(`${selNhom.size} ngành`);
+  if (selMien.size) parts.push(`${selMien.size} miền`);
+  document.getElementById('dashFilterCount').textContent = parts.length ? `Đã chọn: ${parts.join(', ')} (${filteredAll.length} CT)` : `${filteredAll.length} CT`;
 }
 
 function refreshAllCT() {
