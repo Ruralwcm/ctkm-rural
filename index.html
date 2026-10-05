@@ -1092,8 +1092,20 @@ function renderDataTable() {
       </div>
       
       <div class="ms-wrap" id="msNhomD">
-        <button class="ms-btn" data-title="Nhóm hàng" onclick="toggleMS('msNhomD')" style="min-width:100px">Nhóm hàng ▾</button>
-        <div class="ms-drop" id="msNhomDDrop">${[...new Set(skuData.map(r=>r[3]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhomD',event);filterTable()">${v}</div>`).join('')}</div>
+        <button class="ms-btn" data-title="Ngành MCH3" onclick="toggleMS('msNhomD')" style="min-width:100px">Ngành MCH3 ▾</button>
+        <div class="ms-drop" id="msNhomDDrop">${(()=>{
+    const m = {'Fresh & Chill':['Thịt','Thịt nguội, xúc xích, hàng chua','Rau củ','Trái cây','Thủy hải sản','Bơ, sữa, trứng','Đông lạnh','Thức ăn nấu sẵn','Bánh mỳ'],'Ambient':['Thực phẩm khô','Bánh kẹo','Đồ uống, thuốc lá','Hóa phẩm','Mỹ phẩm, chăm sóc cá nhân','Gia dụng','Giấy và bông','Đồ dùng Dân dụng/Trang trí','Đồ chơi/Giải trí thể thao','Văn phòng phẩm','Phụ kiện','Bông Vải Sợi']};
+    const nhomSet = [...new Set(skuData.map(r=>r[3]))].filter(Boolean);
+    const used = new Set(); let h = '';
+    for(const [g,items] of Object.entries(m)){
+      const found = items.filter(i=>nhomSet.includes(i));
+      if(!found.length) continue;
+      h += '<div class="ms-grp-hdr">'+g+'</div>';
+      found.forEach(v=>{h+='<div class="ms-item" data-val="'+v+'" onclick="toggleMSItem(this,\'msNhomD\',event);filterTable()">'+v+'</div>'; used.add(v);});
+    }
+    nhomSet.filter(n=>!used.has(n)).forEach(v=>h+='<div class="ms-item" data-val="'+v+'" onclick="toggleMSItem(this,\'msNhomD\',event);filterTable()">'+v+'</div>');
+    return h;
+  })()}</div>
       </div>
       
       <div class="ms-wrap" id="msMienD">
