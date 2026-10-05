@@ -136,8 +136,8 @@ function renderSurvey(){
       <label>Ngày nhận hàng</label>
       <select id="sday">${DAYS.map((d,i)=>`<option value="${d}">${DAY_LABELS[i]}</option>`).join('')}</select>
       <div class="row">
-        <div><label>🥩 Nhận Thịt MDL</label><select id="smeat"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option>${t}</option>`).join('')}</select></div>
-        <div><label>🥬 Nhận Rau - Trái cây</label><select id="sveg"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div><label>🥩 Nhận Thịt MDL</label><select id="smeat"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
+        <div><label>🥬 Nhận Rau - Trái cây</label><select id="sveg"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
       </div>
     </div>
     <button class="btn btn-primary" onclick="submitSurvey()">✅ Hoàn thành khảo sát</button>
