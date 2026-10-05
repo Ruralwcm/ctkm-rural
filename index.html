@@ -255,7 +255,7 @@ function renderDashboard() {
       </div>
       
       <!-- Thời gian -->
-      <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;width:100px;flex-shrink:0">
+      <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;width:130px;flex-shrink:0">
         <option value="">Thời gian hiệu lực</option>
         <option value="homNay">Hôm nay</option>
         <option value="7ngay">7 ngày tới</option>
@@ -1114,6 +1114,8 @@ loadData().then(({grouped, sku}) => {
   groupedData = grouped;
   window._skuData = sku;
   renderDashboard();
+  // Default view: MCH3
+  setTimeout(function(){ switchView('MCH3'); }, 100);
 }).catch(e => {
   console.error(e);
   document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#dc3545;font-size:14px">❌ Không tải được dữ liệu<br><small style="color:#888">Thử: (1) F5 cứng Ctrl+Shift+R (2) Mở Console F12 xem lỗi<br>Nếu vẫn lỗi → kiểm tra GAS URL trong localStorage: ctkm_gas_url</small><br><br><button onclick="location.reload(true)" style="padding:8px 20px;background:#1F4E79;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px">🔄 Thử lại</button></p>';
