@@ -116,44 +116,127 @@ function showToast(msg, ok=true) {
 
 // ============ DASHBOARD ============
 function renderDashboard() {
-  const byLoai = {}, byNhom = {}, byMien = { bac: 0, trung: 0, nam: 0, tay: 0 };
-  let totalSKU = 0, activeCT = 0;
+  // Compute CT status
+  const now = new Date();
+  const next7d = new Date(now); next7d.setDate(next7d.getDate() + 7);
+  const next30d = new Date(now); next30d.setDate(next30d.getDate() + 30);
+  
+  let totalSKU = 0, activeNow = [], upcoming = [], allCT = [];
   
   groupedData.forEach(ct => {
-    const loai = ct[2] || 'Khác';
-    byLoai[loai] = (byLoai[loai] || 0) + 1;
-    const nhom = ct[3] || 'Khác';
-    byNhom[nhom] = (byNhom[nhom] || 0) + 1;
-    byMien.bac += ct[10] || 0;
-    byMien.trung += ct[11] || 0;
-    byMien.nam += ct[12] || 0;
-    byMien.tay += ct[13] || 0;
     totalSKU += ct[4] || 0;
-    activeCT++;
+    const ctInfo = {
+      ma: ct[0]||'', ten: ct[1]||'', loai: ct[2]||'', nhom: ct[3]||'',
+      sku: ct[4]||0, skuList: ct[5]||'',
+      ngayBD: ct[6], ngayKT: ct[7],
+      bac: ct[10]||0, trung: ct[11]||0, nam: ct[12]||0, tay: ct[13]||0
+    };
+    allCT.push(ctInfo);
+    
+    // Determine status (handle both Date objects and text strings)
+    let bd = ct[6] ? new Date(ct[6]) : null;
+    let kt = ct[7] ? new Date(ct[7]) : null;
+    if (bd && isNaN(bd.getTime())) bd = null;
+    if (kt && isNaN(kt.getTime())) kt = null;
+    
+    if (bd && kt && bd <= now && kt >= now) {
+      activeNow.push(ctInfo);
+    } else if (bd && bd > now && bd <= next30d) {
+      upcoming.push(ctInfo);
+    } else if (!bd || !kt) {
+      // Text-based dates: check if text suggests ongoing
+      const ktStr = (ct[7]||'').toString().toLowerCase();
+      if (ktStr.includes('đến khi có tb') || ktStr.includes('31.12.2026') || ktStr.includes('31/12/2026') || ktStr.includes('31.12.26')) {
+        activeNow.push(ctInfo);
+      }
+    }
   });
   
   document.getElementById('mainContent').innerHTML = `
     <div class="stats">
-      <div class="stat-card"><div class="num">${activeCT}</div><div class="label">CTKM đang chạy</div></div>
+      <div class="stat-card"><div class="num">${allCT.length}</div><div class="label">Tổng CTKM</div></div>
+      <div class="stat-card" style="border-left:3px solid #28a745"><div class="num" style="color:#28a745">${activeNow.length}</div><div class="label">🟢 Đang hiệu lực</div></div>
+      <div class="stat-card" style="border-left:3px solid #F9A825"><div class="num" style="color:#F9A825">${upcoming.length}</div><div class="label">🟡 Sắp diễn ra</div></div>
       <div class="stat-card"><div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div></div>
-      <div class="stat-card"><div class="num">${byMien.bac}</div><div class="label">CT phủ BẮC</div></div>
-      <div class="stat-card"><div class="num">${byMien.trung}</div><div class="label">CT phủ TRUNG</div></div>
-      <div class="stat-card"><div class="num">${byMien.nam}</div><div class="label">CT phủ NAM</div></div>
-      <div class="stat-card"><div class="num">${byMien.tay}</div><div class="label">CT phủ TÂY</div></div>
     </div>
     
-    <h3 style="margin:16px 0 8px">Theo Phân loại KM</h3>
-    <div class="table-wrap"><table>
-      <tr><th>Phân loại MH</th><th>Số CT</th></tr>
-      ${Object.entries(byLoai).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
-    </table></div>
+    <h3 style="margin:20px 0 8px;color:#28a745">🟢 CTKM ĐANG HIỆU LỰC (${activeNow.length})</h3>
+    <div class="table-wrap">${renderCTTable(activeNow)}</div>
     
-    <h3 style="margin:16px 0 8px">Theo Nhóm hàng</h3>
-    <div class="table-wrap"><table>
-      <tr><th>Nhóm hàng (MCH3)</th><th>Số CT</th></tr>
-      ${Object.entries(byNhom).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
-    </table></div>
+    <h3 style="margin:20px 0 8px;color:#F9A825">🟡 CTKM SẮP DIỄN RA (${upcoming.length})</h3>
+    <div class="table-wrap">${renderCTTable(upcoming)}</div>
+    
+    <h3 style="margin:20px 0 8px">📋 TẤT CẢ CTKM (${allCT.length})</h3>
+    <div style="margin-bottom:12px">
+      <select id="sortBy" onchange="refreshAllCT()" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px">
+        <option value="ten">Sắp xếp: Theo tên CTKM</option>
+        <option value="nhom">Theo Nhóm hàng (MCH3)</option>
+        <option value="gia">Theo Giá thường</option>
+        <option value="giaKM">Theo Giá KM</option>
+        <option value="pctKM">Theo % Giảm giá</option>
+        <option value="dienGiai">Theo Diễn giải KM</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="allCTTable">${renderCTTable(allCT)}</div>
   `;
+}
+
+function refreshAllCT() {
+  // Re-render all CT with sort
+  const sortBy = document.getElementById('sortBy')?.value || 'ten';
+  fetch(GAS_URL + '?action=getSKUData').then(r=>r.json()).then(skuData=>{
+    // Build pricing per CT
+    const ctPrice = {};
+    skuData.forEach(row => {
+      const ctName = (row[1]||'').toString();
+      if (!ctName) return;
+      if (!ctPrice[ctName]) ctPrice[ctName] = { prices: [], kmPrices: [], dienGiais: [] };
+      const p = parseFloat(row[8]); // Giá thường (col 9)
+      const km = parseFloat(row[9]); // Giá KM (col 10)
+      const dg = (row[7]||'').toString(); // Diễn giải
+      if (!isNaN(p)) ctPrice[ctName].prices.push(p);
+      if (!isNaN(km)) ctPrice[ctName].kmPrices.push(km);
+      if (dg) ctPrice[ctName].dienGiais.push(dg);
+    });
+    
+    // Build enriched CT list
+    const enriched = allCT_cts.map(ct => {
+      const pData = ctPrice[ct.ten] || {};
+      const avgPrice = pData.prices?.length ? pData.prices.reduce((a,b)=>a+b,0)/pData.prices.length : 0;
+      const avgKM = pData.kmPrices?.length ? pData.kmPrices.reduce((a,b)=>a+b,0)/pData.kmPrices.length : 0;
+      const pctKM = avgPrice > 0 ? ((avgPrice-avgKM)/avgPrice*100) : 0;
+      return { ...ct, avgPrice, avgKM, pctKM, dienGiai: (pData.dienGiais||[]).join('; ').substring(0,60) };
+    });
+    
+    // Sort
+    if (sortBy === 'nhom') enriched.sort((a,b) => (a.nhom||'').localeCompare(b.nhom||''));
+    else if (sortBy === 'gia') enriched.sort((a,b) => (b.avgPrice||0) - (a.avgPrice||0));
+    else if (sortBy === 'giaKM') enriched.sort((a,b) => (b.avgKM||0) - (a.avgKM||0));
+    else if (sortBy === 'pctKM') enriched.sort((a,b) => (b.pctKM||0) - (a.pctKM||0));
+    else if (sortBy === 'dienGiai') enriched.sort((a,b) => (a.dienGiai||'').localeCompare(b.dienGiai||''));
+    else enriched.sort((a,b) => (a.ten||'').localeCompare(b.ten||''));
+    
+    document.getElementById('allCTTable').innerHTML = renderCTTable(enriched);
+  });
+}
+
+let allCT_cts = []; // cached for sort
+
+function renderCTTable(data) {
+  if (!data.length) return '<p style="padding:12px;color:#888">Không có CTKM nào</p>';
+  allCT_cts = data;
+  return `<table>
+    <tr><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>
+    ${data.map(r => `
+      <tr>
+        <td>${r.ma||''}</td>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.ten||''}">${(r.ten||'').substring(0,50)}</td>
+        <td>${r.loai||''}</td><td>${r.nhom||''}</td><td>${r.sku||0}</td>
+        <td>${fmtDate(r.ngayBD)}</td><td>${fmtDate(r.ngayKT)}</td>
+        <td>${r.bac?'✓':''}</td><td>${r.trung?'✓':''}</td><td>${r.nam?'✓':''}</td><td>${r.tay?'✓':''}</td>
+      </tr>
+    `).join('')}
+  </table>`;
 }
 
 // ============ DATA TABLE ============
