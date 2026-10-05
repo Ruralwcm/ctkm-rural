@@ -257,14 +257,20 @@ function renderDashboard() {
       </div>
       
       <!-- Thời gian -->
-      <select id="dashFilterTime2" onchange="applyDashFilter()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;min-width:130px">
+      <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;min-width:130px;flex-shrink:0">
         <option value="">Thời gian hiệu lực</option>
         <option value="homNay">Hôm nay</option>
         <option value="7ngay">7 ngày tới</option>
         <option value="30ngay">30 ngày tới</option>
         <option value="thangNay">Tháng này</option>
         <option value="quyNay">Quý này</option>
+        <option value="custom">📅 Khoảng ngày...</option>
       </select>
+      <span id="customDateRange" style="display:none;display:flex;gap:4px;align-items:center;flex-shrink:0">
+        <input type="date" id="dateFrom" onchange="applyDashFilter()" style="padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px;width:120px">
+        <span style="font-size:10px;color:#888">→</span>
+        <input type="date" id="dateTo" onchange="applyDashFilter()" style="padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px;width:120px">
+      </span>
       
       <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto"></span>
     </div>
@@ -371,7 +377,12 @@ function removeChip(groupId, label) {
   applyDashFilter();
 }
 
-function applyDashFilter() {
+function onTimeFilterChange() {
+  const val = document.getElementById('dashFilterTime2').value;
+  const custom = document.getElementById('customDateRange');
+  custom.style.display = val === 'custom' ? 'flex' : 'none';
+  applyDashFilter();
+}
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
@@ -396,11 +407,22 @@ function applyDashFilter() {
       let bd = r.ngayBD ? new Date(r.ngayBD) : null;
       if (bd && isNaN(bd.getTime())) bd = null;
       if (!bd) return false;
-      if (selTime === 'homNay' && !(bd <= now && r.ngayKT && new Date(r.ngayKT) >= now)) return false;
-      if (selTime === '7ngay' && bd > in7d) return false;
-      if (selTime === '30ngay' && bd > in30d) return false;
-      if (selTime === 'thangNay' && (bd.getMonth()!==now.getMonth()||bd.getFullYear()!==now.getFullYear())) return false;
-      if (selTime === 'quyNay' && (Math.floor(bd.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd.getFullYear()!==now.getFullYear())) return false;
+if (selTime) {
+      let bd2 = r.ngayBD ? new Date(r.ngayBD) : null;
+      if (bd2 && isNaN(bd2.getTime())) bd2 = null;
+      if (!bd2) return false;
+      if (selTime === 'homNay') { if (!(bd2 <= now && r.ngayKT && new Date(r.ngayKT) >= now)) return false; }
+      else if (selTime === '7ngay') { if (bd2 > in7d) return false; }
+      else if (selTime === '30ngay') { if (bd2 > in30d) return false; }
+      else if (selTime === 'thangNay') { if (bd2.getMonth()!==now.getMonth()||bd2.getFullYear()!==now.getFullYear()) return false; }
+      else if (selTime === 'quyNay') { if (Math.floor(bd2.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd2.getFullYear()!==now.getFullYear()) return false; }
+      else if (selTime === 'custom') {
+        const df = document.getElementById('dateFrom')?.value;
+        const dt = document.getElementById('dateTo')?.value;
+        if (df && bd2 < new Date(df)) return false;
+        if (dt) { const kt = r.ngayKT ? new Date(r.ngayKT) : null; if (kt && !isNaN(kt) && kt > new Date(dt)) return false; }
+      }
+    }
     }
     return true;
   };
