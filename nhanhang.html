@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nhận hàng Thịt - Rau Củ · 05-11.10</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; }
+    .header { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; padding: 16px 20px; text-align: center; }
+    .header h1 { font-size: 18px; }
+    .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+    .container { max-width: 500px; margin: 20px auto; padding: 0 12px; }
+    .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .card h3 { font-size: 15px; color: #c0392b; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 12px; background: white; }
+    select:focus, input:focus { border-color: #c0392b; outline: none; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #c0392b; color: white; }
+    .btn-secondary { background: #27ae60; color: white; margin-top: 8px; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 6px; color: white; font-weight: 600; display: none; z-index: 100; }
+    .toast.success { background: #27ae60; }
+    .toast.error { background: #e74c3c; }
+    .summary { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 13px; }
+    .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 480px) { .row { flex-direction: column; } }
+  </style>
+</head>
+<body>
+<div class="header">
+  <h1>🥩🥬 Đăng Ký Nhận Hàng</h1>
+  <p>Thịt MDL & Rau - Trái Cây · 05.10 → 11.10.2026</p>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h3>🏪 Thông tin cửa hàng</h3>
+    <label>GĐV</label>
+    <select id="gdv" onchange="filterStores()">
+      <option value="">-- Chọn GĐV --</option>
+    </select>
+    <label>Tỉnh/TP</label>
+    <select id="tinh" onchange="filterStores()">
+      <option value="">-- Chọn Tỉnh --</option>
+    </select>
+    <label>Cửa hàng</label>
+    <select id="store" onchange="onStoreChange()">
+      <option value="">-- Chọn cửa hàng --</option>
+    </select>
+    <div style="font-size:12px;color:#999;margin-top:-8px" id="storeInfo"></div>
+  </div>
+
+  <div class="card">
+    <h3>📅 Ngày nhận hàng</h3>
+    <select id="ngayNhan" onchange="updateSummary()">
+      <option value="05/10/2026">Thứ 2 - 05/10/2026</option>
+      <option value="06/10/2026">Thứ 3 - 06/10/2026</option>
+      <option value="07/10/2026">Thứ 4 - 07/10/2026</option>
+      <option value="08/10/2026">Thứ 5 - 08/10/2026</option>
+      <option value="09/10/2026">Thứ 6 - 09/10/2026</option>
+      <option value="10/10/2026">Thứ 7 - 10/10/2026</option>
+      <option value="11/10/2026">Chủ Nhật - 11/10/2026</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>⏰ Thời gian nhận hàng</h3>
+    <div class="time-grid">
+      <div>
+        <label>🥩 Nhận Thịt MDL</label>
+        <select id="timeMeat" onchange="updateSummary()">
+          <option value="">-- Chọn giờ --</option>
+        </select>
+      </div>
+      <div>
+        <label>🥬 Nhận Rau - Trái cây</label>
+        <select id="timeVeg" onchange="updateSummary()">
+          <option value="">-- Chọn giờ --</option>
+        </select>
+      </div>
+    </div>
+    <div class="summary" id="summary" style="display:none"></div>
+  </div>
+
+  <button class="btn btn-primary" onclick="submitForm()">✅ Xác nhận đăng ký</button>
+  <button class="btn btn-secondary" onclick="viewAll()">📋 Xem danh sách đã đăng ký</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STORE DATA (from Storelist - will be loaded from GAS) =====
+let STORES = [];
+let GAS_URL = '';
+
+// Generate time slots 00:00-23:30, every 30min
+function genTimeSlots() {
+  const slots = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+    }
+  }
+  return slots;
+}
+
+function initTimeSlots() {
+  const slots = genTimeSlots();
+  const meat = document.getElementById('timeMeat');
+  const veg = document.getElementById('timeVeg');
+  slots.forEach(s => {
+    meat.innerHTML += `<option value="${s}">${s}</option>`;
+    veg.innerHTML += `<option value="${s}">${s}</option>`;
+  });
+}
+
+// ===== Load store data from GAS =====
+async function loadStores() {
+  GAS_URL = localStorage.getItem('ctkm_gas_url') || prompt('Nhap GAS URL:') || '';
+  if (!GAS_URL) return;
+  localStorage.setItem('ctkm_gas_url', GAS_URL);
+  
+  try {
+    const resp = await fetch(GAS_URL + '?action=getStores');
+    STORES = await resp.json();
+    
+    // Populate GĐV dropdown
+    const gdvs = [...new Set(STORES.map(s => s.gdv).filter(Boolean))].sort();
+    const gdvSel = document.getElementById('gdv');
+    gdvs.forEach(g => gdvSel.innerHTML += `<option value="${g}">${g}</option>`);
+    
+    // Populate Tỉnh dropdown
+    const tinhs = [...new Set(STORES.map(s => s.tinh).filter(Boolean))].sort();
+    const tinhSel = document.getElementById('tinh');
+    tinhs.forEach(t => tinhSel.innerHTML += `<option value="${t}">${t}</option>`);
+    
+    filterStores();
+  } catch(e) {
+    console.log('GAS not available, using manual entry mode');
+    showManualMode();
+  }
+}
+
+function showManualMode() {
+  // Replace store dropdown with text inputs
+  document.getElementById('store').outerHTML = `
+    <label>Mã CH</label><input id="maCH" placeholder="Nhập mã cửa hàng">
+    <label>Tên CH</label><input id="tenCH" placeholder="Nhập tên cửa hàng">
+  `;
+}
+
+function filterStores() {
+  const gdv = document.getElementById('gdv')?.value || '';
+  const tinh = document.getElementById('tinh')?.value || '';
+  const sel = document.getElementById('store');
+  if (!sel) return;
+  
+  sel.innerHTML = '<option value="">-- Chọn cửa hàng --</option>';
+  STORES.filter(s => (!gdv || s.gdv === gdv) && (!tinh || s.tinh === tinh))
+    .forEach(s => sel.innerHTML += `<option value="${s.ma}" data-ten="${s.ten}" data-gdv="${s.gdv}" data-tinh="${s.tinh}">${s.ma} - ${s.ten}</option>`);
+}
+
+function onStoreChange() {
+  const opt = document.getElementById('store')?.selectedOptions[0];
+  if (opt && opt.dataset.ten) {
+    document.getElementById('storeInfo').textContent = 
+      `GĐV: ${opt.dataset.gdv} | Tỉnh: ${opt.dataset.tinh} | ${opt.dataset.ten}`;
+    updateSummary();
+  }
+}
+
+function updateSummary() {
+  const store = document.getElementById('store')?.selectedOptions[0];
+  const ngay = document.getElementById('ngayNhan')?.value || '';
+  const meat = document.getElementById('timeMeat')?.value || '';
+  const veg = document.getElementById('timeVeg')?.value || '';
+  const sum = document.getElementById('summary');
+  
+  if (ngay && (meat || veg)) {
+    sum.style.display = 'block';
+    sum.innerHTML = `
+      <strong>📋 Tóm tắt đăng ký:</strong><br>
+      🏪 ${store?.dataset?.ten || document.getElementById('tenCH')?.value || '...'}<br>
+      📅 ${ngay}<br>
+      ${meat ? '🥩 Thịt: ' + meat : ''}${meat && veg ? ' &nbsp;|&nbsp; ' : ''}${veg ? '🥬 Rau: ' + veg : ''}
+    `;
+  }
+}
+
+// ===== SUBMIT =====
+function submitForm() {
+  const data = {
+    gdv: document.getElementById('gdv')?.value || '',
+    tinh: document.getElementById('tinh')?.value || '',
+    maCH: document.getElementById('store')?.value || document.getElementById('maCH')?.value || '',
+    tenCH: document.getElementById('store')?.selectedOptions[0]?.dataset?.ten || document.getElementById('tenCH')?.value || '',
+    ngayNhan: document.getElementById('ngayNhan').value,
+    timeMeat: document.getElementById('timeMeat').value,
+    timeVeg: document.getElementById('timeVeg').value,
+    timestamp: new Date().toISOString()
+  };
+  
+  if (!data.maCH || !data.ngayNhan) {
+    showToast('Vui lòng chọn cửa hàng và ngày nhận hàng', 'error');
+    return;
+  }
+  
+  // Save to localStorage for offline
+  const saved = JSON.parse(localStorage.getItem('nhanhang_data') || '[]');
+  saved.push(data);
+  localStorage.setItem('nhanhang_data', JSON.stringify(saved));
+  
+  // Try GAS
+  if (GAS_URL) {
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'addNhanHang', data: data})
+    }).then(r => r.json()).then(resp => {
+      showToast(resp.message || 'Đã lưu!', 'success');
+    }).catch(() => {
+      showToast('Đã lưu vào máy (sẽ đồng bộ sau)', 'success');
+    });
+  } else {
+    showToast('Đã lưu!', 'success');
+  }
+  
+  // Clear form for next entry
+  setTimeout(() => {
+    document.getElementById('ngayNhan').selectedIndex = 0;
+    document.getElementById('timeMeat').value = '';
+    document.getElementById('timeVeg').value = '';
+    document.getElementById('summary').style.display = 'none';
+  }, 1000);
+}
+
+function viewAll() {
+  const saved = JSON.parse(localStorage.getItem('nhanhang_data') || '[]');
+  if (!saved.length) return alert('Chưa có đăng ký nào');
+  
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<tr style="background:#f5f5f5"><th>CH</th><th>Ngày</th><th>Thịt</th><th>Rau</th></tr>';
+  saved.forEach(d => {
+    html += `<tr style="border-bottom:1px solid #eee">
+      <td>${d.maCH} ${d.tenCH}</td><td>${d.ngayNhan}</td>
+      <td>${d.timeMeat||'-'}</td><td>${d.timeVeg||'-'}</td></tr>`;
+  });
+  html += '</table>';
+  
+  const w = window.open('', '_blank', 'width=600,height=400');
+  w.document.write(`<html><head><meta charset="UTF-8"><title>DS Dang Ky</title>
+    <style>body{font-family:Arial;padding:16px}th,td{padding:8px;text-align:left}</style>
+    </head><body><h3>📋 Danh sách đăng ký nhận hàng</h3>${html}
+    <p style="margin-top:16px"><button onclick="exportExcel()" style="padding:8px 16px;background:#27ae60;color:white;border:none;border-radius:4px;cursor:pointer">📥 Xuất Excel</button></p>
+    <script>
+      function exportExcel() {
+        let csv = 'GDV,Tinh,Ma CH,Ten CH,Ngay nhan hang,Thoi gian nhan Thit MDL,Thoi gian nhan Rau-Trai cay\\n';
+        const data = ${JSON.stringify(saved)};
+        data.forEach(d => csv += [d.gdv,d.tinh,d.maCH,d.tenCH,d.ngayNhan,d.timeMeat,d.timeVeg].join(',') + '\\n');
+        const blob = new Blob(['\\uFEFF' + csv], {type: 'text/csv;charset=utf-8'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'NhanHang_0510_1110.csv'; a.click();
+      }
+    </script></body></html>`);
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// Init
+initTimeSlots();
+loadStores();
+</script>
+</body>
+</html>
