@@ -62,6 +62,9 @@
     .ms-chip { display: inline-flex; align-items: center; gap: 2px; background: #e8f0fe; color: #1F4E79; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
     .ms-chip .x { cursor: pointer; font-weight: bold; margin-left: 2px; }
     
+    .view-btn { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; font-size: 12px; background: white; transition: all .15s; }
+    .view-btn.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+    
     .toast { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 12px 20px; border-radius: 4px; display: none; }
     .loading { text-align: center; padding: 40px; color: #999; }
     
@@ -179,8 +182,15 @@ function renderDashboard() {
       <div class="stat-card"><div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div></div>
     </div>
     
+    <!-- VIEW TOGGLE -->
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <span style="font-weight:600;color:#1F4E79;font-size:12px">View:</span>
+      <button id="btnViewCTKM" class="view-btn active" onclick="switchView('CTKM')">📋 Theo CTKM</button>
+      <button id="btnViewMCH3" class="view-btn" onclick="switchView('MCH3')">🏷 Theo MCH3</button>
+    </div>
+    
     <!-- BỘ LỌC DASHBOARD (dropdown multi-select + chip) -->
-    <div style="background:white;border-radius:8px;padding:10px 14px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div style="background:white;border-radius:8px;padding:10px 14px;margin:8px 0 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap">🔍</span>
       
       <!-- Loại CTKM -->
@@ -226,6 +236,8 @@ function renderDashboard() {
     <!-- Chip display for selected -->
     <div id="msChipsBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:0"></div>
     
+    <!-- VIEW: Theo CTKM -->
+    <div id="viewCTKM">
     <h3 style="margin:20px 0 8px;color:#28a745">🟢 CTKM ĐANG HIỆU LỰC (<span id="activeCount">${activeNow.length}</span>)</h3>
     <div class="table-wrap" id="activeCTTable">${renderCTTable(activeNow)}</div>
     
@@ -244,11 +256,19 @@ function renderDashboard() {
       </select>
     </div>
     <div class="table-wrap" id="allCTTable">${renderCTTable(allCT)}</div>
+    </div>
+    
+    <!-- VIEW: Theo MCH3 -->
+    <div id="viewMCH3" style="display:none">
+      <h3 style="margin:20px 0 8px">🏷 CTKM THEO NHÓM HÀNG (MCH3)</h3>
+      <div class="table-wrap" id="mch3CTTable">${renderMCH3View(allCT)}</div>
+    </div>
   `;
   // Store for filter
   window._allCT = allCT;
   window._activeNow = activeNow;
   window._upcoming = upcoming;
+  window._currentView = 'CTKM';
 }
 
 // ============ MULTI-SELECT DROPDOWN ============
@@ -364,6 +384,11 @@ function applyDashFilter() {
   allCT_cts = filteredAll;
   document.getElementById('allCTTable').innerHTML = renderCTTable(filteredAll);
   document.getElementById('dashFilterCount').textContent = `${filteredAll.length} CT`;
+  
+  // Update MCH3 view if active
+  if (window._currentView === 'MCH3') {
+    document.getElementById('mch3CTTable').innerHTML = renderMCH3View(filteredAll);
+  }
 }
 
 function refreshAllCT() {
@@ -466,8 +491,122 @@ function toggleCTExpand(ctKey, rowEl) {
   } else {
     expandedCT.add(ctKey);
   }
-  // Re-render to update all expand states
   applyDashFilter();
+}
+
+// ============ VIEW SWITCH ============
+function switchView(view) {
+  window._currentView = view;
+  document.getElementById('btnViewCTKM').classList.toggle('active', view==='CTKM');
+  document.getElementById('btnViewMCH3').classList.toggle('active', view==='MCH3');
+  document.getElementById('viewCTKM').style.display = view==='CTKM' ? '' : 'none';
+  document.getElementById('viewMCH3').style.display = view==='MCH3' ? '' : 'none';
+  if (view === 'MCH3') updateMCH3View();
+}
+
+function renderMCH3View(data) {
+  // Group by nhom
+  const groups = {};
+  data.forEach(r => {
+    const nhom = r.nhom || 'Khác';
+    if (!groups[nhom]) groups[nhom] = [];
+    groups[nhom].push(r);
+  });
+  const sortedGroups = Object.keys(groups).sort();
+  
+  const skuData = window._skuData || [];
+  const skuByCT = {};
+  skuData.forEach(row => {
+    const ctName = (row[1]||'').toString();
+    if (!ctName) return;
+    if (!skuByCT[ctName]) skuByCT[ctName] = [];
+    skuByCT[ctName].push(row);
+  });
+  
+  return `<table>
+    <tr><th style="width:20px"></th><th>Nhóm hàng / CTKM</th><th>Loại</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>
+    ${sortedGroups.map(nhom => {
+      const items = groups[nhom];
+      const totalSKU = items.reduce((s,r) => s + (r.sku||0), 0);
+      const grpId = 'grp_' + nhom.replace(/[^a-zA-Z0-9]/g,'_');
+      const isExp = expandedCT.has(grpId);
+      return `
+      <tr class="ct-row" style="background:#eef2ff;font-weight:600;cursor:pointer" onclick="toggleGroupExpand('${grpId}')">
+        <td style="text-align:center">${isExp?'▼':'▶'}</td>
+        <td colspan="9">🏷 ${nhom} (${items.length} CT · ${totalSKU} SKU)</td>
+      </tr>
+      ${isExp ? items.map(r => {
+        const ctKey = r.ten||'';
+        const skus = skuByCT[ctKey] || [];
+        const expId = 'mch3_' + ctKey.replace(/[^a-zA-Z0-9]/g,'_');
+        return `
+        <tr class="ct-row" onclick="toggleCTExpandMCH3('${ctKey.replace(/'/g,"\\'")}')" style="cursor:pointer">
+          <td style="text-align:center;padding-left:20px">${expandedCT.has(ctKey)?'▼':'▶'}</td>
+          <td>${(r.ten||'').substring(0,50)}</td>
+          <td>${r.loai||''}</td><td><b>${r.sku||0}</b></td>
+          <td>${fmtDate(r.ngayBD)}</td><td>${fmtDate(r.ngayKT)}</td>
+          <td>${r.bac?'✓':''}</td><td>${r.trung?'✓':''}</td><td>${r.nam?'✓':''}</td><td>${r.tay?'✓':''}</td>
+        </tr>
+        <tr class="ct-detail" style="display:${expandedCT.has(ctKey)?'table-row':'none'};background:#f8faff">
+          <td colspan="10" style="padding:8px 12px">
+            ${skus.length > 0 ? `
+            <table style="width:100%;font-size:10px;border-collapse:collapse">
+              <tr style="background:#eef2ff"><th style="padding:2px 4px;text-align:left">Mã hàng</th><th style="padding:2px 4px;text-align:left">Tên hàng</th><th style="padding:2px 4px;text-align:right">Giá thường</th><th style="padding:2px 4px;text-align:right">Giá KM</th></tr>
+              ${skus.map(sku => `<tr><td style="padding:2px 4px">${sku[4]||''}</td><td style="padding:2px 4px">${(sku[5]||'').substring(0,50)}</td><td style="padding:2px 4px;text-align:right">${Number(sku[8]||0).toLocaleString()}</td><td style="padding:2px 4px;text-align:right">${Number(sku[9]||0).toLocaleString()}</td></tr>`).join('')}
+            </table>` : '<span style="color:#888;font-size:10px">Không có dữ liệu mã hàng</span>'}
+          </td>
+        </tr>`;
+      }).join('') : ''}`;
+    }).join('')}
+  </table>`;
+}
+
+function toggleGroupExpand(grpId) {
+  if (expandedCT.has(grpId)) expandedCT.delete(grpId);
+  else expandedCT.add(grpId);
+  updateMCH3View();
+}
+function toggleCTExpandMCH3(ctKey) {
+  if (expandedCT.has(ctKey)) expandedCT.delete(ctKey);
+  else expandedCT.add(ctKey);
+  updateMCH3View();
+}
+function updateMCH3View() {
+  const data = window._allCT || [];
+  const filtered = getFilteredCT(data);
+  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(filtered);
+}
+
+function getFilteredCT(data) {
+  const selLoai = new Set(getMSValues('msLoai'));
+  const selNhom = new Set(getMSValues('msNhom'));
+  const selMien = new Set(getMSValues('msMien'));
+  const selTime = document.getElementById('dashFilterTime2')?.value || '';
+  const now = new Date();
+  
+  return data.filter(r => {
+    if (selLoai.size > 0 && !selLoai.has(r.loai)) return false;
+    if (selNhom.size > 0 && !selNhom.has(r.nhom)) return false;
+    if (selMien.size > 0) {
+      let ok = false;
+      if (selMien.has('bac') && r.bac) ok = true;
+      if (selMien.has('trung') && r.trung) ok = true;
+      if (selMien.has('nam') && r.nam) ok = true;
+      if (selMien.has('tay') && r.tay) ok = true;
+      if (!ok) return false;
+    }
+    if (selTime) {
+      let bd = r.ngayBD ? new Date(r.ngayBD) : null;
+      if (bd && isNaN(bd.getTime())) bd = null;
+      if (!bd) return false;
+      if (selTime === 'homNay' && !(bd <= now && r.ngayKT && new Date(r.ngayKT) >= now)) return false;
+      if (selTime === '7ngay' && bd > new Date(now.getTime()+7*86400000)) return false;
+      if (selTime === '30ngay' && bd > new Date(now.getTime()+30*86400000)) return false;
+      if (selTime === 'thangNay' && (bd.getMonth()!==now.getMonth()||bd.getFullYear()!==now.getFullYear())) return false;
+      if (selTime === 'quyNay' && (Math.floor(bd.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd.getFullYear()!==now.getFullYear())) return false;
+    }
+    return true;
+  });
 }
 
 // ============ DATA TABLE ============
