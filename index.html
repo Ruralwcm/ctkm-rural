@@ -19,6 +19,7 @@
     .stat-card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
     .stat-card .num { font-size: 28px; font-weight: 700; color: #1F4E79; }
     .stat-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+    .stat-card.active-card { box-shadow: 0 0 0 2px #1F4E79; transform: translateY(-1px); }
     
     /* Table */
     .table-wrap { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); overflow: auto; }
@@ -188,10 +189,18 @@ function renderDashboard() {
   
   document.getElementById('mainContent').innerHTML = `
     <div class="stats">
-      <div class="stat-card"><div class="num">${allCT.length}</div><div class="label">Tổng CTKM</div></div>
-      <div class="stat-card" style="border-left:3px solid #28a745"><div class="num" style="color:#28a745">${activeNow.length}</div><div class="label">🟢 Đang hiệu lực</div></div>
-      <div class="stat-card" style="border-left:3px solid #F9A825"><div class="num" style="color:#F9A825">${upcoming.length}</div><div class="label">🟡 Sắp diễn ra</div></div>
-      <div class="stat-card"><div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div></div>
+      <div class="stat-card" id="cardAll" onclick="quickFilter('all')" style="cursor:pointer;transition:all .15s" title="Lọc: Tất cả CTKM">
+        <div class="num">${allCT.length}</div><div class="label">Tổng CTKM</div>
+      </div>
+      <div class="stat-card" id="cardActive" onclick="quickFilter('active')" style="cursor:pointer;transition:all .15s;border-left:3px solid #28a745" title="Lọc: CTKM đang hiệu lực">
+        <div class="num" style="color:#28a745">${activeNow.length}</div><div class="label">🟢 Đang hiệu lực</div>
+      </div>
+      <div class="stat-card" id="cardUpcoming" onclick="quickFilter('upcoming')" style="cursor:pointer;transition:all .15s;border-left:3px solid #F9A825" title="Lọc: CTKM sắp diễn ra">
+        <div class="num" style="color:#F9A825">${upcoming.length}</div><div class="label">🟡 Sắp diễn ra</div>
+      </div>
+      <div class="stat-card" id="cardSKU" onclick="quickFilter('mch3')" style="cursor:pointer;transition:all .15s" title="Xem theo MCH3">
+        <div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div>
+      </div>
     </div>
     
     <!-- VIEW TOGGLE -->
@@ -503,7 +512,60 @@ function toggleCTExpand(ctKey, rowEl) {
   applyDashFilter();
 }
 
-// ============ VIEW SWITCH ============
+// ============ QUICK FILTER CARDS ============
+function quickFilter(type) {
+  // Highlight card
+  document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-card'));
+  if (type !== 'none') document.getElementById('card' + (type==='all'?'All':type==='active'?'Active':type==='upcoming'?'Upcoming':'SKU')).classList.add('active-card');
+  
+  const now = new Date();
+  if (type === 'all') {
+    // Reset all filters + show all
+    ['msLoai','msNhom','msMien'].forEach(id => {
+      document.querySelectorAll('#'+id+' .ms-item.selected').forEach(s => s.classList.remove('selected'));
+      updateMSBtn(id);
+    });
+    document.getElementById('dashFilterTime2').value = '';
+    refreshChipsBar();
+    switchView('CTKM');
+  } else if (type === 'active') {
+    switchView('CTKM');
+    applyQuickFilter(r => {
+      let bd = r.ngayBD ? new Date(r.ngayBD) : null;
+      let kt = r.ngayKT ? new Date(r.ngayKT) : null;
+      if (bd && isNaN(bd.getTime())) bd = null;
+      if (kt && isNaN(kt.getTime())) kt = null;
+      if (bd && kt && bd <= now && kt >= now) return true;
+      const ktStr = (r.ngayKT||'').toString().toLowerCase();
+      return ktStr.includes('đến khi có tb') || ktStr.includes('31.12.2026') || ktStr.includes('31/12/2026');
+    });
+  } else if (type === 'upcoming') {
+    switchView('CTKM');
+    const next30d = new Date(now); next30d.setDate(next30d.getDate() + 30);
+    applyQuickFilter(r => {
+      let bd = r.ngayBD ? new Date(r.ngayBD) : null;
+      if (bd && isNaN(bd.getTime())) bd = null;
+      return bd && bd > now && bd <= next30d;
+    });
+  } else if (type === 'mch3') {
+    switchView('MCH3');
+  }
+}
+
+function applyQuickFilter(fn) {
+  const active = window._activeNow.filter(fn);
+  const upcoming = window._upcoming.filter(fn);
+  const all = window._allCT.filter(fn);
+  document.getElementById('activeCount').textContent = active.length;
+  document.getElementById('upcomingCount').textContent = upcoming.length;
+  document.getElementById('allCount').textContent = all.length;
+  document.getElementById('activeCTTable').innerHTML = renderCTTable(active);
+  document.getElementById('upcomingCTTable').innerHTML = renderCTTable(upcoming);
+  allCT_cts = all;
+  document.getElementById('allCTTable').innerHTML = renderCTTable(all);
+  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(all);
+  document.getElementById('dashFilterCount').textContent = `${all.length} CT`;
+}
 function switchView(view) {
   window._currentView = view;
   document.getElementById('btnViewCTKM').classList.toggle('active', view==='CTKM');
