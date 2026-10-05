@@ -301,7 +301,7 @@ function renderDashboard() {
     <div class="table-wrap" id="upcomingCTTable">${renderCTTable(upcoming)}</div>
     
     <h3 style="margin:20px 0 8px;display:none" id="allHdr">📋 TẤT CẢ CTKM (<span id="allCount">${allCT.length}</span>)</h3>
-    <div style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <select id="sortBy" onchange="refreshAllCT()" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px">
         <option value="ten">Sắp xếp: Theo tên CTKM</option>
         <option value="nhom">Theo Nhóm hàng (MCH3)</option>
@@ -310,8 +310,11 @@ function renderDashboard() {
         <option value="pctKM">Theo % Giảm giá</option>
         <option value="dienGiai">Theo Diễn giải KM</option>
       </select>
+      <label style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" id="showExpired" onchange="toggleExpired()" style="width:auto"> Hiện CTKM hết hạn
+      </label>
     </div>
-    <div class="table-wrap" id="allCTTable">${renderCTTable(allCT)}</div>
+    <div class="table-wrap" id="allCTTable">${renderCTTable(allCT.filter(function(r){var kt=r.ngayKT?new Date(r.ngayKT):null;return !kt||isNaN(kt.getTime())||kt>=new Date();}))}</div>
     </div>
     
     <!-- VIEW: Theo MCH3 -->
@@ -469,7 +472,13 @@ function applyDashFilter() {
   document.getElementById('activeCTTable').innerHTML = renderCTTable(filteredActive);
   document.getElementById('upcomingCTTable').innerHTML = renderCTTable(filteredUpcoming);
   allCT_cts = filteredAll;
-  document.getElementById('allCTTable').innerHTML = renderCTTable(filteredAll);
+  // Filter all table by expired toggle
+  var allVisible = getVisibleAllCT();
+  allVisible = allVisible.filter(function(r) {
+    // Apply same filterFn logic
+    return filteredAll.some(function(fr) { return fr.ten === r.ten && fr.ma === r.ma; });
+  });
+  document.getElementById('allCTTable').innerHTML = renderCTTable(allVisible);
   
   document.getElementById('activeHdr').style.display = filteredActive.length > 0 ? '' : 'none';
   document.getElementById('upcomingHdr').style.display = filteredUpcoming.length > 0 ? '' : 'none';
@@ -648,6 +657,25 @@ function quickFilter(type) {
   }
 }
 
+function toggleExpired() {
+  applyDashFilter();
+}
+
+// Override the all CT display to respect showExpired checkbox
+let _allCTRenderCache = null;
+function getVisibleAllCT() {
+  var all = window._allCT || [];
+  var cb = document.getElementById('showExpired');
+  if (cb && !cb.checked) {
+    var now = new Date();
+    all = all.filter(function(r) {
+      var kt = r.ngayKT ? new Date(r.ngayKT) : null;
+      return !kt || isNaN(kt.getTime()) || kt >= now;
+    });
+  }
+  return all;
+}
+
 function applyQuickFilter(fn) {
   const active = window._activeNow.filter(fn);
   const upcoming = window._upcoming.filter(fn);
@@ -661,6 +689,11 @@ function applyQuickFilter(fn) {
   document.getElementById('allCTTable').innerHTML = renderCTTable(all);
   document.getElementById('mch3CTTable').innerHTML = renderMCH3View(all);
   document.getElementById('dashFilterCount').textContent = `${all.length} CT`;
+  // Update allCT table with expired filter
+  var visibleAll = getVisibleAllCT().filter(fn);
+  allCT_cts = visibleAll;
+  document.getElementById('allCTTable').innerHTML = renderCTTable(visibleAll);
+  document.getElementById('allCount').textContent = window._allCT ? window._allCT.filter(fn).length : 0;
 }
 function switchView(view) {
   window._currentView = view;
