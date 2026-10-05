@@ -726,23 +726,32 @@ function getFilteredCT(data) {
 // ============ DATA TABLE ============
 function renderDataTable() {
   document.getElementById('mainContent').innerHTML = `
-    <div class="filter-bar">
-      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()">
-      <select id="filterLoai" onchange="filterTable()">
-        <option value="">Tất cả Phân loại</option>
-        ${[...new Set(groupedData.map(r=>r[2]))].filter(Boolean).sort().map(v=>`<option>${v}</option>`).join('')}
-      </select>
-      <select id="filterNhom" onchange="filterTable()">
-        <option value="">Tất cả Nhóm hàng</option>
-        ${[...new Set(groupedData.map(r=>r[3]))].filter(Boolean).sort().map(v=>`<option>${v}</option>`).join('')}
-      </select>
-      <select id="filterMien" onchange="filterTable()">
-        <option value="">Tất cả Miền</option>
-        <option value="bac">BẮC</option><option value="trung">TRUNG</option>
-        <option value="nam">NAM</option><option value="tay">TÂY</option>
-      </select>
-      <input id="filterDateFrom" type="date" onchange="filterTable()" title="Tu ngay hieu luc" style="width:140px">
-      <input id="filterDateTo" type="date" onchange="filterTable()" title="Den ngay hieu luc" style="width:140px">
+    <div class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:150px;max-width:250px;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">
+      
+      <div class="ms-wrap" id="msLoaiD">
+        <button class="ms-btn" data-title="Phân loại" onclick="toggleMS('msLoaiD')" style="min-width:100px">Phân loại ▾</button>
+        <div class="ms-drop" id="msLoaiDDrop">${[...new Set(groupedData.map(r=>r[2]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msLoaiD');filterTable()">${v}</div>`).join('')}</div>
+      </div>
+      
+      <div class="ms-wrap" id="msNhomD">
+        <button class="ms-btn" data-title="Nhóm hàng" onclick="toggleMS('msNhomD')" style="min-width:100px">Nhóm hàng ▾</button>
+        <div class="ms-drop" id="msNhomDDrop">${[...new Set(groupedData.map(r=>r[3]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhomD');filterTable()">${v}</div>`).join('')}</div>
+      </div>
+      
+      <div class="ms-wrap" id="msMienD">
+        <button class="ms-btn" data-title="Miền" onclick="toggleMS('msMienD')" style="min-width:90px">Miền ▾</button>
+        <div class="ms-drop" id="msMienDDrop">
+          <div class="ms-item" data-val="bac" onclick="toggleMSItem(this,'msMienD');filterTable()">BẮC</div>
+          <div class="ms-item" data-val="trung" onclick="toggleMSItem(this,'msMienD');filterTable()">TRUNG</div>
+          <div class="ms-item" data-val="nam" onclick="toggleMSItem(this,'msMienD');filterTable()">NAM</div>
+          <div class="ms-item" data-val="tay" onclick="toggleMSItem(this,'msMienD');filterTable()">TÂY</div>
+        </div>
+      </div>
+      
+      <input id="filterDateFrom" type="date" onchange="filterTable()" style="width:125px;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:11px">
+      <span style="font-size:11px;color:#888">→</span>
+      <input id="filterDateTo" type="date" onchange="filterTable()" style="width:125px;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:11px">
     </div>
     <div class="table-wrap" id="dataTable"></div>
   `;
@@ -784,19 +793,23 @@ function doSKUFilter() {
 
 function filterTable(skuMatchedCTs = null) {
   const search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
-  const loai = document.getElementById('filterLoai')?.value || '';
-  const nhom = document.getElementById('filterNhom')?.value || '';
-  const mienFilter = document.getElementById('filterMien')?.value || '';
-  const mienIdx = {bac:10, trung:11, nam:12, tay:13}[mienFilter];
+  const selLoai = new Set(getMSValues('msLoaiD'));
+  const selNhom = new Set(getMSValues('msNhomD'));
+  const selMien = new Set(getMSValues('msMienD'));
   const dateFrom = document.getElementById('filterDateFrom')?.value || '';
   const dateTo = document.getElementById('filterDateTo')?.value || '';
   
   let filtered = groupedData.filter(r => {
     const rowStr = Object.values(r).join(' ').toLowerCase();
     if (search && !rowStr.includes(search)) return false;
-    if (loai && r[2] !== loai) return false;
-    if (nhom && r[3] !== nhom) return false;
-    if (mienIdx && !r[mienIdx]) return false;
+    if (selLoai.size > 0 && !selLoai.has(r[2])) return false;
+    if (selNhom.size > 0 && !selNhom.has(r[3])) return false;
+    if (selMien.size > 0) {
+      const mienMap = {bac:10, trung:11, nam:12, tay:13};
+      let ok = false;
+      for (const m of selMien) { if (r[mienMap[m]]) { ok = true; break; } }
+      if (!ok) return false;
+    }
     if (skuMatchedCTs && !skuMatchedCTs.has(r[1]?.toString())) return false;
     if (dateFrom && r[6]) {
       const d = new Date(r[6]);
