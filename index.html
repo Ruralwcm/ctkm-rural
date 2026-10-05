@@ -517,7 +517,6 @@ function refreshAllCT() {
 let allCT_cts = []; // cached for sort
 
 function renderUnifiedCTTable(active, upcoming, all) {
-  // Build one table with section headers
   var showExpired = document.getElementById('showExpired');
   var showExp = showExpired ? showExpired.checked : false;
   if (!showExp) {
@@ -527,34 +526,6 @@ function renderUnifiedCTTable(active, upcoming, all) {
     });
   }
   
-  var html = '<table style="table-layout:fixed;width:100%;min-width:850px"><colgroup>' +
-    '<col style="width:26px"><col style="width:50px"><col style="width:auto"><col style="width:100px">' +
-    '<col style="width:110px"><col style="width:50px"><col style="width:80px"><col style="width:80px">' +
-    '<col style="width:26px"><col style="width:26px"><col style="width:26px"><col style="width:26px"></colgroup>' +
-    '<tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>';
-  
-  // Active section
-  if (active.length > 0) {
-    html += '<tr style="background:#f0fdf4"><td colspan="12" style="padding:6px 10px;font-weight:700;color:#16a34a;font-size:13px">🟢 CTKM ĐANG HIỆU LỰC (' + active.length + ')</td></tr>';
-    html += renderCTRows(active);
-  }
-  
-  // Upcoming section
-  if (upcoming.length > 0) {
-    html += '<tr style="background:#fefce8"><td colspan="12" style="padding:6px 10px;font-weight:700;color:#ca8a04;font-size:13px">🟡 CTKM SẮP DIỄN RA (' + upcoming.length + ')</td></tr>';
-    html += renderCTRows(upcoming);
-  }
-  
-  // All section
-  html += '<tr style="background:#f8f9fa"><td colspan="12" style="padding:6px 10px;font-weight:700;color:#1e293b;font-size:13px">📋 TẤT CẢ CTKM (' + all.length + ') ' +
-    '<label style="font-weight:400;font-size:11px;margin-left:10px;cursor:pointer"><input type="checkbox" id="showExpired2" onchange="toggleExpired2()" style="width:auto;margin-right:4px" ' + (showExp?'checked':'') + '>Hiện CTKM hết hạn</label></td></tr>';
-  html += renderCTRows(all);
-  
-  html += '</table>';
-  return html;
-}
-
-function renderCTRows(data) {
   var skuData = window._skuData || [];
   var skuByCT = {};
   skuData.forEach(function(row) {
@@ -563,39 +534,75 @@ function renderCTRows(data) {
     if (!skuByCT[ctName]) skuByCT[ctName] = [];
     skuByCT[ctName].push(row);
   });
-  
-  return data.map(function(r, idx) {
-    var ctKey = r.ten||'';
-    var skus = skuByCT[ctKey] || [];
-    var isExp = expandedCT.has(ctKey);
-    var isExpired = r.ngayKT && (function(){var kt=new Date(r.ngayKT);if(isNaN(kt.getTime()))return false;return kt < new Date();})();
-    
-    var rowHtml = '<tr onclick="toggleCTExpand2(\'' + ctKey.replace(/'/g,"\\'") + '\')" style="cursor:pointer;' + (isExpired?'opacity:.5;background:#f8f9fa':'') + '">' +
-      '<td style="width:20px;text-align:center">' + (isExp?'▼':'▶') + '</td>' +
-      '<td>' + (r.ma||'') + '</td>' +
-      '<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (r.ten||'') + '">' + (r.ten||'').substring(0,50) + '</td>' +
-      '<td>' + (r.loai||'') + '</td><td>' + (r.nhom||'') + '</td><td><b>' + (r.sku||0) + '</b></td>' +
-      '<td>' + fmtDate(r.ngayBD) + '</td><td>' + fmtDate(r.ngayKT) + '</td>' +
-      '<td>' + (r.bac?'✓':'') + '</td><td>' + (r.trung?'✓':'') + '</td><td>' + (r.nam?'✓':'') + '</td><td>' + (r.tay?'✓':'') + '</td>' +
-      '</tr>';
-    
-    if (isExp && skus.length > 0) {
-      rowHtml += '<tr style="background:#f8faff"><td colspan="12" style="padding:8px 12px">' +
-        '<table style="width:100%;font-size:11px;border-collapse:collapse">' +
-        '<tr style="background:#eef2ff"><th style="padding:3px 6px;text-align:left">Mã hàng</th><th style="padding:3px 6px;text-align:left">Tên hàng</th><th style="padding:3px 6px;text-align:left">ĐVT</th><th style="padding:3px 6px;text-align:right">Giá thường</th><th style="padding:3px 6px;text-align:right">Giá KM</th><th style="padding:3px 6px;text-align:left">Diễn giải</th></tr>' +
-        skus.map(function(sku) {
-          return '<tr><td style="padding:2px 6px">'+(sku[4]||'')+'</td><td style="padding:2px 6px">'+(sku[5]||'').substring(0,60)+'</td><td style="padding:2px 6px">'+(sku[6]||'')+'</td><td style="padding:2px 6px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td><td style="padding:2px 6px;text-align:right">'+Number(sku[9]||0).toLocaleString()+'</td><td style="padding:2px 6px;font-size:10px">'+(sku[7]||'').substring(0,80)+'</td></tr>';
-        }).join('') +
-        '</table></td></tr>';
-    }
-    return rowHtml;
-  }).join('');
-}
 
-function toggleCTExpand2(ctKey) {
-  if (expandedCT.has(ctKey)) expandedCT.delete(ctKey);
-  else expandedCT.add(ctKey);
-  applyDashFilter();
+  function mienAD(sku) {
+    var p = [];
+    if (sku[17]) p.push('B');
+    if (sku[18]) p.push('T');
+    if (sku[19]) p.push('N');
+    if (sku[20]) p.push('Ty');
+    if (p.length===4) return 'ALL';
+    return p.length ? p.join('/') : '';
+  }
+  
+  function renderCTGroup(items, title, color) {
+    if (!items.length) return '';
+    var html = '<tr style="background:'+color+'"><td colspan="11" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
+    items.forEach(function(r) {
+      var ctKey = r.ten||'';
+      var skus = skuByCT[ctKey] || [];
+      var grpId = 'ct_' + ctKey.replace(/[^a-zA-Z0-9]/g,'_');
+      var isExp = expandedCT.has(ctKey);
+      var isExpired = r.ngayKT && (function(){var kt=new Date(r.ngayKT);if(isNaN(kt.getTime()))return false;return kt<new Date();})();
+      
+      html += '<tr onclick="toggleCTExpand2(\'' + ctKey.replace(/'/g,"\\'") + '\')" style="cursor:pointer;'
+        + (isExpired?'opacity:.5;background:#f8f9fa':'')+'font-weight:600">'
+        + '<td style="text-align:center">'+(isExp?'▼':'▶')+'</td>'
+        + '<td>'+(r.ma||'')+'</td>'
+        + '<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r.ten||'')+'">'+(r.ten||'').substring(0,50)+'</td>'
+        + '<td>'+(r.loai||'')+'</td>'
+        + '<td style="text-align:right;font-weight:700">'+(r.sku||0)+'</td>'
+        + '<td>'+fmtDate(r.ngayBD)+'</td>'
+        + '<td>'+fmtDate(r.ngayKT)+'</td>'
+        + '<td>'+(r.bac?'B':'')+'</td>'
+        + '<td>'+(r.trung?'T':'')+'</td>'
+        + '<td>'+(r.nam?'N':'')+'</td>'
+        + '<td>'+(r.tay?'Ty':'')+'</td>'
+        + '</tr>';
+      
+      if (isExp && skus.length > 0) {
+        html += '<tr style="background:#f8faff"><td></td><td colspan="10" style="padding:4px 8px">'
+          + '<table style="width:100%;font-size:11px;border-collapse:collapse">'
+          + '<tr style="background:#eef2ff"><th style="padding:3px 6px;text-align:left">Mã SP</th><th style="padding:3px 6px;text-align:left">Tên SP</th><th style="padding:3px 6px">ĐVT</th><th style="padding:3px 6px;text-align:right">Giá thường</th><th style="padding:3px 6px;text-align:right">Giá KM</th><th style="padding:3px 6px">Loại CTKM</th><th style="padding:3px 6px">Diễn giải</th><th style="padding:3px 6px">Miền AD</th><th style="padding:3px 6px">Ngày BĐ</th><th style="padding:3px 6px">Ngày KT</th></tr>'
+          + skus.map(function(sku){return '<tr>'
+            + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
+            + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
+            + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
+            + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
+            + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
+            + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
+            + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
+            + '<td style="padding:2px 4px">'+mienAD(sku)+'</td>'
+            + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
+            + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
+            + '</tr>';}).join('')
+          + '</table></td></tr>';
+      }
+    });
+    return html;
+  }
+  
+  var html = '<table style="table-layout:fixed;width:100%;min-width:800px"><colgroup>'
+    + '<col style="width:26px"><col style="width:50px"><col style="width:auto"><col style="width:100px">'
+    + '<col style="width:60px"><col style="width:80px"><col style="width:80px">'
+    + '<col style="width:26px"><col style="width:26px"><col style="width:26px"><col style="width:26px"></colgroup>'
+    + '<tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>';
+  
+  html += renderCTGroup(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
+  html += renderCTGroup(upcoming, '🟡 CTKM SẮP DIỄN RA', '#fefce8');
+  html += renderCTGroup(all, '📋 TẤT CẢ CTKM', '#f8f9fa');
+  html += '</table>';
+  return html;
 }
 
 function toggleExpired2() {
