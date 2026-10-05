@@ -98,8 +98,20 @@ input:focus,select:focus{border-color:#2e7d32;outline:none}
 // ===== CONFIG =====
 const SHEET_ID = '1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A';
 const SHEET_NAME = 'Store_list';
-const DAYS = ['05/10/2026','06/10/2026','07/10/2026','08/10/2026','09/10/2026','10/10/2026','11/10/2026'];
-const DAY_LABELS = ['T2 05/10','T3 06/10','T4 07/10','T5 08/10','T6 09/10','T7 10/10','CN 11/10'];
+// Dynamic: chỉ hiện Hôm qua (D-1) & Hôm nay
+const WEEKDAYS = ['CN','T2','T3','T4','T5','T6','T7'];
+function getAvailableDays() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  return [
+    { value: yesterday.toLocaleDateString('vi-VN'), label: WEEKDAYS[yesterday.getDay()] + ' Hôm qua ' + yesterday.toLocaleDateString('vi-VN') },
+    { value: today.toLocaleDateString('vi-VN'), label: WEEKDAYS[today.getDay()] + ' Hôm nay ' + today.toLocaleDateString('vi-VN') }
+  ];
+}
+const AVAIL_DAYS = getAvailableDays();
+const DAYS = AVAIL_DAYS.map(d => d.value);
+const DAY_LABELS = AVAIL_DAYS.map(d => d.label);
 
 let STORES = [];
 let selectedStore = null;
