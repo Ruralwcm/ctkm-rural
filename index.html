@@ -392,8 +392,8 @@ function getMSLabels(id) {
 }
 
 function refreshChipsBar() {
-  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien');
-  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'}))];
+  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien'), status = getMSLabels('msStatus');
+  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'})), ...status.map(l=>({t:l,g:'msStatus',c:'#fce4ec'}))];
   const bar = document.getElementById('msChipsBar');
   if (!bar) return;
   bar.innerHTML = all.map(x => `<span class="ms-chip" style="background:${x.c}">${x.t}<span class="x" onclick="event.stopPropagation();removeChip('${x.g}','${x.t}')">×</span></span>`).join('');
@@ -422,6 +422,7 @@ function applyDashFilter() {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
+  const selStatus = new Set(getMSValues('msStatus'));
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   
   const now = new Date();
@@ -438,6 +439,20 @@ function applyDashFilter() {
       if (selMien.has('nam') && r.nam) ok = true;
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
+    }
+    if (selStatus.size > 0) {
+      const now2 = new Date(); const twoDays2 = new Date(now2); twoDays2.setDate(twoDays2.getDate()+2);
+      let bdS = r.ngayBD ? new Date(r.ngayBD) : null; let ktS = r.ngayKT ? new Date(r.ngayKT) : null;
+      if (bdS && isNaN(bdS.getTime())) bdS = null;
+      if (ktS && isNaN(ktS.getTime())) ktS = null;
+      if (!bdS || !ktS) return false;
+      let bSD = dayOnly(bdS), kSD = dayOnly(ktS), n2D = dayOnly(now2), t2D = dayOnly(twoDays2);
+      let okS = false;
+      if (selStatus.has('active') && bSD <= n2D && kSD >= n2D) okS = true;
+      if (selStatus.has('upcoming') && bSD > n2D) okS = true;
+      if (selStatus.has('ending') && kSD >= n2D && kSD <= t2D) okS = true;
+      if (selStatus.has('expired') && kSD < n2D) okS = true;
+      if (!okS) return false;
     }
     if (selTime) {
       let bd = r.ngayBD ? new Date(r.ngayBD) : null;
@@ -783,8 +798,8 @@ function renderMCH3View(data) {
 
   return `<table style="table-layout:fixed;width:100%;min-width:700px">
     <colgroup>
-      <col style="width:24px"><col style="width:75px"><col style="width:200px"><col style="width:35px">
-      <col style="width:75px"><col style="width:75px"><col style="width:80px"><col style="width:100px"><col style="width:45px"><col style="width:70px"><col style="width:70px">
+      <col style="width:24px"><col style="width:70px"><col style="width:190px"><col style="width:35px">
+      <col style="width:75px"><col style="width:75px"><col style="width:80px"><col style="width:130px"><col style="width:45px"><col style="width:70px"><col style="width:70px">
     </colgroup>
     <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th style="text-align:right">Giá thường</th><th style="text-align:right">Giá KM</th><th>Loại CTKM</th><th>Diễn giải</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
     ${sortedGroups.map(nhom => {
@@ -835,6 +850,7 @@ function getFilteredSKU(skuData) {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
+  const selStatus = new Set(getMSValues('msStatus'));
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   const now = new Date();
   const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
@@ -845,6 +861,21 @@ function getFilteredSKU(skuData) {
     const nhom = (sku[3]||'').toString();
     if (selLoai.size > 0 && !selLoai.has(loai)) return false;
     if (selNhom.size > 0 && !selNhom.has(nhom)) return false;
+    const selStatus = new Set(getMSValues('msStatus'));
+    if (selStatus.size > 0) {
+      const nowS = new Date(); const twoDaysS = new Date(nowS); twoDaysS.setDate(twoDaysS.getDate()+2);
+      let bdS = sku[12] ? new Date(sku[12]) : null; let ktS = sku[13] ? new Date(sku[13]) : null;
+      if (bdS && isNaN(bdS.getTime())) bdS = null;
+      if (ktS && isNaN(ktS.getTime())) ktS = null;
+      if (!bdS || !ktS) return false;
+      let bSD = dayOnly(bdS), kSD = dayOnly(ktS), nSD = dayOnly(nowS), tSD = dayOnly(twoDaysS);
+      let okS = false;
+      if (selStatus.has('active') && bSD <= nSD && kSD >= nSD) okS = true;
+      if (selStatus.has('upcoming') && bSD > nSD) okS = true;
+      if (selStatus.has('ending') && kSD >= nSD && kSD <= tSD) okS = true;
+      if (selStatus.has('expired') && kSD < nSD) okS = true;
+      if (!okS) return false;
+    }
     if (selMien.size > 0) {
       let ok = false;
       if (selMien.has('bac') && sku[17]) ok = true;
@@ -879,6 +910,7 @@ function getFilteredCT(data) {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
+  const selStatus = new Set(getMSValues('msStatus'));
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   const now = new Date();
   
@@ -892,6 +924,20 @@ function getFilteredCT(data) {
       if (selMien.has('nam') && r.nam) ok = true;
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
+    }
+    if (selStatus.size > 0) {
+      const now2 = new Date(); const twoDays2 = new Date(now2); twoDays2.setDate(twoDays2.getDate()+2);
+      let bdS = r.ngayBD ? new Date(r.ngayBD) : null; let ktS = r.ngayKT ? new Date(r.ngayKT) : null;
+      if (bdS && isNaN(bdS.getTime())) bdS = null;
+      if (ktS && isNaN(ktS.getTime())) ktS = null;
+      if (!bdS || !ktS) return false;
+      let bSD = dayOnly(bdS), kSD = dayOnly(ktS), n2D = dayOnly(now2), t2D = dayOnly(twoDays2);
+      let okS = false;
+      if (selStatus.has('active') && bSD <= n2D && kSD >= n2D) okS = true;
+      if (selStatus.has('upcoming') && bSD > n2D) okS = true;
+      if (selStatus.has('ending') && kSD >= n2D && kSD <= t2D) okS = true;
+      if (selStatus.has('expired') && kSD < n2D) okS = true;
+      if (!okS) return false;
     }
     if (selTime) {
       let bd = r.ngayBD ? new Date(r.ngayBD) : null;
