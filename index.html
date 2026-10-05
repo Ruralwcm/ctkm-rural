@@ -260,13 +260,13 @@ function renderDashboard() {
     
     <!-- VIEW: Theo CTKM -->
     <div id="viewCTKM">
-    <h3 style="margin:20px 0 8px;color:#28a745">🟢 CTKM ĐANG HIỆU LỰC (<span id="activeCount">${activeNow.length}</span>)</h3>
+    <h3 style="margin:20px 0 8px;color:#28a745;display:none" id="activeHdr">🟢 CTKM ĐANG HIỆU LỰC (<span id="activeCount">${activeNow.length}</span>)</h3>
     <div class="table-wrap" id="activeCTTable">${renderCTTable(activeNow)}</div>
     
-    <h3 style="margin:20px 0 8px;color:#F9A825">🟡 CTKM SẮP DIỄN RA (<span id="upcomingCount">${upcoming.length}</span>)</h3>
+    <h3 style="margin:20px 0 8px;color:#F9A825;display:none" id="upcomingHdr">🟡 CTKM SẮP DIỄN RA (<span id="upcomingCount">${upcoming.length}</span>)</h3>
     <div class="table-wrap" id="upcomingCTTable">${renderCTTable(upcoming)}</div>
     
-    <h3 style="margin:20px 0 8px">📋 TẤT CẢ CTKM (<span id="allCount">${allCT.length}</span>)</h3>
+    <h3 style="margin:20px 0 8px;display:none" id="allHdr">📋 TẤT CẢ CTKM (<span id="allCount">${allCT.length}</span>)</h3>
     <div style="margin-bottom:12px">
       <select id="sortBy" onchange="refreshAllCT()" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px">
         <option value="ten">Sắp xếp: Theo tên CTKM</option>
@@ -402,6 +402,15 @@ function applyDashFilter() {
   document.getElementById('upcomingCTTable').innerHTML = renderCTTable(filteredUpcoming);
   allCT_cts = filteredAll;
   document.getElementById('allCTTable').innerHTML = renderCTTable(filteredAll);
+  
+  // Show/hide sections based on content
+  const showActive = filteredActive.length > 0 || !(getMSValues('msLoai').length + getMSValues('msNhom').length + getMSValues('msMien').length + (document.getElementById('dashFilterTime2')?.value||'').length);
+  document.getElementById('activeHdr').style.display = filteredActive.length > 0 ? '' : 'none';
+  document.getElementById('upcomingHdr').style.display = filteredUpcoming.length > 0 ? '' : 'none';
+  document.getElementById('allHdr').style.display = ''; // always show all
+  document.getElementById('activeCTTable').style.display = filteredActive.length > 0 ? '' : 'none';
+  document.getElementById('upcomingCTTable').style.display = filteredUpcoming.length > 0 ? '' : 'none';
+  
   document.getElementById('dashFilterCount').textContent = `${filteredAll.length} CT`;
   
   // Update MCH3 view if active
