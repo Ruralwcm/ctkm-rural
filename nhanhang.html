@@ -98,10 +98,12 @@ let GAS_URL = '';
 
 // Generate time slots 00:00-23:30, every 30min
 function genTimeSlots() {
+  // 06:00 - 18:00, each 30 min
   const slots = [];
-  for (let h = 0; h < 24; h++) {
+  for (let h = 6; h <= 18; h++) {
     for (let m of [0, 30]) {
-      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+      if (h === 18 && m === 30) continue; // stop at 18:00
+      slots.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
     }
   }
   return slots;
@@ -117,29 +119,57 @@ function initTimeSlots() {
   });
 }
 
-// ===== Load store data from GAS =====
+// ===== Load store data from chi-phi-dinh-ky (same origin) =====
 async function loadStores() {
-  GAS_URL = localStorage.getItem('ctkm_gas_url') || prompt('Nhap GAS URL:') || '';
-  if (!GAS_URL) return;
-  localStorage.setItem('ctkm_gas_url', GAS_URL);
-  
+  GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
+
+  // Try loading from chi-phi-dinh-ky first
   try {
-    const resp = await fetch(GAS_URL + '?action=getStores');
-    STORES = await resp.json();
+    const resp = await fetch('https://ruralwcm.github.io/chi-phi-dinh-ky/index.html');
+    const html = await resp.text();
     
-    // Populate GĐV dropdown
+    // Extract store data from the chi-phi-dinh-ky app
+    // The store data is embedded as a JS object
+    const match = html.match(/window\.__STORE_DATA__\s*=\s*({[^}]+})/);
+    if (!match) {
+      // Try to find store list in the DOM/JS
+      console.log('Store data not found in chi-phi-dinh-ky, trying GAS...');
+    } else {
+      const storeObj = JSON.parse(match[1]);
+      STORES = Object.values(storeObj).flatMap(g => 
+        Object.values(g).flatMap(q => q || [])
+      ).map(s => ({
+        ma: s.maSAP || '',
+        ten: s.tenCH || '',
+        gdv: s.gdv || '',
+        tinh: s.tinh || '',
+        qlkv: s.qlkv || ''
+      }));
+      console.log('Loaded', STORES.length, 'stores from chi-phi-dinh-ky');
+    }
+  } catch(e) {
+    console.log('chi-phi-dinh-ky not available:', e.message);
+  }
+  
+  // Also try GAS if available
+  if (GAS_URL && !STORES.length) {
+    try {
+      const resp = await fetch(GAS_URL + '?action=getStores');
+      STORES = await resp.json();
+    } catch(e) {}
+  }
+
+  if (STORES.length > 0) {
     const gdvs = [...new Set(STORES.map(s => s.gdv).filter(Boolean))].sort();
     const gdvSel = document.getElementById('gdv');
     gdvs.forEach(g => gdvSel.innerHTML += `<option value="${g}">${g}</option>`);
     
-    // Populate Tỉnh dropdown
     const tinhs = [...new Set(STORES.map(s => s.tinh).filter(Boolean))].sort();
     const tinhSel = document.getElementById('tinh');
     tinhs.forEach(t => tinhSel.innerHTML += `<option value="${t}">${t}</option>`);
     
     filterStores();
-  } catch(e) {
-    console.log('GAS not available, using manual entry mode');
+  } else {
     showManualMode();
   }
 }
