@@ -599,9 +599,9 @@ function renderUnifiedCTTable(active, upcoming, all) {
       if (isExp && skus.length > 0) {
         html += '<tr style="background:#f8faff"><td></td><td colspan="10" style="padding:4px 8px">'
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
-          + '<col style="width:80px"><col style="width:auto"><col style="width:40px"><col style="width:85px"><col style="width:85px">'
-          + '<col style="width:80px"><col style="width:100px"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
-          + '<tr style="background:#eef2ff"><th style="padding:3px 6px;text-align:left">Mã SP</th><th style="padding:3px 6px;text-align:left">Tên SP</th><th style="padding:3px 6px">ĐVT</th><th style="padding:3px 6px;text-align:right">Giá thường</th><th style="padding:3px 6px;text-align:right">Giá KM</th><th style="padding:3px 6px">Loại CTKM</th><th style="padding:3px 6px">Diễn giải</th><th style="padding:3px 6px">Miền AD</th><th style="padding:3px 6px">Ngày BĐ</th><th style="padding:3px 6px">Ngày KT</th></tr>'
+          + '<col style="width:65px"><col style="width:auto"><col style="width:35px"><col style="width:75px"><col style="width:75px">'
+          + '<col style="width:85px"><col style="width:auto"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
+          '
           + skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
@@ -621,10 +621,10 @@ function renderUnifiedCTTable(active, upcoming, all) {
   }
   
   var minW = window.innerWidth < 600 ? '700px' : '900px';
-  var html = '<table style="table-layout:fixed;width:100%;min-width:'+minW+'"><colgroup>'
-    + '<col style="width:26px"><col style="width:80px"><col style="width:auto"><col style="width:40px"><col style="width:85px"><col style="width:85px">'
-    + '<col style="width:80px"><col style="width:110px"><col style="width:45px"><col style="width:75px"><col style="width:75px"></colgroup>'
-    + '<tr><th></th><th>Mã SP</th><th>Tên SP / CTKM</th><th>ĐVT</th><th style="text-align:right">Giá thường</th><th style="text-align:right">Giá KM</th><th>Loại CTKM</th><th>Diễn giải</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>';
+  var html = '<table style="table-layout:fixed;width:100%;min-width:'+minW+';font-size:12px"><colgroup>'
+    + '<col style="width:24px"><col style="width:65px"><col style="width:auto"><col style="width:35px"><col style="width:75px"><col style="width:75px">'
+    + '<col style="width:85px"><col style="width:auto"><col style="width:45px"><col style="width:70px"><col style="width:70px"></colgroup>'
+    + '<tr><th style="font-size:11px;padding:6px 4px"></th><th style="font-size:11px;padding:6px 4px">Mã SP</th><th style="font-size:11px;padding:6px 4px">Tên SP / CTKM</th><th style="font-size:11px;padding:6px 4px">ĐVT</th><th style="font-size:11px;padding:6px 4px;text-align:right">Giá thường</th><th style="font-size:11px;padding:6px 4px;text-align:right">Giá KM</th><th style="font-size:11px;padding:6px 4px">Loại CTKM</th><th style="font-size:11px;padding:6px 4px">Diễn giải</th><th style="font-size:11px;padding:6px 4px">Miền AD</th><th style="font-size:11px;padding:6px 4px">Ngày BĐ</th><th style="font-size:11px;padding:6px 4px">Ngày KT</th></tr>';
   
   html += renderCTGroup2(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
   html += renderCTGroup2(upcoming, '🟡 CTKM SẮP DIỄN RA', '#fefce8');
