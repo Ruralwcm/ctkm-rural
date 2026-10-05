@@ -421,6 +421,8 @@ function onTimeFilterChange() {
 }
 
 function applyDashFilter() {
+  // Guard: only run on Dashboard tab (skip if Data tab)
+  if (!document.getElementById('dashFilterTime2')) return;
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
