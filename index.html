@@ -52,7 +52,7 @@
     
     /* Multi-select dropdown */
     .ms-wrap { position: relative; display: inline-block; }
-    .ms-btn { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 90px; max-width: 150px; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+    .ms-btn { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 90px; max-width: 150px; text-align: left; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
     .ms-btn:hover { border-color: #1F4E79; }
     .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 99; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 300px; overflow-y: auto; min-width: 200px; max-width: 320px; white-space: nowrap; }
     .ms-wrap.right .ms-drop { left: auto; right: 0; }
@@ -213,8 +213,8 @@ function renderDashboard() {
     </div>
     
     <!-- BỘ LỌC DASHBOARD -->
-    <div style="background:white;border-radius:8px;padding:8px 12px;margin:0 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:8px;align-items:center;overflow-x:auto">
-      <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap">🔍</span>
+    <div style="background:white;border-radius:8px;padding:8px 12px;margin:0 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:8px;align-items:center;overflow-x:auto;min-height:38px">
+      <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap;flex-shrink:0">🔍</span>
       
       <!-- Loại CTKM -->
       <div class="ms-wrap" id="msLoai">
