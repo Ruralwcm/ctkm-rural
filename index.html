@@ -385,6 +385,8 @@ function onTimeFilterChange() {
   custom.style.display = val === 'custom' ? 'flex' : 'none';
   applyDashFilter();
 }
+
+function applyDashFilter() {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
@@ -409,22 +411,17 @@ function onTimeFilterChange() {
       let bd = r.ngayBD ? new Date(r.ngayBD) : null;
       if (bd && isNaN(bd.getTime())) bd = null;
       if (!bd) return false;
-if (selTime) {
-      let bd2 = r.ngayBD ? new Date(r.ngayBD) : null;
-      if (bd2 && isNaN(bd2.getTime())) bd2 = null;
-      if (!bd2) return false;
-      if (selTime === 'homNay') { if (!(bd2 <= now && r.ngayKT && new Date(r.ngayKT) >= now)) return false; }
-      else if (selTime === '7ngay') { if (bd2 > in7d) return false; }
-      else if (selTime === '30ngay') { if (bd2 > in30d) return false; }
-      else if (selTime === 'thangNay') { if (bd2.getMonth()!==now.getMonth()||bd2.getFullYear()!==now.getFullYear()) return false; }
-      else if (selTime === 'quyNay') { if (Math.floor(bd2.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd2.getFullYear()!==now.getFullYear()) return false; }
+      if (selTime === 'homNay') { if (!(bd <= now && r.ngayKT && new Date(r.ngayKT) >= now)) return false; }
+      else if (selTime === '7ngay') { if (bd > in7d) return false; }
+      else if (selTime === '30ngay') { if (bd > in30d) return false; }
+      else if (selTime === 'thangNay') { if (bd.getMonth()!==now.getMonth()||bd.getFullYear()!==now.getFullYear()) return false; }
+      else if (selTime === 'quyNay') { if (Math.floor(bd.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd.getFullYear()!==now.getFullYear()) return false; }
       else if (selTime === 'custom') {
         const df = document.getElementById('dateFrom')?.value;
         const dt = document.getElementById('dateTo')?.value;
-        if (df && bd2 < new Date(df)) return false;
+        if (df && bd < new Date(df)) return false;
         if (dt) { const kt = r.ngayKT ? new Date(r.ngayKT) : null; if (kt && !isNaN(kt) && kt > new Date(dt)) return false; }
       }
-    }
     }
     return true;
   };
@@ -441,17 +438,14 @@ if (selTime) {
   allCT_cts = filteredAll;
   document.getElementById('allCTTable').innerHTML = renderCTTable(filteredAll);
   
-  // Show/hide sections based on content
-  const showActive = filteredActive.length > 0 || !(getMSValues('msLoai').length + getMSValues('msNhom').length + getMSValues('msMien').length + (document.getElementById('dashFilterTime2')?.value||'').length);
   document.getElementById('activeHdr').style.display = filteredActive.length > 0 ? '' : 'none';
   document.getElementById('upcomingHdr').style.display = filteredUpcoming.length > 0 ? '' : 'none';
-  document.getElementById('allHdr').style.display = ''; // always show all
+  document.getElementById('allHdr').style.display = '';
   document.getElementById('activeCTTable').style.display = filteredActive.length > 0 ? '' : 'none';
   document.getElementById('upcomingCTTable').style.display = filteredUpcoming.length > 0 ? '' : 'none';
   
-  document.getElementById('dashFilterCount').textContent = `${filteredAll.length} CT`;
+  document.getElementById('dashFilterCount').textContent = filteredAll.length + ' CT';
   
-  // Update MCH3 view if active
   if (window._currentView === 'MCH3') {
     document.getElementById('mch3CTTable').innerHTML = renderMCH3View(filteredAll);
   }
@@ -1003,13 +997,13 @@ const GAS_URL = localStorage.getItem('ctkm_gas_url') || 'https://script.google.c
 
 async function loadData() {
   const ts = Date.now();
-  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#1F4E79">⏳ Đang tải dữ liệu từ GitHub Pages...</p>';
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#1F4E79">⏳ Đang tải dữ liệu...</p>';
   
   // Step 1: Try GitHub Pages static JSON
   try {
     const [grouped, sku] = await Promise.all([
-      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json?_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}),
-      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json?_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      fetch('https://raw.githubusercontent.com/Ruralwcm/ctkm-rural/main/ctkm_grouped.json?_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}),
+      fetch('https://raw.githubusercontent.com/Ruralwcm/ctkm-rural/main/ctkm_sku.json?_='+ts).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     ]);
     console.log('✅ Data loaded from GitHub Pages');
     return {grouped, sku};
