@@ -1,301 +1,259 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nhận hàng Thịt - Rau Củ · 05-11.10</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; }
-    .header { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; padding: 16px 20px; text-align: center; }
-    .header h1 { font-size: 18px; }
-    .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
-    .container { max-width: 500px; margin: 20px auto; padding: 0 12px; }
-    .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-    .card h3 { font-size: 15px; color: #c0392b; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
-    input, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 12px; background: white; }
-    select:focus, input:focus { border-color: #c0392b; outline: none; }
-    .row { display: flex; gap: 10px; }
-    .row > * { flex: 1; }
-    .btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; }
-    .btn-primary { background: #c0392b; color: white; }
-    .btn-secondary { background: #27ae60; color: white; margin-top: 8px; }
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 6px; color: white; font-weight: 600; display: none; z-index: 100; }
-    .toast.success { background: #27ae60; }
-    .toast.error { background: #e74c3c; }
-    .summary { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 13px; }
-    .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    @media (max-width: 480px) { .row { flex-direction: column; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Khảo Sát Nhận Hàng · 05-11.10</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
+.header{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff;padding:14px 18px;text-align:center}
+.header h1{font-size:17px}.header p{font-size:11px;opacity:0.8;margin-top:2px}
+.container{max-width:520px;margin:20px auto;padding:0 12px}
+.card{background:#fff;border-radius:10px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h3{font-size:14px;color:#2e7d32;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#555}
+input,select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;background:#fff}
+input:focus,select:focus{border-color:#2e7d32;outline:none}
+.row{display:flex;gap:8px}.row>*{flex:1}
+
+/* Store search */
+.search-box{position:relative}
+.search-results{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:10;display:none;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.search-results.show{display:block}
+.search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:13px}
+.search-item:hover{background:#e8f5e9}
+.search-item .code{font-weight:700;color:#2e7d32}
+.search-item .info{font-size:11px;color:#888;margin-top:2px}
+.store-filled{background:#e8f5e9;border-radius:6px;padding:12px;margin-bottom:12px;font-size:13px;display:none}
+.store-filled .row2{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.store-filled .tag{background:#fff;padding:3px 8px;border-radius:4px;font-size:11px;border:1px solid #c8e6c9}
+.clear-store{font-size:11px;color:#c62828;cursor:pointer;float:right}
+
+/* Time grid */
+.time-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.btn{width:100%;padding:13px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-primary{background:#2e7d32;color:#fff}
+.btn-outline{background:#fff;color:#2e7d32;border:2px solid #2e7d32;margin-top:4px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:6px;color:#fff;font-weight:600;display:none;z-index:100;background:#2e7d32}
+.toast.err{background:#c62828}
+
+/* Loading */
+.loading{text-align:center;padding:20px;color:#888;display:none}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid #e0e0e0;border-top-color:#2e7d32;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:480px){
+  .row{flex-direction:column}
+  .time-grid{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 <div class="header">
-  <h1>🥩🥬 Đăng Ký Nhận Hàng</h1>
-  <p>Thịt MDL & Rau - Trái Cây · 05.10 → 11.10.2026</p>
+  <h1>🥩🥬 Khảo Sát Nhận Hàng</h1>
+  <p>Thịt MDL & Rau-Trái cây · 05.10 → 11.10.2026</p>
 </div>
-
 <div class="container">
-  <div class="card">
-    <h3>🏪 Thông tin cửa hàng</h3>
-    <label>GĐV</label>
-    <select id="gdv" onchange="filterStores()">
-      <option value="">-- Chọn GĐV --</option>
-    </select>
-    <label>Tỉnh/TP</label>
-    <select id="tinh" onchange="filterStores()">
-      <option value="">-- Chọn Tỉnh --</option>
-    </select>
-    <label>Cửa hàng</label>
-    <select id="store" onchange="onStoreChange()">
-      <option value="">-- Chọn cửa hàng --</option>
-    </select>
-    <div style="font-size:12px;color:#999;margin-top:-8px" id="storeInfo"></div>
-  </div>
+  <div class="loading" id="loading"><span class="spinner"></span>Đang tải dữ liệu cửa hàng...</div>
 
-  <div class="card">
-    <h3>📅 Ngày nhận hàng</h3>
-    <select id="ngayNhan" onchange="updateSummary()">
-      <option value="05/10/2026">Thứ 2 - 05/10/2026</option>
-      <option value="06/10/2026">Thứ 3 - 06/10/2026</option>
-      <option value="07/10/2026">Thứ 4 - 07/10/2026</option>
-      <option value="08/10/2026">Thứ 5 - 08/10/2026</option>
-      <option value="09/10/2026">Thứ 6 - 09/10/2026</option>
-      <option value="10/10/2026">Thứ 7 - 10/10/2026</option>
-      <option value="11/10/2026">Chủ Nhật - 11/10/2026</option>
-    </select>
-  </div>
-
-  <div class="card">
-    <h3>⏰ Thời gian nhận hàng</h3>
-    <div class="time-grid">
-      <div>
-        <label>🥩 Nhận Thịt MDL</label>
-        <select id="timeMeat" onchange="updateSummary()">
-          <option value="">-- Chọn giờ --</option>
-        </select>
-      </div>
-      <div>
-        <label>🥬 Nhận Rau - Trái cây</label>
-        <select id="timeVeg" onchange="updateSummary()">
-          <option value="">-- Chọn giờ --</option>
-        </select>
+  <div class="card" id="formCard" style="display:none">
+    <h3>🔍 Tìm cửa hàng</h3>
+    <div class="search-box">
+      <input id="searchInput" placeholder="Nhập Mã CH hoặc tên cửa hàng..." oninput="searchStore()" onfocus="searchStore()" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <div class="store-filled" id="storeFilled">
+      <span class="clear-store" onclick="clearStore()">✕ Đổi CH</span>
+      <strong id="sfMa"></strong> — <span id="sfTen"></span>
+      <div class="row2">
+        <span class="tag">GĐV: <span id="sfGdv"></span></span>
+        <span class="tag">QLKV: <span id="sfQlkv"></span></span>
+        <span class="tag">Tỉnh: <span id="sfTinh"></span></span>
+        <span class="tag">Miền: <span id="sfMien"></span></span>
       </div>
     </div>
-    <div class="summary" id="summary" style="display:none"></div>
   </div>
 
-  <button class="btn btn-primary" onclick="submitForm()">✅ Hoàn thành khảo sát</button>
-  <button class="btn btn-secondary" onclick="viewAll()">📋 Xem danh sách đã đăng ký</button>
-</div>
+  <div class="card" id="timeCard" style="display:none">
+    <h3>📅 Ngày nhận hàng</h3>
+    <select id="sday"></select>
 
+    <h3 style="margin-top:16px">⏰ Thời gian nhận</h3>
+    <div class="time-grid">
+      <div><label>🥩 Nhận Thịt MDL</label><select id="smeat"><option value="">-- Chọn giờ --</option></select></div>
+      <div><label>🥬 Nhận Rau - Trái cây</label><select id="sveg"><option value="">-- Chọn giờ --</option></select></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="submitSurvey()">✅ Hoàn thành khảo sát</button>
+    <button class="btn btn-outline" onclick="window.open('https://ruralwcm.github.io/ctkm-rural/khaosat-nhanhang.html?tab=1')">📊 Xem Dashboard</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
+<script src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
-// ===== STORE DATA (from Storelist - will be loaded from GAS) =====
+// ===== CONFIG =====
+const SHEET_ID = '1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A';
+const SHEET_NAME = 'Store_list';
+const DAYS = ['05/10/2026','06/10/2026','07/10/2026','08/10/2026','09/10/2026','10/10/2026','11/10/2026'];
+const DAY_LABELS = ['T2 05/10','T3 06/10','T4 07/10','T5 08/10','T6 09/10','T7 10/10','CN 11/10'];
+
 let STORES = [];
-let GAS_URL = '';
+let selectedStore = null;
+let SURVEYS = JSON.parse(localStorage.getItem('ks_nhanhang')||'[]');
 
-// Generate time slots 00:00-23:30, every 30min
-function genTimeSlots() {
-  // 6h-6h30, 6h30-7h, 7h-7h30...
-  const slots = [];
-  for (let h = 6; h < 18; h++) {
-    for (let m of [0, 30]) {
-      let start = h+'h'+String(m).padStart(2,'0');
-      let endH = m===30 ? h+1 : h;
-      let endM = m===30 ? '00' : '30';
-      if (endH === 18 && endM !== '00') continue;
-      slots.push({label: start+' - '+endH+'h'+endM, value: String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')});
-    }
+// ===== TIME SLOTS =====
+function genTimes(){
+  let s=[];
+  for(let h=6;h<18;h++)for(let m of[0,30]){
+    let start=h+'h'+String(m).padStart(2,'0');
+    let endH=m===30?h+1:h;
+    let endM=m===30?'00':'30';
+    if(endH===18&&endM!=='00')continue;
+    s.push({label:start+' - '+endH+'h'+endM, value:String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')});
   }
-  return slots;
+  return s;
 }
+const TIMES=genTimes();
 
-function initTimeSlots() {
-  const slots = genTimeSlots();
-  const meat = document.getElementById('timeMeat');
-  const veg = document.getElementById('timeVeg');
-  slots.forEach(s => {
-    meat.innerHTML += `<option value="${s}">${s}</option>`;
-    veg.innerHTML += `<option value="${s}">${s}</option>`;
+// ===== INIT =====
+function init(){
+  TIMES.forEach(t=>{
+    document.getElementById('smeat').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
+    document.getElementById('sveg').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
+  });
+  DAYS.forEach((d,i)=>document.getElementById('sday').innerHTML+=`<option value="${d}">${DAY_LABELS[i]}</option>`);
+  
+  // Load store data from Google Sheets
+  google.charts.load('current',{packages:['corechart']});
+  google.charts.setOnLoadCallback(loadStores);
+}
+google.charts.load('current',{packages:['corechart']});
+google.charts.setOnLoadCallback(function(){
+  // If charts loaded before DOM, retry
+  if(document.getElementById('sday'))init();
+  else setTimeout(init,500);
+});
+// Fallback if google charts fails
+setTimeout(function(){
+  if(STORES.length===0){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('formCard').style.display='block';
+    document.getElementById('timeCard').style.display='block';
+    showToast('⚠️ Không tải được Storelist, vui lòng nhập tay Mã CH','err');
+  }
+},8000);
+
+function loadStores(){
+  let q=new google.visualization.Query('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?sheet='+encodeURIComponent(SHEET_NAME)+'&headers=1');
+  q.send(function(resp){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('formCard').style.display='block';
+    if(resp.isError()){
+      document.getElementById('timeCard').style.display='block';
+      showToast('⚠️ Lỗi tải Storelist, nhập tay Mã CH','err');
+      return;
+    }
+    let dt=resp.getDataTable();
+    // Find columns: Mã SAP, Tên CH, GĐV, QLKV, Tỉnh, Miền
+    let cols={ma:-1,ten:-1,gdv:-1,qlkv:-1,tinh:-1,mien:-1};
+    for(let c=0;c<dt.getNumberOfColumns();c++){
+      let h=dt.getColumnLabel(c).toLowerCase();
+      if(h.includes('mã')&&h.includes('sap'))cols.ma=c;
+      else if(h.includes('tên')&&h.includes('hàng'))cols.ten=c;
+      else if(h.includes('gđv')||h.includes('gdv'))cols.gdv=c;
+      else if(h.includes('qlkv'))cols.qlkv=c;
+      else if(h.includes('tỉnh')||h.includes('tinh'))cols.tinh=c;
+      else if(h.includes('miền')||h.includes('mien'))cols.mien=c;
+    }
+    
+    STORES=[];
+    for(let r=0;r<dt.getNumberOfRows();r++){
+      STORES.push({
+        ma:dt.getValue(r,cols.ma>=0?cols.ma:0)?.toString()||'',
+        ten:dt.getValue(r,cols.ten>=0?cols.ten:1)?.toString()||'',
+        gdv:dt.getValue(r,cols.gdv>=0?cols.gdv:2)?.toString()||'',
+        qlkv:dt.getValue(r,cols.qlkv>=0?cols.qlkv:3)?.toString()||'',
+        tinh:dt.getValue(r,cols.tinh>=0?cols.tinh:4)?.toString()||'',
+        mien:dt.getValue(r,cols.mien>=0?cols.mien:5)?.toString()||''
+      });
+    }
+    document.getElementById('timeCard').style.display='block';
+    // Remove loading
+    if(STORES.length===0){
+      showToast('⚠️ Storelist rỗng, nhập tay Mã CH','err');
+    }
   });
 }
 
-// ===== Store data =====
-const SAMPLE_STORES = [
-  {ma:'2797',ten:'WM+ HNI TTTM Cho Sui',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra'},
-  {ma:'2924',ten:'WM+ HNI 391 Ngo Xuan Quang',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra'},
-  {ma:'3088',ten:'WM+ HNI 38 Dao Cam Moc',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thi Hanh'},
-  {ma:'3089',ten:'WM+ HNI 44 Lam Tien',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thi Hanh'},
-  {ma:'3275',ten:'WM+ HNI 254 Co Bi',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra'},
-  {ma:'3659',ten:'WM+ HNI Xom 8, Ninh Hiep',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thu Ha'},
-  {ma:'3131',ten:'WM+ HNI Gian 1, Cho Giay',gdv:'Ta Cong Nhan',tinh:'TP. Ha Noi',qlkv:'QLKV1'},
-  {ma:'3132',ten:'WM+ HNI Gian 2, Cho Giay',gdv:'Ta Cong Nhan',tinh:'TP. Ha Noi',qlkv:'QLKV1'},
-  {ma:'5820',ten:'WM+ HNI 12 Nguyen Trai',gdv:'Ta Quoc Huy',tinh:'TP. Ha Noi',qlkv:'QLKV2'},
-  {ma:'5821',ten:'WM+ HNI 88 Tran Duy Hung',gdv:'Ta Quoc Huy',tinh:'TP. Ha Noi',qlkv:'QLKV2'},
-];
-
-async function loadStores() {
-  GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
-  STORES = SAMPLE_STORES;
-  
-  // Try loading full store list from GAS
-  if (GAS_URL) {
-    try {
-      const resp = await fetch(GAS_URL + '?action=getStores');
-      const data = await resp.json();
-      if (data && data.length > 0) STORES = data;
-    } catch(e) {}
-  }
-  
-  // Populate dropdowns
-  const gdvs = [...new Set(STORES.map(s => s.gdv).filter(Boolean))].sort();
-  const gdvSel = document.getElementById('gdv');
-  gdvSel.innerHTML = '<option value="">-- Chon GDV --</option>';
-  gdvs.forEach(g => gdvSel.innerHTML += '<option value="'+g+'">'+g+'</option>');
-  
-  const tinhs = [...new Set(STORES.map(s => s.tinh).filter(Boolean))].sort();
-  const tinhSel = document.getElementById('tinh');
-  tinhSel.innerHTML = '<option value="">-- Chon Tinh/TP --</option>';
-  tinhs.forEach(t => tinhSel.innerHTML += '<option value="'+t+'">'+t+'</option>');
-  
-  filterStores();
+// ===== STORE SEARCH =====
+function searchStore(){
+  let q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+  let div=document.getElementById('searchResults');
+  if(!q||q.length<1){div.classList.remove('show');return;}
+  let results=STORES.filter(s=>s.ma.toLowerCase().includes(q)||s.ten.toLowerCase().includes(q)).slice(0,15);
+  if(!results.length){div.classList.remove('show');return;}
+  div.innerHTML=results.map(s=>`
+    <div class="search-item" onclick="selectStore('${s.ma}')">
+      <span class="code">${s.ma}</span> — ${s.ten}
+      <div class="info">GĐV: ${s.gdv||'?'} | QLKV: ${s.qlkv||'?'} | ${s.tinh||'?'} | ${s.mien||'?'}</div>
+    </div>
+  `).join('');
+  div.classList.add('show');
 }
-
-function showManualMode() {
-  // Replace store dropdown with text inputs
-  document.getElementById('store').outerHTML = `
-    <label>Mã CH</label><input id="maCH" placeholder="Nhập mã cửa hàng">
-    <label>Tên CH</label><input id="tenCH" placeholder="Nhập tên cửa hàng">
-  `;
+function selectStore(ma){
+  let s=STORES.find(s=>s.ma===ma);
+  if(!s)return;
+  selectedStore=s;
+  document.getElementById('searchInput').value=s.ma+' - '+s.ten;
+  document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('sfMa').textContent=s.ma;
+  document.getElementById('sfTen').textContent=s.ten;
+  document.getElementById('sfGdv').textContent=s.gdv||'?';
+  document.getElementById('sfQlkv').textContent=s.qlkv||'?';
+  document.getElementById('sfTinh').textContent=s.tinh||'?';
+  document.getElementById('sfMien').textContent=s.mien||'?';
+  document.getElementById('storeFilled').style.display='block';
 }
-
-function filterStores() {
-  const gdv = document.getElementById('gdv')?.value || '';
-  const tinh = document.getElementById('tinh')?.value || '';
-  const sel = document.getElementById('store');
-  if (!sel) return;
-  
-  sel.innerHTML = '<option value="">-- Chọn cửa hàng --</option>';
-  STORES.filter(s => (!gdv || s.gdv === gdv) && (!tinh || s.tinh === tinh))
-    .forEach(s => sel.innerHTML += `<option value="${s.ma}" data-ten="${s.ten}" data-gdv="${s.gdv}" data-tinh="${s.tinh}">${s.ma} - ${s.ten}</option>`);
-}
-
-function onStoreChange() {
-  const opt = document.getElementById('store')?.selectedOptions[0];
-  if (opt && opt.dataset.ten) {
-    document.getElementById('storeInfo').textContent = 
-      `GĐV: ${opt.dataset.gdv} | Tỉnh: ${opt.dataset.tinh} | ${opt.dataset.ten}`;
-    updateSummary();
-  }
-}
-
-function updateSummary() {
-  const store = document.getElementById('store')?.selectedOptions[0];
-  const ngay = document.getElementById('ngayNhan')?.value || '';
-  const meat = document.getElementById('timeMeat')?.value || '';
-  const veg = document.getElementById('timeVeg')?.value || '';
-  const sum = document.getElementById('summary');
-  
-  if (ngay && (meat || veg)) {
-    sum.style.display = 'block';
-    sum.innerHTML = `
-      <strong>📋 Tóm tắt đăng ký:</strong><br>
-      🏪 ${store?.dataset?.ten || document.getElementById('tenCH')?.value || '...'}<br>
-      📅 ${ngay}<br>
-      ${meat ? '🥩 Thịt: ' + meat : ''}${meat && veg ? ' &nbsp;|&nbsp; ' : ''}${veg ? '🥬 Rau: ' + veg : ''}
-    `;
-  }
+function clearStore(){
+  selectedStore=null;
+  document.getElementById('searchInput').value='';
+  document.getElementById('storeFilled').style.display='none';
 }
 
 // ===== SUBMIT =====
-function submitForm() {
-  const data = {
-    gdv: document.getElementById('gdv')?.value || '',
-    tinh: document.getElementById('tinh')?.value || '',
-    maCH: document.getElementById('store')?.value || document.getElementById('maCH')?.value || '',
-    tenCH: document.getElementById('store')?.selectedOptions[0]?.dataset?.ten || document.getElementById('tenCH')?.value || '',
-    ngayNhan: document.getElementById('ngayNhan').value,
-    timeMeat: document.getElementById('timeMeat').value,
-    timeVeg: document.getElementById('timeVeg').value,
-    timestamp: new Date().toISOString()
+function submitSurvey(){
+  if(!selectedStore)return showToast('⚠️ Vui lòng tìm và chọn cửa hàng','err');
+  let d={
+    ma:selectedStore.ma,ten:selectedStore.ten,gdv:selectedStore.gdv,tinh:selectedStore.tinh,
+    qlkv:selectedStore.qlkv,mien:selectedStore.mien,
+    ngay:document.getElementById('sday').value,
+    meat:document.getElementById('smeat').value,veg:document.getElementById('sveg').value,
+    ts:new Date().toISOString()
   };
-  
-  if (!data.maCH || !data.ngayNhan) {
-    showToast('Vui lòng chọn cửa hàng và ngày nhận hàng', 'error');
-    return;
-  }
-  
-  // Save to localStorage for offline
-  const saved = JSON.parse(localStorage.getItem('nhanhang_data') || '[]');
-  saved.push(data);
-  localStorage.setItem('nhanhang_data', JSON.stringify(saved));
-  
-  // Try GAS
-  if (GAS_URL) {
-    fetch(GAS_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({action: 'addNhanHang', data: data})
-    }).then(r => r.json()).then(resp => {
-      showToast(resp.message || 'Đã lưu!', 'success');
-    }).catch(() => {
-      showToast('Đã lưu vào máy (sẽ đồng bộ sau)', 'success');
-    });
-  } else {
-    showToast('Đã lưu!', 'success');
-  }
-  
-  // Clear form for next entry
-  setTimeout(() => {
-    document.getElementById('ngayNhan').selectedIndex = 0;
-    document.getElementById('timeMeat').value = '';
-    document.getElementById('timeVeg').value = '';
-    document.getElementById('summary').style.display = 'none';
-  }, 1000);
+  if(!d.meat&&!d.veg)return showToast('⚠️ Vui lòng chọn ít nhất 1 khung giờ','err');
+  SURVEYS.push(d);localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
+  showToast('✅ Đã lưu khảo sát cho '+d.ma);
+  document.getElementById('smeat').value='';document.getElementById('sveg').value='';
 }
 
-function viewAll() {
-  const saved = JSON.parse(localStorage.getItem('nhanhang_data') || '[]');
-  if (!saved.length) return alert('Chưa có đăng ký nào');
-  
-  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-  html += '<tr style="background:#f5f5f5"><th>CH</th><th>Ngày</th><th>Thịt</th><th>Rau</th></tr>';
-  saved.forEach(d => {
-    html += `<tr style="border-bottom:1px solid #eee">
-      <td>${d.maCH} ${d.tenCH}</td><td>${d.ngayNhan}</td>
-      <td>${d.timeMeat||'-'}</td><td>${d.timeVeg||'-'}</td></tr>`;
-  });
-  html += '</table>';
-  
-  const w = window.open('', '_blank', 'width=600,height=400');
-  w.document.write(`<html><head><meta charset="UTF-8"><title>DS Dang Ky</title>
-    <style>body{font-family:Arial;padding:16px}th,td{padding:8px;text-align:left}</style>
-    </head><body><h3>📋 Danh sách đăng ký nhận hàng</h3>${html}
-    <p style="margin-top:16px"><button onclick="exportExcel()" style="padding:8px 16px;background:#27ae60;color:white;border:none;border-radius:4px;cursor:pointer">📥 Xuất Excel</button></p>
-    <script>
-      function exportExcel() {
-        let csv = 'GDV,Tinh,Ma CH,Ten CH,Ngay nhan hang,Thoi gian nhan Thit MDL,Thoi gian nhan Rau-Trai cay\\n';
-        const data = ${JSON.stringify(saved)};
-        data.forEach(d => csv += [d.gdv,d.tinh,d.maCH,d.tenCH,d.ngayNhan,d.timeMeat,d.timeVeg].join(',') + '\\n');
-        const blob = new Blob(['\\uFEFF' + csv], {type: 'text/csv;charset=utf-8'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = 'NhanHang_0510_1110.csv'; a.click();
-      }
-    </script></body></html>`);
+function showToast(msg,cls){
+  let t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(cls?' '+cls:'');
+  t.style.display='block';setTimeout(()=>t.style.display='none',2500);
 }
 
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast ' + type;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3000);
-}
+// Close search on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.search-box'))document.getElementById('searchResults').classList.remove('show');
+});
 
-// Init
-initTimeSlots();
-loadStores();
+// Check for dashboard redirect
+if(location.search.includes('tab=1')){
+  location.href='https://ruralwcm.github.io/ctkm-rural/khaosat-nhanhang.html#dash';
+}
 </script>
 </body>
 </html>
