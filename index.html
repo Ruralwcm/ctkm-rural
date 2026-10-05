@@ -51,8 +51,8 @@
     .filter-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
     
     /* Multi-select dropdown */
-    .ms-wrap { position: relative; display: inline-block; }
-    .ms-btn { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 90px; max-width: 150px; text-align: left; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+    .ms-wrap { position: relative; display: inline-block; flex-shrink: 0; }
+    .ms-btn { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 90px; max-width: 150px; text-align: left; overflow: hidden; text-overflow: ellipsis; width: auto; }
     .ms-btn:hover { border-color: #1F4E79; }
     .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 99; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 300px; overflow-y: auto; min-width: 200px; max-width: 320px; white-space: nowrap; }
     .ms-wrap.right .ms-drop { left: auto; right: 0; }
@@ -213,8 +213,9 @@ function renderDashboard() {
     </div>
     
     <!-- BỘ LỌC DASHBOARD -->
-    <div style="background:white;border-radius:8px;padding:8px 12px;margin:0 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:8px;align-items:center;overflow-x:auto;min-height:38px">
+    <div style="background:white;border-radius:8px;padding:8px 12px;margin:0 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:6px;align-items:center;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch">
       <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap;flex-shrink:0">🔍</span>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:nowrap">
       
       <!-- Loại CTKM -->
       <div class="ms-wrap" id="msLoai">
@@ -272,7 +273,8 @@ function renderDashboard() {
         <input type="date" id="dateTo" onchange="applyDashFilter()" style="padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px;width:120px">
       </span>
       
-      <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto"></span>
+      <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto;flex-shrink:0"></span>
+      </div>
     </div>
     
     <!-- Chip display for selected -->
