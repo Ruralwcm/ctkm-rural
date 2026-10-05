@@ -275,7 +275,8 @@ function renderDashboard() {
         <div class="ms-drop" id="msSkuKeyDrop">
           ${(()=>{
             const skus = window._skuData || [];
-            const keys = [...new Set(skus.map(r=>r[4]).filter(Boolean))].sort();
+            // SKU Key at index 24 if exists, fallback to empty
+            const keys = [...new Set(skus.map(r=>r.length>24&&r[24]?r[24]:null).filter(Boolean))].sort();
             if (!keys.length) return '<div class="ms-item" style="color:#999">Chưa có dữ liệu</div>';
             return keys.slice(0,200).map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msSkuKey',event)">${v}</div>`).join('');
           })()}
@@ -445,7 +446,8 @@ function applyDashFilter() {
       const skuData = window._skuData || [];
       const matchingCT = new Set();
       skuData.forEach(sku => {
-        if (selSkuKey.has((sku[4]||'').toString())) {
+        const key = sku.length > 24 ? (sku[24]||'') : (sku[4]||'');
+        if (selSkuKey.has(key.toString())) {
           matchingCT.add((sku[1]||'').toString());
         }
       });
@@ -960,7 +962,7 @@ function getFilteredSKU(skuData) {
   
   const selSkuKey2 = new Set(getMSValues('msSkuKey'));
   return skuData.filter(sku => {
-    if (selSkuKey2.size > 0 && !selSkuKey2.has((sku[4]||'').toString())) return false;
+    if (selSkuKey2.size > 0) { const key2 = sku.length > 24 ? (sku[24]||'') : (sku[4]||''); if (!selSkuKey2.has(key2.toString())) return false; }
     const loai = (sku[2]||'').toString();
     const nhom = (sku[3]||'').toString();
     if (selLoai.size > 0 && !selLoai.has(loai)) return false;
@@ -971,7 +973,8 @@ function getFilteredSKU(skuData) {
       const skuData = window._skuData || [];
       const matchingCT = new Set();
       skuData.forEach(sku => {
-        if (selSkuKey.has((sku[4]||'').toString())) {
+        const key = sku.length > 24 ? (sku[24]||'') : (sku[4]||'');
+        if (selSkuKey.has(key.toString())) {
           matchingCT.add((sku[1]||'').toString());
         }
       });
@@ -1045,7 +1048,8 @@ function getFilteredCT(data) {
       const skuData = window._skuData || [];
       const matchingCT = new Set();
       skuData.forEach(sku => {
-        if (selSkuKey.has((sku[4]||'').toString())) {
+        const key = sku.length > 24 ? (sku[24]||'') : (sku[4]||'');
+        if (selSkuKey.has(key.toString())) {
           matchingCT.add((sku[1]||'').toString());
         }
       });
