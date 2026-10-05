@@ -621,8 +621,8 @@ function switchView(view) {
 }
 
 function renderMCH3View(data) {
-  // SKU-centric view: group by Nhóm hàng (MCH3), show SKUs directly
-  const skuData = window._skuData || [];
+  // SKU-centric view: apply filters + group by Nhóm hàng (MCH3), show SKUs directly
+  const skuData = getFilteredSKU(window._skuData || []);
   
   // Build a map of nhom → SKUs
   const groups = {};
@@ -693,9 +693,51 @@ function toggleCTExpandMCH3(ctKey) {
   updateMCH3View();
 }
 function updateMCH3View() {
-  const data = window._allCT || [];
-  const filtered = getFilteredCT(data);
-  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(filtered);
+  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData || []);
+}
+
+function getFilteredSKU(skuData) {
+  const selLoai = new Set(getMSValues('msLoai'));
+  const selNhom = new Set(getMSValues('msNhom'));
+  const selMien = new Set(getMSValues('msMien'));
+  const selTime = document.getElementById('dashFilterTime2')?.value || '';
+  const now = new Date();
+  const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
+  const in30d = new Date(now); in30d.setDate(in30d.getDate()+30);
+  
+  return skuData.filter(sku => {
+    const loai = (sku[2]||'').toString();
+    const nhom = (sku[3]||'').toString();
+    if (selLoai.size > 0 && !selLoai.has(loai)) return false;
+    if (selNhom.size > 0 && !selNhom.has(nhom)) return false;
+    if (selMien.size > 0) {
+      let ok = false;
+      if (selMien.has('bac') && sku[17]) ok = true;
+      if (selMien.has('trung') && sku[18]) ok = true;
+      if (selMien.has('nam') && sku[19]) ok = true;
+      if (selMien.has('tay') && sku[20]) ok = true;
+      if (!ok) return false;
+    }
+    if (selTime) {
+      let bd = sku[12] ? new Date(sku[12]) : null;
+      if (bd && isNaN(bd.getTime())) bd = null;
+      if (!bd) return false;
+      let kt = sku[13] ? new Date(sku[13]) : null;
+      if (kt && isNaN(kt.getTime())) kt = null;
+      if (selTime === 'homNay') { if (!(bd<=now&&kt&&kt>=now)) return false; }
+      else if (selTime === '7ngay') { if (bd>in7d) return false; }
+      else if (selTime === '30ngay') { if (bd>in30d) return false; }
+      else if (selTime === 'thangNay') { if (bd.getMonth()!==now.getMonth()||bd.getFullYear()!==now.getFullYear()) return false; }
+      else if (selTime === 'quyNay') { if (Math.floor(bd.getMonth()/3)!==Math.floor(now.getMonth()/3)||bd.getFullYear()!==now.getFullYear()) return false; }
+      else if (selTime === 'custom') {
+        const df = document.getElementById('dateFrom')?.value;
+        const dt = document.getElementById('dateTo')?.value;
+        if (df && bd < new Date(df)) return false;
+        if (dt && kt && kt > new Date(dt)) return false;
+      }
+    }
+    return true;
+  });
 }
 
 function getFilteredCT(data) {
