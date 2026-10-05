@@ -452,6 +452,37 @@ function renderResultTable(){
   meatChart+=meatBars;
   meatChart+='</svg></div></div>';
 
+  // ===== BANG GIAO HANG: Rau + Thit =====
+  var vegSlotsDetail={}, meatSlotsDetail={};
+  data.forEach(function(s){
+    if(s.veg&&s.veg!=='Không có lịch giao'){
+      if(!vegSlotsDetail[s.veg])vegSlotsDetail[s.veg]=[];
+      vegSlotsDetail[s.veg].push({ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh});
+    }
+    if(s.meat&&s.meat!=='Không có lịch giao'){
+      if(!meatSlotsDetail[s.meat])meatSlotsDetail[s.meat]=[];
+      meatSlotsDetail[s.meat].push({ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh});
+    }
+  });
+
+  var vegTimes=Object.keys(vegSlotsDetail).sort();
+  var vegTable='<div style="margin-top:16px"><h4 style="font-size:13px;color:#2e7d32;margin-bottom:8px">🥬 Bảng 1: Khung giờ giao Rau</h4>';
+  if(vegTimes.length){
+    vegTable+='<table><tr><th>Khung giờ</th><th>Số CH</th><th>Danh sách CH</th></tr>';
+    vegTimes.forEach(function(t){var st=vegSlotsDetail[t];vegTable+='<tr><td style="font-weight:600;white-space:nowrap">'+t+'</td><td class="green">'+st.length+'</td><td style="font-size:11px">'+st.map(function(s){return '<span class="badge badge-veg" title="'+s.ten+' | '+s.gdv+' | '+s.tinh+'">'+s.ma+'</span>';}).join(' ')+'</td></tr>';});
+    vegTable+='</table>';
+  }else{vegTable+='<p style="color:#888;font-size:12px;padding:8px">Chưa có dữ liệu</p>';}
+  vegTable+='</div>';
+
+  var meatTimes=Object.keys(meatSlotsDetail).sort();
+  var meatTable='<div style="margin-top:16px"><h4 style="font-size:13px;color:#c62828;margin-bottom:8px">🥩 Bảng 2: Khung giờ giao Thịt</h4>';
+  if(meatTimes.length){
+    meatTable+='<table><tr><th>Khung giờ</th><th>Số CH</th><th>Danh sách CH</th></tr>';
+    meatTimes.forEach(function(t){var st=meatSlotsDetail[t];meatTable+='<tr><td style="font-weight:600;white-space:nowrap">'+t+'</td><td class="red">'+st.length+'</td><td style="font-size:11px">'+st.map(function(s){return '<span class="badge badge-meat" title="'+s.ten+' | '+s.gdv+' | '+s.tinh+'">'+s.ma+'</span>';}).join(' ')+'</td></tr>';});
+    meatTable+='</table>';
+  }else{meatTable+='<p style="color:#888;font-size:12px;padding:8px">Chưa có dữ liệu</p>';}
+  meatTable+='</div>';
+
   document.getElementById('barChart').innerHTML=vegChart+meatChart+vegTable+meatTable;
   document.getElementById('resultTable').innerHTML=`
     <table><tr><th>Mã CH</th><th>Tên CH</th><th>GĐV</th><th>QLKV</th><th>Miền</th><th>Tỉnh</th><th>🥩 Thịt</th><th>🥬 Rau</th><th>Số ngày</th></tr>
@@ -465,13 +496,22 @@ function renderList(){
   document.getElementById('main').innerHTML=`
     <div style="margin-bottom:12px">
       <button class="btn btn-outline" onclick="exportCSV()">📥 Xuất Excel (CSV)</button>
-      <button class="btn btn-outline" style="margin-top:4px" onclick="if(confirm('Xóa tất cả?')){SURVEYS=[];localStorage.removeItem('ks_nhanhang');render(2)}">🗑 Xóa tất cả</button>
+      <button class="btn btn-outline" style="margin-top:4px;color:#c62828;border-color:#c62828" onclick="deleteWrongDates()">🗑 Xóa data sai ngày</button>
     </div>
     <div class="tbl-wrap"><table>
       <tr><th>Ngày</th><th>Mã CH</th><th>Tên CH</th><th>GĐV</th><th>Tỉnh</th><th>QLKV</th><th>🥩 Thịt</th><th>🥬 Rau</th></tr>
       ${data.map(s=>`<tr><td>${s.ngay}</td><td>${s.ma}</td><td>${s.ten||''}</td><td>${s.gdv}</td><td>${s.tinh}</td><td>${s.qlkv}</td><td>${s.meat||'-'}</td><td>${s.veg||'-'}</td></tr>`).join('')}
     </table></div>
     <p style="padding:10px;color:#888;font-size:12px">${data.length} khảo sát</p>`;
+}
+function deleteWrongDates(){
+  var avail=DAYS;
+  var before=SURVEYS.length;
+  SURVEYS=SURVEYS.filter(function(s){return avail.indexOf(s.ngay)>=0;});
+  var removed=before-SURVEYS.length;
+  localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
+  showToast('Da xoa '+removed+' khao sat sai ngay. Con lai '+SURVEYS.length);
+  render(2);
 }
 function exportCSV(){
   let csv='GDV,Tinh,Ma CH,Ten CH,Ngay nhan hang,Thoi gian nhan Thit MDL,Thoi gian nhan Rau-Trai cay,QLKV,Mien\n';
