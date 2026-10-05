@@ -270,7 +270,17 @@ function renderDashboard() {
       </div>
       
       <!-- SKU Key -->
-      <input id="skuKeyFilter" placeholder="🔑 SKU Key..." oninput="applyDashFilter()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;width:90px;flex-shrink:0">
+      <div class="ms-wrap" id="msSkuKey">
+        <button class="ms-btn" data-title="SKU Key" onclick="toggleMS('msSkuKey')">SKU Key ▾</button>
+        <div class="ms-drop" id="msSkuKeyDrop">
+          ${(()=>{
+            const skus = window._skuData || [];
+            const keys = [...new Set(skus.map(r=>r[4]).filter(Boolean))].sort();
+            if (!keys.length) return '<div class="ms-item" style="color:#999">Chưa có dữ liệu</div>';
+            return keys.slice(0,200).map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msSkuKey',event)">${v}</div>`).join('');
+          })()}
+        </div>
+      </div>
       
       <!-- Thời gian -->
       <select id="dashFilterTime2" onchange="onTimeFilterChange()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;width:130px;flex-shrink:0">
@@ -382,8 +392,8 @@ function getMSLabels(id) {
 }
 
 function refreshChipsBar() {
-  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien'), status = getMSLabels('msStatus');
-  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'})), ...status.map(l=>({t:l,g:'msStatus',c:'#fce4ec'}))];
+  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien'), status = getMSLabels('msStatus'), skukey = getMSLabels('msSkuKey');
+  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'})), ...status.map(l=>({t:l,g:'msStatus',c:'#fce4ec'})), ...skukey.map(l=>({t:l,g:'msSkuKey',c:'#e8f5e9'}))];
   const bar = document.getElementById('msChipsBar');
   if (!bar) return;
   bar.innerHTML = all.map(x => `<span class="ms-chip" style="background:${x.c}">${x.t}<span class="x" onclick="event.stopPropagation();removeChip('${x.g}','${x.t}')">×</span></span>`).join('');
@@ -430,12 +440,12 @@ function applyDashFilter() {
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
     }
-    const skuKey = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
-    if (skuKey) {
+    const selSkuKey = new Set(getMSValues('msSkuKey'));
+    if (selSkuKey.size > 0) {
       const skuData = window._skuData || [];
       const matchingCT = new Set();
       skuData.forEach(sku => {
-        if ((sku[4]||'').toString().toLowerCase().includes(skuKey)) {
+        if (selSkuKey.has((sku[4]||'').toString())) {
           matchingCT.add((sku[1]||'').toString());
         }
       });
@@ -948,20 +958,20 @@ function getFilteredSKU(skuData) {
   const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
   const in30d = new Date(now); in30d.setDate(in30d.getDate()+30);
   
-  const skuKey2 = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
+  const selSkuKey2 = new Set(getMSValues('msSkuKey'));
   return skuData.filter(sku => {
-    if (skuKey2 && !(sku[4]||'').toString().toLowerCase().includes(skuKey2)) return false;
+    if (selSkuKey2.size > 0 && !selSkuKey2.has((sku[4]||'').toString())) return false;
     const loai = (sku[2]||'').toString();
     const nhom = (sku[3]||'').toString();
     if (selLoai.size > 0 && !selLoai.has(loai)) return false;
     if (selNhom.size > 0 && !selNhom.has(nhom)) return false;
     const selStatus = new Set(getMSValues('msStatus'));
-    const skuKey = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
-    if (skuKey) {
+    const selSkuKey = new Set(getMSValues('msSkuKey'));
+    if (selSkuKey.size > 0) {
       const skuData = window._skuData || [];
       const matchingCT = new Set();
       skuData.forEach(sku => {
-        if ((sku[4]||'').toString().toLowerCase().includes(skuKey)) {
+        if (selSkuKey.has((sku[4]||'').toString())) {
           matchingCT.add((sku[1]||'').toString());
         }
       });
@@ -1030,12 +1040,12 @@ function getFilteredCT(data) {
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
     }
-    const skuKey = (document.getElementById('skuKeyFilter')?.value || '').toLowerCase().trim();
-    if (skuKey) {
+    const selSkuKey = new Set(getMSValues('msSkuKey'));
+    if (selSkuKey.size > 0) {
       const skuData = window._skuData || [];
       const matchingCT = new Set();
       skuData.forEach(sku => {
-        if ((sku[4]||'').toString().toLowerCase().includes(skuKey)) {
+        if (selSkuKey.has((sku[4]||'').toString())) {
           matchingCT.add((sku[1]||'').toString());
         }
       });
