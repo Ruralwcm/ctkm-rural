@@ -516,7 +516,9 @@ function refreshAllCT() {
 
 let allCT_cts = []; // cached for sort
 
+var _ctKeys = []; // global for expand click
 function renderUnifiedCTTable(active, upcoming, all) {
+  _ctKeys = [];
   var showExpired = document.getElementById('showExpired');
   var showExp = showExpired ? showExpired.checked : false;
   if (!showExp) {
@@ -550,6 +552,8 @@ function renderUnifiedCTTable(active, upcoming, all) {
     var html = '<tr style="background:'+color+'"><td colspan="9" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
     items.forEach(function(r) {
       var ctKey = r.ten||'';
+      _ctKeys.push(ctKey);
+      var ctIdx = _ctKeys.length - 1;
       var skus = skuByCT[ctKey] || [];
       var grpId = 'ct_' + ctKey.replace(/[^a-zA-Z0-9]/g,'_');
       var isExp = expandedCT.has(ctKey);
@@ -563,7 +567,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
       if (r.tay) mienCT.push('Ty');
       if (mienCT.length === 4) mienCT = ['ALL'];
       
-      html += '<tr onclick="toggleCTExpand2(this)" data-ctkey="' + ctKey.replace(/"/g,'&quot;') + '" style="cursor:pointer;'
+      html += '<tr onclick="toggleCTExpand2(' + ctIdx + ')" style="cursor:pointer;'
         + (isExpired?'opacity:.5;background:#f8f9fa':'')+'font-weight:600">'
         + '<td style="text-align:center">'+(isExp?'▼':'▶')+'</td>'
         + '<td>'+(r.ma||'')+'</td>'
@@ -599,9 +603,9 @@ function renderUnifiedCTTable(active, upcoming, all) {
   }
   
   var html = '<table style="table-layout:fixed;width:100%;min-width:800px"><colgroup>'
-    + '<col style="width:26px"><col style="width:55px"><col style="width:auto"><col style="width:100px">'
-    + '<col style="width:110px"><col style="width:60px"><col style="width:80px"><col style="width:80px">'
-    + '<col style="width:60px"></colgroup>'
+    + '<col style="width:26px"><col style="width:50px"><col style="width:auto"><col style="width:90px">'
+    + '<col style="width:120px"><col style="width:55px"><col style="width:80px"><col style="width:80px">'
+    + '<col style="width:55px"></colgroup>'
     + '<tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>';
   
   html += renderCTGroup(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
