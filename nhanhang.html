@@ -255,7 +255,7 @@ function submitSurvey(){
   if(!confirm('Xac nhan thong tin:\\n\\n'+summary+'\\n\\nDong y gui?'))return;
   
   SURVEYS.push(d);localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
-  let GAS_URL=localStorage.getItem('ctkm_gas_url')||'';
+  let GAS_URL=localStorage.getItem('ctkm_gas_url')||'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
   if(GAS_URL){fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'addNhanHang',data:d})}).catch(()=>{});}
   
   document.getElementById('smeat').value='';document.getElementById('sveg').value='';
