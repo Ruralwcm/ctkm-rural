@@ -649,10 +649,10 @@ function renderMCH3View(data) {
 
   return `<table style="table-layout:fixed;width:100%">
     <colgroup>
-      <col style="width:26px"><col style="width:90px"><col style="width:auto"><col style="width:50px">
-      <col style="width:100px"><col style="width:100px"><col style="width:90px"><col style="width:90px">
+      <col style="width:26px"><col style="width:90px"><col style="width:auto"><col style="width:45px">
+      <col style="width:90px"><col style="width:90px"><col style="width:100px"><col style="width:70px"><col style="width:80px"><col style="width:80px">
     </colgroup>
-    <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
+    <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th>Giá thường</th><th>Giá KM</th><th>Loại CTKM</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
     ${sortedGroups.map(nhom => {
       if (selNhom.size > 0 && !selNhom.has(nhom)) return '';
       const rows = groups[nhom];
@@ -661,7 +661,7 @@ function renderMCH3View(data) {
       return `
       <tr class="ct-row" style="background:#eef2ff;font-weight:700;cursor:pointer" onclick="toggleGroupExpand('${grpId}')">
         <td style="text-align:center">${isExp?'▼':'▶'}</td>
-        <td colspan="7" style="font-size:13px;color:#1e293b;white-space:nowrap">🏷 ${nhom} <span style="font-weight:400;color:#64748b">(${rows.length} SKU)</span></td>
+        <td colspan="9" style="font-size:13px;color:#1e293b;white-space:nowrap">🏷 ${nhom} <span style="font-weight:400;color:#64748b">(${rows.length} SKU)</span></td>
       </tr>
       ${isExp ? rows.map(sku => {
         return `
@@ -672,6 +672,8 @@ function renderMCH3View(data) {
           <td style="font-size:11px">${sku[6]||''}</td>
           <td style="font-size:11px;text-align:right">${Number(sku[8]||0).toLocaleString()}</td>
           <td style="font-size:11px;text-align:right;color:#dc2626">${Number(sku[9]||0).toLocaleString()}</td>
+          <td style="font-size:11px">${sku[2]||''}</td>
+          <td style="font-size:11px">${mienAD(sku)}</td>
           <td style="font-size:11px">${fmtDate(sku[12])}</td>
           <td style="font-size:11px">${fmtDate(sku[13])}</td>
         </tr>`;
