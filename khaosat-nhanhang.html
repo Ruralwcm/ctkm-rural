@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Khảo Sát Nhận Hàng · 05-11.10.2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333}
+.header{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.header h1{font-size:17px}
+.header p{font-size:11px;opacity:0.8}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e0e0e0;position:sticky;top:0;z-index:10}
+.tab{flex:1;text-align:center;padding:12px 8px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#888;white-space:nowrap}
+.tab.active{color:#2e7d32;border-bottom-color:#2e7d32}
+.content{max-width:800px;margin:0 auto;padding:16px 12px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center}
+.stat-card .num{font-size:24px;font-weight:700;color:#2e7d32}
+.stat-card.red .num{color:#c62828}
+.stat-card .lbl{font-size:11px;color:#888;margin-top:2px}
+
+/* Card */
+.card{background:#fff;border-radius:10px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h3{font-size:14px;color:#2e7d32;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+label{display:block;font-size:12px;font-weight:600;margin-bottom:3px;color:#555}
+select,input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;background:#fff}
+select:focus,input:focus{border-color:#2e7d32;outline:none}
+.row{display:flex;gap:10px}.row>*{flex:1}
+
+/* Filter bar */
+.fbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fbar select,.fbar input{width:auto;min-width:120px;margin-bottom:0;padding:8px 10px;font-size:12px}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+table{width:100%;border-collapse:collapse;font-size:12px;background:#fff}
+th{background:#f8f9fa;padding:8px 6px;text-align:left;font-weight:600;border-bottom:2px solid #dee2e6;white-space:nowrap;position:sticky;top:0}
+td{padding:7px 6px;border-bottom:1px solid #eee}
+tr:hover{background:#f8fdf8}
+.green{color:#2e7d32;font-weight:600}.red{color:#c62828}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-meat{background:#ffebee;color:#c62828}
+.badge-veg{background:#e8f5e9;color:#2e7d32}
+.badge-done{background:#c8e6c9;color:#1b5e20}
+
+/* Progress bar */
+.pbar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-top:3px}
+.pbar-fill{height:100%;background:#2e7d32;border-radius:4px;transition:width .3s}
+
+/* Buttons */
+.btn{width:100%;padding:13px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-primary{background:#2e7d32;color:#fff}
+.btn-outline{background:#fff;color:#2e7d32;border:2px solid #2e7d32}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:6px;color:#fff;font-weight:600;display:none;z-index:100;background:#2e7d32}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-content{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal h3{margin-bottom:12px}
+
+@media(max-width:480px){
+  .header h1{font-size:14px}
+  .tab{font-size:11px;padding:10px 4px}
+  .stats{grid-template-columns:1fr 1fr}
+  .row{flex-direction:column}
+  .fbar{flex-direction:column}
+  .fbar select{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🥩🥬 Khảo Sát Nhận Hàng</h1><p>Thịt MDL & Rau-Trái cây · 05.10 → 11.10.2026</p></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">📝 Khảo sát</div>
+  <div class="tab" onclick="switchTab(1)">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab(2)">📋 Danh sách</div>
+</div>
+
+<div class="content" id="main"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+let STORES = [
+  {ma:'2797',ten:'WM+ HNI TTTM Cho Sui',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra',mien:'Mien Bac'},
+  {ma:'2924',ten:'WM+ HNI 391 Ngo Xuan Quang',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra',mien:'Mien Bac'},
+  {ma:'3088',ten:'WM+ HNI 38 Dao Cam Moc',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thi Hanh',mien:'Mien Bac'},
+  {ma:'3089',ten:'WM+ HNI 44 Lam Tien',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thi Hanh',mien:'Mien Bac'},
+  {ma:'3275',ten:'WM+ HNI 254 Co Bi',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Tran Thu Tra',mien:'Mien Bac'},
+  {ma:'3659',ten:'WM+ HNI Xom 8, Ninh Hiep',gdv:'Pham Minh Thu',tinh:'TP. Ha Noi',qlkv:'Nguyen Thu Ha',mien:'Mien Bac'},
+  {ma:'3131',ten:'WM+ HNI Gian 1, Cho Giay',gdv:'Ta Cong Nhan',tinh:'TP. Ha Noi',qlkv:'Nguyen Van A',mien:'Mien Bac'},
+  {ma:'3132',ten:'WM+ HNI Gian 2, Cho Giay',gdv:'Ta Cong Nhan',tinh:'TP. Ha Noi',qlkv:'Nguyen Van A',mien:'Mien Bac'},
+  {ma:'5820',ten:'WM+ HNI 12 Nguyen Trai',gdv:'Ta Quoc Huy',tinh:'TP. Ha Noi',qlkv:'Tran Van B',mien:'Mien Bac'},
+  {ma:'5821',ten:'WM+ HNI 88 Tran Duy Hung',gdv:'Ta Quoc Huy',tinh:'TP. Ha Noi',qlkv:'Tran Van B',mien:'Mien Bac'},
+  {ma:'7100',ten:'WM+ BNI 5 Le Loi',gdv:'Ho Nam',tinh:'T. Bac Ninh',qlkv:'Le Thi C',mien:'Mien Bac'},
+  {ma:'7101',ten:'WM+ BNI 8 Tran Hung Dao',gdv:'Ho Nam',tinh:'T. Bac Ninh',qlkv:'Le Thi C',mien:'Mien Bac'},
+  {ma:'8200',ten:'WM+ HCM 22 Nguyen Hue',gdv:'Nguyen Thi Thu',tinh:'TP. HCM',qlkv:'Pham Van D',mien:'Mien Nam'},
+];
+let SURVEYS = JSON.parse(localStorage.getItem('ks_nhanhang')||'[]');
+
+// ===== COMMON =====
+const DAYS = ['05/10/2026','06/10/2026','07/10/2026','08/10/2026','09/10/2026','10/10/2026','11/10/2026'];
+const DAY_LABELS = ['T2 05/10','T3 06/10','T4 07/10','T5 08/10','T6 09/10','T7 10/10','CN 11/10'];
+function genTimes(){let s=[];for(let h=6;h<=18;h++)for(let m of[0,30]){if(h===18&&m===30)continue;s.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'))}return s}
+const TIMES = genTimes();
+
+function showToast(msg){let t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
+function switchTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));render(i)}
+
+// ===== TAB 0: SURVEY FORM =====
+function renderSurvey(){
+  let gdvs=[...new Set(STORES.map(s=>s.gdv))].sort();
+  let tinhs=[...new Set(STORES.map(s=>s.tinh))].sort();
+  document.getElementById('main').innerHTML=`
+    <div class="card">
+      <h3>🏪 Chọn cửa hàng</h3>
+      <div class="row">
+        <div><label>GĐV</label><select id="sgdv" onchange="filterStore()"><option value="">-- Chọn --</option>${gdvs.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div><label>Tỉnh/TP</label><select id="stinh" onchange="filterStore()"><option value="">-- Chọn --</option>${tinhs.map(t=>`<option>${t}</option>`).join('')}</select></div>
+      </div>
+      <label>Cửa hàng</label>
+      <select id="sstore" onchange="onStoreSel()"><option value="">-- Chọn cửa hàng --</option></select>
+      <div id="storeInfo" style="font-size:11px;color:#888;margin-top:-6px"></div>
+    </div>
+    <div class="card">
+      <h3>📅 Ngày & Thời gian nhận hàng</h3>
+      <label>Ngày nhận hàng</label>
+      <select id="sday">${DAYS.map((d,i)=>`<option value="${d}">${DAY_LABELS[i]}</option>`).join('')}</select>
+      <div class="row">
+        <div><label>🥩 Nhận Thịt MDL</label><select id="smeat"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div><label>🥬 Nhận Rau - Trái cây</label><select id="sveg"><option value="">-- Chọn giờ --</option>${TIMES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="submitSurvey()">✅ Hoàn thành khảo sát</button>
+  `;
+  filterStore();
+}
+function filterStore(){
+  let g=document.getElementById('sgdv')?.value||'', t=document.getElementById('stinh')?.value||'';
+  let sel=document.getElementById('sstore'); if(!sel)return;
+  sel.innerHTML='<option value="">-- Chọn cửa hàng --</option>';
+  STORES.filter(s=>(!g||s.gdv===g)&&(!t||s.tinh===t)).forEach(s=>sel.innerHTML+=`<option value="${s.ma}" data-ten="${s.ten}" data-gdv="${s.gdv}" data-tinh="${s.tinh}" data-qlkv="${s.qlkv}" data-mien="${s.mien}">${s.ma} - ${s.ten}</option>`);
+}
+function onStoreSel(){
+  let o=document.getElementById('sstore')?.selectedOptions[0];
+  if(o&&o.dataset.ten) document.getElementById('storeInfo').textContent=`GĐV: ${o.dataset.gdv} | QLKV: ${o.dataset.qlkv} | Tỉnh: ${o.dataset.tinh} | Miền: ${o.dataset.mien}`;
+}
+function submitSurvey(){
+  let o=document.getElementById('sstore')?.selectedOptions[0];
+  if(!o||!o.dataset.ten) return showToast('⚠️ Vui lòng chọn cửa hàng');
+  let d={
+    ma:o.value, ten:o.dataset.ten, gdv:o.dataset.gdv, tinh:o.dataset.tinh, qlkv:o.dataset.qlkv, mien:o.dataset.mien,
+    ngay:document.getElementById('sday').value, meat:document.getElementById('smeat').value, veg:document.getElementById('sveg').value,
+    ts:new Date().toISOString()
+  };
+  if(!d.meat&&!d.veg) return showToast('⚠️ Vui lòng chọn ít nhất 1 khung giờ');
+  SURVEYS.push(d); localStorage.setItem('ks_nhanhang',JSON.stringify(SURVEYS));
+  showToast('✅ Đã lưu!');
+  document.getElementById('smeat').value=''; document.getElementById('sveg').value='';
+}
+
+// ===== TAB 1: DASHBOARD =====
+function renderDashboard(){
+  let total=SURVEYS.length, meat=SURVEYS.filter(s=>s.meat).length, veg=SURVEYS.filter(s=>s.veg).length;
+  let byDay={}; DAYS.forEach(d=>{byDay[d]={total:0,meat:0,veg:0}});
+  SURVEYS.forEach(s=>{let d=byDay[s.ngay];if(d){d.total++;if(s.meat)d.meat++;if(s.veg)d.veg++}});
+  let maxTotal=Math.max(1,...Object.values(byDay).map(d=>d.total));
+  
+  let gdvs=[...new Set(SURVEYS.map(s=>s.gdv))].sort();
+  let tinhs=[...new Set(SURVEYS.map(s=>s.tinh))].sort();
+  let qlkvs=[...new Set(SURVEYS.map(s=>s.qlkv))].sort();
+  let miens=[...new Set(SURVEYS.map(s=>s.mien))].sort();
+  
+  document.getElementById('main').innerHTML=`
+    <div class="stats">
+      <div class="stat-card"><div class="num">${total}</div><div class="lbl">Tổng khảo sát</div></div>
+      <div class="stat-card red"><div class="num">${meat}</div><div class="lbl">🥩 Có nhận Thịt</div></div>
+      <div class="stat-card"><div class="num">${veg}</div><div class="lbl">🥬 Có nhận Rau</div></div>
+      <div class="stat-card"><div class="num">${(total/STORES.length*100).toFixed(0)}%</div><div class="lbl">Độ phủ CH</div></div>
+    </div>
+    
+    <div class="card"><h3>📈 Tiến độ theo ngày</h3>
+      ${DAYS.map((d,i)=>{
+        let dd=byDay[d];
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px">
+            <span>${DAY_LABELS[i]}</span>
+            <span>🥩${dd.meat} 🥬${dd.veg} / ${dd.total} CH</span>
+          </div>
+          <div class="pbar"><div class="pbar-fill" style="width:${dd.total/maxTotal*100}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+    
+    <div class="card"><h3>📋 Kết quả khảo sát</h3>
+      <div class="fbar">
+        <select id="fMien" onchange="renderResultTable()"><option value="">Tất cả Miền</option>${miens.map(m=>`<option>${m}</option>`).join('')}</select>
+        <select id="fTinh" onchange="renderResultTable()"><option value="">Tất cả Tỉnh</option>${tinhs.map(t=>`<option>${t}</option>`).join('')}</select>
+        <select id="fGdv" onchange="renderResultTable()"><option value="">Tất cả GĐV</option>${gdvs.map(g=>`<option>${g}</option>`).join('')}</select>
+        <select id="fQlkv" onchange="renderResultTable()"><option value="">Tất cả QLKV</option>${qlkvs.map(q=>`<option>${q}</option>`).join('')}</select>
+      </div>
+      <div class="tbl-wrap" id="resultTable"></div>
+    </div>
+  `;
+  renderResultTable();
+}
+function renderResultTable(){
+  let fm=document.getElementById('fMien')?.value||'', ft=document.getElementById('fTinh')?.value||'';
+  let fg=document.getElementById('fGdv')?.value||'', fq=document.getElementById('fQlkv')?.value||'';
+  let data=SURVEYS.filter(s=>(!fm||s.mien===fm)&&(!ft||s.tinh===ft)&&(!fg||s.gdv===fg)&&(!fq||s.qlkv===fq));
+  // Group by store
+  let grp={}; data.forEach(s=>{let k=s.ma;if(!grp[k])grp[k]={ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh,qlkv:s.qlkv,mien:s.mien,meat:0,veg:0,days:new Set()};grp[k].meat+=s.meat?1:0;grp[k].veg+=s.veg?1:0;grp[k].days.add(s.ngay)});
+  let rows=Object.values(grp).sort((a,b)=>a.ten.localeCompare(b.ten,'vi'));
+  document.getElementById('resultTable').innerHTML=`
+    <table><tr><th>Mã CH</th><th>Tên CH</th><th>GĐV</th><th>QLKV</th><th>Miền</th><th>Tỉnh</th><th>🥩 Thịt</th><th>🥬 Rau</th><th>Số ngày</th></tr>
+    ${rows.map(r=>`<tr><td>${r.ma}</td><td>${r.ten}</td><td>${r.gdv}</td><td>${r.qlkv}</td><td>${r.mien}</td><td>${r.tinh}</td><td class="red">${r.meat||'-'}</td><td class="green">${r.veg||'-'}</td><td>${r.days.size}/7</td></tr>`).join('')}
+    </table><p style="padding:10px;color:#888;font-size:12px">${rows.length} CH / ${data.length} khảo sát</p>`;
+}
+
+// ===== TAB 2: ALL ENTRIES =====
+function renderList(){
+  let data=[...SURVEYS].reverse();
+  document.getElementById('main').innerHTML=`
+    <div style="margin-bottom:12px">
+      <button class="btn btn-outline" onclick="exportCSV()">📥 Xuất Excel (CSV)</button>
+      <button class="btn btn-outline" style="margin-top:4px" onclick="if(confirm('Xóa tất cả?')){SURVEYS=[];localStorage.removeItem('ks_nhanhang');render(2)}">🗑 Xóa tất cả</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <tr><th>Ngày</th><th>Mã CH</th><th>Tên CH</th><th>GĐV</th><th>Tỉnh</th><th>QLKV</th><th>🥩 Thịt</th><th>🥬 Rau</th></tr>
+      ${data.map(s=>`<tr><td>${s.ngay}</td><td>${s.ma}</td><td>${s.ten||''}</td><td>${s.gdv}</td><td>${s.tinh}</td><td>${s.qlkv}</td><td>${s.meat||'-'}</td><td>${s.veg||'-'}</td></tr>`).join('')}
+    </table></div>
+    <p style="padding:10px;color:#888;font-size:12px">${data.length} khảo sát</p>`;
+}
+function exportCSV(){
+  let csv='GDV,Tinh,Ma CH,Ten CH,Ngay nhan hang,Thoi gian nhan Thit MDL,Thoi gian nhan Rau-Trai cay,QLKV,Mien\n';
+  SURVEYS.forEach(s=>csv+=`${s.gdv},${s.tinh},${s.ma},${s.ten||''},${s.ngay},${s.meat||''},${s.veg||''},${s.qlkv},${s.mien}\n`);
+  let b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='KhaoSat_NhanHang_0510_1110.csv';a.click();
+}
+
+// ===== INIT =====
+function render(i){[renderSurvey,renderDashboard,renderList][i]()}
+render(0);
+</script>
+</body>
+</html>
