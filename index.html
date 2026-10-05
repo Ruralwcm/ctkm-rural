@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v1.2</title>
+  <title>CTKM RURAL v1.3</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -522,26 +522,16 @@ if (!GAS_URL) {
   if (url) { localStorage.setItem('ctkm_gas_url', url); location.reload(); }
   else { document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">⚠️ Cần URL GAS Web App để kết nối.<br><button class="btn btn-primary" onclick="localStorage.removeItem('ctkm_gas_url');location.reload()">Nhập URL</button></p>'; }
 } else {
-  fetch(GAS_URL + '?action=getGroupedData')
-    .then(r => r.json())
-    .then(data => {
-      if (data && data.length > 0) { groupedData = data; renderDashboard(); }
-      else { loadFromGitHub(); }
-    })
-    .catch(e => { loadFromGitHub(); });
-}
-
-function loadFromGitHub() {
+  // Load directly from GitHub JSON (no GAS needed)
   Promise.all([
     fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json').then(r=>r.json()),
     fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json').then(r=>r.json())
   ]).then(([grouped, sku]) => {
     groupedData = grouped;
-    // Store SKU data for search
     window._skuData = sku;
     renderDashboard();
   }).catch(e => {
-    document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">Không thể tải dữ liệu. Vui lòng thử lại.</p>';
+    document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">Loi tai du lieu. F5 thu lai.</p>';
   });
 }
 </script>
