@@ -153,18 +153,55 @@ function renderDataTable() {
         <option value="bac">BẮC</option><option value="trung">TRUNG</option>
         <option value="nam">NAM</option><option value="tay">TÂY</option>
       </select>
+      <input id="filterDateFrom" type="date" onchange="filterTable()" title="Tu ngay hieu luc" style="width:140px">
+      <input id="filterDateTo" type="date" onchange="filterTable()" title="Den ngay hieu luc" style="width:140px">
     </div>
     <div class="table-wrap" id="dataTable"></div>
   `;
   filterTable();
 }
 
-function filterTable() {
+// SKU search - uses allData from GAS
+let skuStoreMap = null;
+function filterSKU() {
+  const sku = (document.getElementById('filterSKU')?.value || '').trim().toLowerCase();
+  if (!sku) { skuStoreMap = null; return filterTable(); }
+  if (!skuStoreMap) {
+    fetch(GAS_URL + '?action=getSKUData')
+      .then(r => r.json())
+      .then(skuData => {
+        skuStoreMap = {};
+        skuData.forEach(row => {
+          const code = (row[4] || '').toString().toLowerCase();
+          const ctName = (row[1] || '').toString();
+          if (code && ctName) {
+            if (!skuStoreMap[code]) skuStoreMap[code] = new Set();
+            skuStoreMap[code].add(ctName);
+          }
+        });
+        doSKUFilter();
+      });
+  } else { doSKUFilter(); }
+}
+function doSKUFilter() {
+  const sku = (document.getElementById('filterSKU')?.value || '').trim().toLowerCase();
+  let matched = new Set();
+  if (sku && skuStoreMap) {
+    Object.keys(skuStoreMap).forEach(code => {
+      if (code.includes(sku)) skuStoreMap[code].forEach(ct => matched.add(ct));
+    });
+  }
+  filterTable(matched.size > 0 ? matched : null);
+}
+
+function filterTable(skuMatchedCTs = null) {
   const search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
   const loai = document.getElementById('filterLoai')?.value || '';
   const nhom = document.getElementById('filterNhom')?.value || '';
   const mienFilter = document.getElementById('filterMien')?.value || '';
   const mienIdx = {bac:10, trung:11, nam:12, tay:13}[mienFilter];
+  const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+  const dateTo = document.getElementById('filterDateTo')?.value || '';
   
   let filtered = groupedData.filter(r => {
     const rowStr = Object.values(r).join(' ').toLowerCase();
@@ -172,6 +209,15 @@ function filterTable() {
     if (loai && r[2] !== loai) return false;
     if (nhom && r[3] !== nhom) return false;
     if (mienIdx && !r[mienIdx]) return false;
+    if (skuMatchedCTs && !skuMatchedCTs.has(r[1]?.toString())) return false;
+    if (dateFrom && r[6]) {
+      const d = new Date(r[6]);
+      if (!isNaN(d) && d < new Date(dateFrom)) return false;
+    }
+    if (dateTo && r[7]) {
+      const d = new Date(r[7]);
+      if (!isNaN(d) && d > new Date(dateTo)) return false;
+    }
     return true;
   });
   
@@ -182,7 +228,7 @@ function filterTable() {
         <tr>
           <td>${r[0]||''}</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r[1]||''}">${(r[1]||'').substring(0,50)}</td>
           <td>${r[2]||''}</td><td>${r[3]||''}</td><td>${r[4]||0}</td>
-          <td>${r[6]||''}</td><td>${r[7]||''}</td>
+          <td>${fmtDate(r[6])}</td><td>${fmtDate(r[7])}</td>
           <td>${r[10]?'✓':''}</td><td>${r[11]?'✓':''}</td><td>${r[12]?'✓':''}</td><td>${r[13]?'✓':''}</td>
         </tr>
       `).join('')}
@@ -362,6 +408,8 @@ function doImport() {
   };
   reader.readAsArrayBuffer(file);
 }
+
+function fmtDate(v) { if (!v) return ""; const d = new Date(v); if (isNaN(d.getTime())) return v; return d.toLocaleDateString("vi-VN"); }
 
 // Init — dùng fetch() đến GAS Web App URL
 const GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
