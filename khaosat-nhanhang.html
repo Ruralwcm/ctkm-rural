@@ -116,7 +116,7 @@ async function loadFromGAS(){
     let raw=await resp.json();
     if(Array.isArray(raw)&&raw.length>0){
       // Map from GAS: [gdv,tinh,ma,ten,qlkv,mien,ngay,meat,veg,ts]
-      let gasData=raw.map(r=>({gdv:r[0]||'',tinh:r[1]||'',ma:r[2]||'',ten:r[3]||'',qlkv:r[4]||'',mien:r[5]||'',ngay:formatDate(r[6]),meat:r[7]||'',veg:r[8]||'',ts:r[9]||''}));
+      let gasData=raw.map(r=>({gdv:r[0]||'',tinh:r[1]||'',ma:r[2]||'',ten:r[3]||'',qlkv:r[4]||'',mien:r[5]||'',ngay:parseVal(r[6],'date'),meat:parseVal(r[7],'time'),veg:parseVal(r[8],'time'),ts:r[9]||''}));
       // Merge GAS data with local (prefer GAS, dedupe by ma+ngay)
       let localMap={}; SURVEYS.forEach(s=>{localMap[s.ma+'|'+s.ngay]=s});
       gasData.forEach(s=>{localMap[s.ma+'|'+s.ngay]=s});
@@ -127,10 +127,31 @@ async function loadFromGAS(){
     }
   }catch(e){console.warn('GAS load failed, using localStorage:',e.message)}
 }
-function formatDate(v){
-  if(!v)return '';
+function parseVal(v,type){
+  // type: 'date' | 'time' | 'text'
+  if(!v)return'';
+  if(typeof v==='string'){
+    // Already a string — check if it looks like an ISO datetime from Sheets
+    if(v.includes('T')||v.includes('1899')){
+      let d=new Date(v); if(!isNaN(d.getTime())){
+        if(type==='time') return String(d.getUTCHours()+7).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
+        return String(d.getUTCDate()).padStart(2,'0')+'/'+String(d.getUTCMonth()+1).padStart(2,'0')+'/'+d.getUTCFullYear();
+      }
+    }
+    // Already a display string like '06:30' or '05/10/2026'
+    return v;
+  }
+  // Date object from Sheets
   let d=new Date(v); if(isNaN(d.getTime()))return String(v);
-  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  if(type==='time'){
+    // Google Sheets time → add 7h for Vietnam TZ
+    let h=d.getUTCHours()+7, m=d.getUTCMinutes();
+    if(h>=24)h-=24;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  }
+  // Date → DD/MM/YYYY (UTC+7)
+  let dd=new Date(d.getTime()+7*3600000);
+  return String(dd.getUTCDate()).padStart(2,'0')+'/'+String(dd.getUTCMonth()+1).padStart(2,'0')+'/'+dd.getUTCFullYear();
 }
 
 // ===== COMMON =====
