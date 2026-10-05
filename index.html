@@ -56,20 +56,20 @@
     .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 99; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 300px; overflow-y: auto; min-width: 200px; max-width: 320px; white-space: nowrap; }
     .ms-wrap.right .ms-drop { left: auto; right: 0; }
     .ms-drop.open { display: block; }
-    .ms-item { display: flex; align-items: center; padding: 4px 10px; cursor: pointer; font-size: 11px; gap: 6px; white-space: nowrap; }
+    .ms-item { padding: 5px 12px; cursor: pointer; font-size: 11px; white-space: nowrap; user-select: none; border-left: 3px solid transparent; }
     
     @media (max-width: 768px) {
       .ms-drop { min-width: 170px; max-width: 250px; max-height: 250px; font-size: 10px; }
-      .ms-item { font-size: 10px; padding: 4px 8px; }
+      .ms-item { font-size: 10px; padding: 4px 10px; }
       .ms-btn { font-size: 10px; min-width: 70px; max-width: 120px; padding: 5px 6px; }
     }
     @media (max-width: 480px) {
       .ms-drop { min-width: 160px; max-width: calc(100vw - 24px); max-height: 220px; }
-      .ms-item { font-size: 10px; padding: 3px 6px; }
+      .ms-item { font-size: 10px; padding: 3px 8px; }
       .ms-btn { font-size: 10px; min-width: 60px; max-width: 100px; padding: 5px 4px; }
     }
     .ms-item:hover { background: #f0f4ff; }
-    .ms-item input { margin: 0; flex-shrink: 0; }
+    .ms-item.selected { background: #dbeafe; color: #1F4E79; font-weight: 600; border-left-color: #1F4E79; }
     .ms-chips { display: inline-flex; gap: 3px; flex-wrap: wrap; vertical-align: middle; }
     .ms-chip { display: inline-flex; align-items: center; gap: 2px; background: #e8f0fe; color: #1F4E79; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
     .ms-chip .x { cursor: pointer; font-weight: bold; margin-left: 2px; }
@@ -209,7 +209,7 @@ function renderDashboard() {
       <div class="ms-wrap" id="msLoai">
         <button class="ms-btn" data-title="Loại CTKM" onclick="toggleMS('msLoai')">Loại CTKM ▾</button>
         <div class="ms-drop" id="msLoaiDrop">
-          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<label class="ms-item"><input type="checkbox" value="${v}" onchange="updateMSChips('msLoai')">${v}</label>`).join('')}
+          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msLoai')">${v}</div>`).join('')}
         </div>
       </div>
       
@@ -217,7 +217,7 @@ function renderDashboard() {
       <div class="ms-wrap" id="msNhom">
         <button class="ms-btn" data-title="Ngành MCH3" onclick="toggleMS('msNhom')">Ngành MCH3 ▾</button>
         <div class="ms-drop" id="msNhomDrop">
-          ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<label class="ms-item"><input type="checkbox" value="${v}" onchange="updateMSChips('msNhom')">${v}</label>`).join('')}
+          ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhom')">${v}</div>`).join('')}
         </div>
       </div>
       
@@ -225,10 +225,10 @@ function renderDashboard() {
       <div class="ms-wrap" id="msMien">
         <button class="ms-btn" data-title="Miền AD" onclick="toggleMS('msMien')">Miền AD ▾</button>
         <div class="ms-drop" id="msMienDrop">
-          <label class="ms-item"><input type="checkbox" value="bac" onchange="updateMSChips('msMien')">BẮC</label>
-          <label class="ms-item"><input type="checkbox" value="trung" onchange="updateMSChips('msMien')">TRUNG</label>
-          <label class="ms-item"><input type="checkbox" value="nam" onchange="updateMSChips('msMien')">NAM</label>
-          <label class="ms-item"><input type="checkbox" value="tay" onchange="updateMSChips('msMien')">TÂY</label>
+          <div class="ms-item" data-val="bac" onclick="toggleMSItem(this,'msMien')">BẮC</div>
+          <div class="ms-item" data-val="trung" onclick="toggleMSItem(this,'msMien')">TRUNG</div>
+          <div class="ms-item" data-val="nam" onclick="toggleMSItem(this,'msMien')">NAM</div>
+          <div class="ms-item" data-val="tay" onclick="toggleMSItem(this,'msMien')">TÂY</div>
         </div>
       </div>
       
@@ -283,7 +283,7 @@ function renderDashboard() {
   window._currentView = 'CTKM';
 }
 
-// ============ MULTI-SELECT DROPDOWN ============
+// ============ MULTI-SELECT DROPDOWN (click-to-select) ============
 let activeMS = null;
 
 function toggleMS(id) {
@@ -300,54 +300,51 @@ document.addEventListener('click', e => {
   }
 });
 
-function updateMSChips(id) {
-  const wrap = document.getElementById(id);
-  const checks = [...wrap.querySelectorAll('input[type=checkbox]:checked')];
-  const labels = checks.map(c => c.parentElement.textContent.trim());
-  const btn = wrap.querySelector('.ms-btn');
-  
-  if (labels.length === 0) {
-    btn.innerHTML = btn.getAttribute('data-title') + ' ▾';
-    btn.style.color = '';
-  } else if (labels.length <= 2) {
-    btn.innerHTML = labels.join(', ') + ' ▾';
-    btn.style.color = '#1F4E79';
-  } else {
-    btn.innerHTML = `<b>${labels.length}</b> đã chọn ▾`;
-    btn.style.color = '#1F4E79';
-  }
+function toggleMSItem(el, groupId) {
+  el.classList.toggle('selected');
+  updateMSBtn(groupId);
   refreshChipsBar();
   applyDashFilter();
+}
+
+function updateMSBtn(id) {
+  const wrap = document.getElementById(id);
+  const selected = [...wrap.querySelectorAll('.ms-item.selected')].map(s => s.dataset.val);
+  const labels = [...wrap.querySelectorAll('.ms-item.selected')].map(s => s.textContent.trim());
+  const btn = wrap.querySelector('.ms-btn');
+  if (labels.length === 0) { btn.innerHTML = btn.getAttribute('data-title') + ' ▾'; btn.style.color = ''; }
+  else if (labels.length <= 2) { btn.innerHTML = labels.join(', ') + ' ▾'; btn.style.color = '#1F4E79'; }
+  else { btn.innerHTML = `<b>${labels.length}</b> đã chọn ▾`; btn.style.color = '#1F4E79'; }
 }
 
 function getMSValues(id) {
   const wrap = document.getElementById(id);
   if (!wrap) return [];
-  return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
+  return [...wrap.querySelectorAll('.ms-item.selected')].map(s => s.dataset.val);
 }
 function getMSLabels(id) {
   const wrap = document.getElementById(id);
   if (!wrap) return [];
-  return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(c => c.parentElement.textContent.trim());
+  return [...wrap.querySelectorAll('.ms-item.selected')].map(s => s.textContent.trim());
 }
 
-let chipBarHTML = '';
 function refreshChipsBar() {
   const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien');
   const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'}))];
   const bar = document.getElementById('msChipsBar');
   if (!bar) return;
-  chipBarHTML = all.map(x => `<span class="ms-chip" style="background:${x.c}">${x.t}<span class="x" onclick="event.stopPropagation();removeChip('${x.g}','${x.t}')">×</span></span>`).join('');
-  bar.innerHTML = chipBarHTML;
+  bar.innerHTML = all.map(x => `<span class="ms-chip" style="background:${x.c}">${x.t}<span class="x" onclick="event.stopPropagation();removeChip('${x.g}','${x.t}')">×</span></span>`).join('');
 }
 
 function removeChip(groupId, label) {
   const wrap = document.getElementById(groupId);
   if (!wrap) return;
-  wrap.querySelectorAll('input[type=checkbox]').forEach(c => {
-    if (c.parentElement.textContent.trim() === label) c.checked = false;
+  wrap.querySelectorAll('.ms-item.selected').forEach(s => {
+    if (s.textContent.trim() === label) s.classList.remove('selected');
   });
-  updateMSChips(groupId);
+  updateMSBtn(groupId);
+  refreshChipsBar();
+  applyDashFilter();
 }
 
 function applyDashFilter() {
