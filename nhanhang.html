@@ -243,7 +243,7 @@ function submitSurvey(){
   if(!selectedStore)return showToast('Vui long chon cua hang','err');
   let meat=document.getElementById('smeat').value, veg=document.getElementById('sveg').value;
   let ngay=document.getElementById('sday').value;
-  if(!meat&&!veg)return showToast('Vui long chon it nhat 1 khung gio','err');
+  // Allow empty = Khong co lich giao
   
   let d={ma:selectedStore.ma,ten:selectedStore.ten,gdv:selectedStore.gdv,tinh:selectedStore.tinh,qlkv:selectedStore.qlkv,mien:selectedStore.mien,ngay:ngay,meat:meat,veg:veg,ts:new Date().toISOString()};
   
