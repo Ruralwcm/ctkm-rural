@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.2</title>
+  <title>CTKM RURAL v2.3</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -114,7 +114,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.2</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.3</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -131,7 +131,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.2";
+const APP_VERSION = "2.3";
 let allData = [];
 let groupedData = [];
 
@@ -998,18 +998,44 @@ function doImport() {
 
 function fmtDate(v) { if (!v) return ""; const d = new Date(v); if (isNaN(d.getTime())) return v; return d.toLocaleDateString("vi-VN"); }
 
-// Init — dùng fetch() đến GAS Web App URL
-const GAS_URL = localStorage.getItem('ctkm_gas_url') || '';
-// Load directly from GitHub JSON (always works, no GAS needed)
-Promise.all([
-  fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json').then(r=>r.json()),
-  fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json').then(r=>r.json())
-]).then(([grouped, sku]) => {
+// Init — fallback chain: GitHub JSON → GAS API
+const GAS_URL = localStorage.getItem('ctkm_gas_url') || 'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
+
+async function loadData() {
+  // Step 1: Try GitHub Pages static JSON
+  try {
+    const [grouped, sku] = await Promise.all([
+      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_grouped.json', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('GH 404');return r.json();}),
+      fetch('https://ruralwcm.github.io/ctkm-rural/ctkm_sku.json', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('GH 404');return r.json();})
+    ]);
+    console.log('Data loaded from GitHub Pages');
+    return {grouped, sku};
+  } catch(ghErr) {
+    console.warn('GitHub Pages failed, trying GAS API:', ghErr.message);
+    // Step 2: Fallback to GAS API
+    if (GAS_URL) {
+      try {
+        const [grouped, sku] = await Promise.all([
+          fetch(GAS_URL + '?action=getGroupedData').then(r=>{if(!r.ok)throw new Error('GAS grouped failed');return r.json();}),
+          fetch(GAS_URL + '?action=getSKUData').then(r=>{if(!r.ok)throw new Error('GAS SKU failed');return r.json();})
+        ]);
+        console.log('Data loaded from GAS API');
+        return {grouped, sku};
+      } catch(gasErr) {
+        console.error('GAS API also failed:', gasErr.message);
+      }
+    }
+    throw new Error('All data sources failed');
+  }
+}
+
+loadData().then(({grouped, sku}) => {
   groupedData = grouped;
   window._skuData = sku;
   renderDashboard();
 }).catch(e => {
-  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center">Loi tai du lieu. F5 thu lai.</p>';
+  console.error(e);
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#dc3545">❌ Lỗi tải dữ liệu.<br><small>Kiểm tra kết nối mạng hoặc F5 thử lại.</small></p>';
 });
 </script>
 <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#1F4E79;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
