@@ -98,12 +98,15 @@ let GAS_URL = '';
 
 // Generate time slots 00:00-23:30, every 30min
 function genTimeSlots() {
-  // 06:00 - 18:00, each 30 min
+  // 6h-6h30, 6h30-7h, 7h-7h30...
   const slots = [];
-  for (let h = 6; h <= 18; h++) {
+  for (let h = 6; h < 18; h++) {
     for (let m of [0, 30]) {
-      if (h === 18 && m === 30) continue; // stop at 18:00
-      slots.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
+      let start = h+'h'+String(m).padStart(2,'0');
+      let endH = m===30 ? h+1 : h;
+      let endM = m===30 ? '00' : '30';
+      if (endH === 18 && endM !== '00') continue;
+      slots.push({label: start+' - '+endH+'h'+endM, value: String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')});
     }
   }
   return slots;
