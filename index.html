@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.8</title>
+  <title>CTKM RURAL v2.9</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.8</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.9</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.8";
+const APP_VERSION = "2.9";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -577,8 +577,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
   }
   
   function renderCTGroup2(items, title, color) {
-    if (!items.length) return '';
-    var html = '<tr style="background:'+color+'"><td colspan="11" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
+    if (!items.length) return ''; var html = ''; if (title) html += '<tr style="background:'+color+'"><td colspan="11" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
     items.forEach(function(r) {
       var ctKey = r.ten||'';
       _ctKeys.push(ctKey);
@@ -622,11 +621,9 @@ function renderUnifiedCTTable(active, upcoming, all) {
   var html = '<table style="table-layout:fixed;width:100%;min-width:'+minW+';font-size:12px"><colgroup>'
     + '<col style="width:24px"><col style="width:65px"><col style="width:auto"><col style="width:30px"><col style="width:68px"><col style="width:68px">'
     + '<col style="width:100px"><col style="width:90px"><col style="width:40px"><col style="width:65px"><col style="width:65px"></colgroup>'
-    + '<tr><th style="font-size:11px;padding:6px 4px"></th><th style="font-size:11px;padding:6px 4px">Mã SP</th><th style="font-size:11px;padding:6px 4px">Tên SP / CTKM</th><th style="font-size:11px;padding:6px 4px">ĐVT</th><th style="font-size:11px;padding:6px 4px;text-align:right">Giá thường</th><th style="font-size:11px;padding:6px 4px;text-align:right">Giá KM</th><th style="font-size:11px;padding:6px 4px">Loại CTKM</th><th style="font-size:11px;padding:6px 4px">Diễn giải</th><th style="font-size:11px;padding:6px 4px">Miền AD</th><th style="font-size:11px;padding:6px 4px">Ngày BĐ</th><th style="font-size:11px;padding:6px 4px">Ngày KT</th></tr>';
+    + '<tr><th></th><th>Mã SP</th><th>Tên SP / CTKM</th><th>ĐVT</th><th style="text-align:right">Giá thường</th><th style="text-align:right">Giá KM</th><th>Loại CTKM</th><th>Diễn giải</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>';
   
-  html += renderCTGroup2(active, '🟢 CTKM ĐANG HIỆU LỰC', '#f0fdf4');
-  html += renderCTGroup2(upcoming, '🟡 CTKM SẮP DIỄN RA', '#fefce8');
-  html += renderCTGroup2(all, '📋 TẤT CẢ CTKM', '#f8f9fa');
+  html += renderCTGroup2(all, '', '');
   html += '</table>';
   return html;
 }
