@@ -549,13 +549,8 @@ function renderCTTable(data) {
     skuByCT[ctName].push(row);
   });
   
-  return `<table style="table-layout:fixed;width:100%;min-width:700px">
-    <colgroup>
-      <col style="width:24px"><col style="width:50px"><col style="width:260px"><col style="width:100px">
-      <col style="width:110px"><col style="width:50px"><col style="width:80px"><col style="width:80px">
-      <col style="width:24px"><col style="width:24px"><col style="width:24px"><col style="width:24px">
-    </colgroup>
-    <tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th style="text-align:right">SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>
+  return `<table style="width:100%">
+    <tr><th></th><th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>SKU</th><th>Ngày BĐ</th><th>Ngày KT</th><th>B</th><th>T</th><th>N</th><th>Ty</th></tr>
     ${data.map((r, idx) => {
       const ctKey = r.ten||'';
       const skus = skuByCT[ctKey] || [];
@@ -566,7 +561,7 @@ function renderCTTable(data) {
       <tr class="ct-row" onclick="toggleCTExpand('${ctKey.replace(/'/g,"\'")}', this)" style="cursor:pointer;${isExpired?'opacity:.5;background:#f8f9fa':''}">
         <td style="width:20px;text-align:center">${isExp ? '▼' : '▶'}</td>
         <td>${r.ma||''}</td>
-        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.ten||''}">${(r.ten||'').substring(0,50)}</td>
+        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.ten||''}">${(r.ten||'').substring(0,50)}</td>
         <td>${r.loai||''}</td><td>${r.nhom||''}</td><td><b>${r.sku||0}</b></td>
         <td>${fmtDate(r.ngayBD)}</td><td>${fmtDate(r.ngayKT)}</td>
         <td>${r.bac?'✓':''}</td><td>${r.trung?'✓':''}</td><td>${r.nam?'✓':''}</td><td>${r.tay?'✓':''}</td>
@@ -599,6 +594,9 @@ function toggleCTExpand(ctKey, rowEl) {
   } else {
     expandedCT.add(ctKey);
   }
+  // Toggle inline detail div
+  var detailEl = document.getElementById('exp_' + allCT_cts.indexOf(allCT_cts.find(function(r){return (r.ten||'')===ctKey;})));
+  // Re-render to update icons
   applyDashFilter();
 }
 
