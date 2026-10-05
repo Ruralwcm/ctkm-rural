@@ -328,30 +328,80 @@ function renderResultTable(){
   let grp={}; data.forEach(s=>{let k=s.ma;if(!grp[k])grp[k]={ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh,qlkv:s.qlkv,mien:s.mien,meat:0,veg:0,days:new Set()};grp[k].meat+=s.meat?1:0;grp[k].veg+=s.veg?1:0;grp[k].days.add(s.ngay)});
   let rows=Object.values(grp).sort((a,b)=>a.ten.localeCompare(b.ten,'vi'));
   
-  // Build bar chart data
-  let meatSlots={}, vegSlots={};
-  data.forEach(s=>{
-    if(s.meat&&s.meat!=='Không có lịch giao'){let k=s.meat;if(!meatSlots[k])meatSlots[k]=0;meatSlots[k]++;}
-    if(s.veg&&s.veg!=='Không có lịch giao'){let k=s.veg;if(!vegSlots[k])vegSlots[k]=0;vegSlots[k]++;}
+  // ===== SVG COLUMN CHART: time 0h-23h left to right =====
+  var allSlots=[]; for(var hh=0;hh<24;hh++)for(var mm of[0,30])allSlots.push(String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'));
+  
+  var meatCounts={}, vegCounts={}; allSlots.forEach(function(k){meatCounts[k]=0;vegCounts[k]=0;});
+  data.forEach(function(s){
+    if(s.meat&&s.meat!=='Không có lịch giao'&&meatCounts.hasOwnProperty(s.meat))meatCounts[s.meat]++;
+    if(s.veg&&s.veg!=='Không có lịch giao'&&vegCounts.hasOwnProperty(s.veg))vegCounts[s.veg]++;
   });
-  let allTimes=[...new Set([...Object.keys(meatSlots),...Object.keys(vegSlots)])].sort();
-  let maxCount=Math.max(1,...Object.values(meatSlots),...Object.values(vegSlots));
+  var maxCnt=Math.max(1,Math.max.apply(null,allSlots.map(function(k){return Math.max(meatCounts[k],vegCounts[k])})));
   
-  let barHtml='<div style="font-size:12px;font-weight:600;padding:8px 0;color:#555">📊 Số CH xác nhận theo khung giờ</div>';
-  if(allTimes.length){
-    allTimes.forEach(t=>{
-      let mc=meatSlots[t]||0, vc=vegSlots[t]||0;
-      barHtml+=`<div style="display:flex;align-items:center;margin-bottom:4px;font-size:11px">
-        <div style="width:50px;text-align:right;padding-right:8px;font-weight:600;flex-shrink:0">${t}</div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:1px">
-          ${mc>0?`<div style="display:flex;align-items:center"><span style="width:28px;font-size:10px;color:#c62828">🥩${mc}</span><div style="height:14px;width:${mc/maxCount*100}%;background:#ef9a9a;border-radius:3px;min-width:4px"></div></div>`:''}
-          ${vc>0?`<div style="display:flex;align-items:center"><span style="width:28px;font-size:10px;color:#2e7d32">🥬${vc}</span><div style="height:14px;width:${vc/maxCount*100}%;background:#a5d6a7;border-radius:3px;min-width:4px"></div></div>`:''}
-        </div>
-      </div>`;
+  var chartH=180, barW=5, gap=1, colW=barW*2+gap+2;
+  var svgW=allSlots.length*colW+20;
+  var bars='';
+  allSlots.forEach(function(t,i){
+    var mc=meatCounts[t], vc=vegCounts[t];
+    var mh=mc?Math.max(2,Math.round(mc/maxCnt*chartH)):0;
+    var vh=vc?Math.max(2,Math.round(vc/maxCnt*chartH)):0;
+    var x=i*colW+4;
+    bars+='<rect x="'+x+'" y="'+(chartH-mh)+'" width="'+barW+'" height="'+mh+'" fill="#ef5350" rx="1"><title>Thit '+t+' ('+mc+' CH)</title></rect>';
+    bars+='<rect x="'+(x+barW+gap)+'" y="'+(chartH-vh)+'" width="'+barW+'" height="'+vh+'" fill="#66bb6a" rx="1"><title>Rau '+t+' ('+vc+' CH)</title></rect>';
+    if(i%4===0)bars+='<text x="'+(x+4)+'" y="'+(chartH+14)+'" font-size="9" fill="#888" text-anchor="middle">'+(t.slice(0,2).replace(/^0/,'')+'h')+'</text>';
+  });
+  
+  var svgHtml='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:8px">';
+  svgHtml+='<div style="font-size:11px;font-weight:600;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:12px"><span>&#x1F4CA; So CH xac nhan theo khung gio (0h-23h)</span><span style="font-size:10px;font-weight:400"><span style="display:inline-block;width:10px;height:10px;background:#ef5350;border-radius:2px;vertical-align:middle;margin-right:2px"></span>Thit <span style="display:inline-block;width:10px;height:10px;background:#66bb6a;border-radius:2px;vertical-align:middle;margin:0 2px 0 8px"></span>Rau</span></div>';
+  svgHtml+='<svg width="'+svgW+'" height="'+(chartH+24)+'" style="display:block;font-family:Segoe UI,Arial,sans-serif">';
+  for(var gy=0;gy<=chartH;gy+=chartH/4){
+    svgHtml+='<line x1="0" y1="'+(chartH-gy)+'" x2="'+svgW+'" y2="'+(chartH-gy)+'" stroke="#eee" stroke-width="0.5"/>';
+    svgHtml+='<text x="2" y="'+(chartH-gy+3)+'" font-size="8" fill="#ccc">'+Math.round(gy/chartH*maxCnt)+'</text>';
+  }
+  svgHtml+=bars;
+  svgHtml+='</svg></div>';
+  
+  // ===== BANG 1: Khung gio giao Rau =====
+  var vegSlotsDetail={};
+  data.forEach(function(s){
+    if(s.veg&&s.veg!=='Không có lịch giao'){
+      if(!vegSlotsDetail[s.veg])vegSlotsDetail[s.veg]=[];
+      vegSlotsDetail[s.veg].push({ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh,qlkv:s.qlkv});
+    }
+  });
+  var vegTimes=Object.keys(vegSlotsDetail).sort();
+  var vegTable='<div style="margin-top:16px"><h4 style="font-size:13px;color:#2e7d32;margin-bottom:8px">&#x1F96C; Bang 1: Khung gio giao Rau</h4>';
+  if(vegTimes.length){
+    vegTable+='<table><tr><th>Khung gio</th><th>So CH</th><th>Danh sach CH</th></tr>';
+    vegTimes.forEach(function(t){
+      var stores=vegSlotsDetail[t];
+      vegTable+='<tr><td style="font-weight:600;white-space:nowrap">'+t+'</td><td class="green">'+stores.length+'</td><td style="font-size:11px">'+stores.map(function(s){return '<span class="badge badge-veg" title="'+s.ten+' | '+s.gdv+' | '+s.tinh+'">'+s.ma+'</span>';}).join(' ')+'</td></tr>';
     });
-  }else{barHtml+='<p style="padding:8px;color:#888;font-size:12px">Chưa có dữ liệu</p>';}
-  document.getElementById('barChart').innerHTML=barHtml;
+    vegTable+='</table>';
+  }else{vegTable+='<p style="color:#888;font-size:12px;padding:8px">Chua co du lieu</p>';}
+  vegTable+='</div>';
   
+  // ===== BANG 2: Khung gio giao Thit =====
+  var meatSlotsDetail={};
+  data.forEach(function(s){
+    if(s.meat&&s.meat!=='Không có lịch giao'){
+      if(!meatSlotsDetail[s.meat])meatSlotsDetail[s.meat]=[];
+      meatSlotsDetail[s.meat].push({ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh,qlkv:s.qlkv});
+    }
+  });
+  var meatTimes=Object.keys(meatSlotsDetail).sort();
+  var meatTable='<div style="margin-top:16px"><h4 style="font-size:13px;color:#c62828;margin-bottom:8px">&#x1F969; Bang 2: Khung gio giao Thit</h4>';
+  if(meatTimes.length){
+    meatTable+='<table><tr><th>Khung gio</th><th>So CH</th><th>Danh sach CH</th></tr>';
+    meatTimes.forEach(function(t){
+      var stores=meatSlotsDetail[t];
+      meatTable+='<tr><td style="font-weight:600;white-space:nowrap">'+t+'</td><td class="red">'+stores.length+'</td><td style="font-size:11px">'+stores.map(function(s){return '<span class="badge badge-meat" title="'+s.ten+' | '+s.gdv+' | '+s.tinh+'">'+s.ma+'</span>';}).join(' ')+'</td></tr>';
+    });
+    meatTable+='</table>';
+  }else{meatTable+='<p style="color:#888;font-size:12px;padding:8px">Chua co du lieu</p>';}
+  meatTable+='</div>';
+  
+  document.getElementById('barChart').innerHTML=svgHtml+vegTable+meatTable;
   document.getElementById('resultTable').innerHTML=`
     <table><tr><th>Mã CH</th><th>Tên CH</th><th>GĐV</th><th>QLKV</th><th>Miền</th><th>Tỉnh</th><th>🥩 Thịt</th><th>🥬 Rau</th><th>Số ngày</th></tr>
     ${rows.map(r=>`<tr><td>${r.ma}</td><td>${r.ten}</td><td>${r.gdv}</td><td>${r.qlkv}</td><td>${r.mien}</td><td>${r.tinh}</td><td class="red">${r.meat||'-'}</td><td class="green">${r.veg||'-'}</td><td>${r.days.size}/7</td></tr>`).join('')}
