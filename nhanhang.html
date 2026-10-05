@@ -92,7 +92,6 @@ input:focus,select:focus{border-color:#2e7d32;outline:none}
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
 // ===== CONFIG =====
 const SHEET_ID = '1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A';
@@ -119,76 +118,63 @@ function genTimes(){
 const TIMES=genTimes();
 
 // ===== INIT =====
-function init(){
-  TIMES.forEach(t=>{
-    document.getElementById('smeat').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
-    document.getElementById('sveg').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
-  });
-  DAYS.forEach((d,i)=>document.getElementById('sday').innerHTML+=`<option value="${d}">${DAY_LABELS[i]}</option>`);
-  
-  // Load store data from Google Sheets
-  google.charts.load('current',{packages:['corechart']});
-  google.charts.setOnLoadCallback(loadStores);
-}
-google.charts.load('current',{packages:['corechart']});
-google.charts.setOnLoadCallback(function(){
-  // If charts loaded before DOM, retry
-  if(document.getElementById('sday'))init();
-  else setTimeout(init,500);
+TIMES.forEach(t=>{
+  document.getElementById('smeat').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
+  document.getElementById('sveg').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
 });
-// Fallback if google charts fails
-setTimeout(function(){
-  if(STORES.length===0){
-    document.getElementById('loading').style.display='none';
-    document.getElementById('formCard').style.display='block';
-    document.getElementById('timeCard').style.display='block';
-    showToast('⚠️ Không tải được Storelist, vui lòng nhập tay Mã CH','err');
-  }
-},8000);
+DAYS.forEach((d,i)=>document.getElementById('sday').innerHTML+=`<option value="${d}">${DAY_LABELS[i]}</option>`);
+loadStores();
 
 function loadStores(){
-  let q=new google.visualization.Query('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?sheet='+encodeURIComponent(SHEET_NAME)+'&headers=1');
-  q.send(function(resp){
+  // Use tqx=out:json to get ALL rows (no default limit)
+  let url='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?sheet='+encodeURIComponent(SHEET_NAME)+'&tqx=out:json&headers=1';
+  fetch(url).then(r=>r.text()).then(txt=>{
+    // Parse Google's weird JSONP format
+    let json=JSON.parse(txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1));
     document.getElementById('loading').style.display='none';
     document.getElementById('formCard').style.display='block';
-    if(resp.isError()){
-      document.getElementById('timeCard').style.display='block';
-      showToast('⚠️ Lỗi tải Storelist, nhập tay Mã CH','err');
-      return;
-    }
-    let dt=resp.getDataTable();
-    // Find columns: Mã SAP, Tên CH, GĐV, QLKV, Tỉnh, Miền
-    let cols={ma:-1,ten:-1,gdv:-1,qlkv:-1,tinh:-1,mien:-1};
-    for(let c=0;c<dt.getNumberOfColumns();c++){
-      let h=dt.getColumnLabel(c).toLowerCase();
-      if(h.includes('mã')&&h.includes('sap'))cols.ma=c;
-      else if(h.includes('tên')&&h.includes('hàng'))cols.ten=c;
-      else if(h.includes('gđv')||h.includes('gdv'))cols.gdv=c;
-      else if(h.includes('qlkv'))cols.qlkv=c;
-      else if(h.includes('tỉnh')||h.includes('tinh'))cols.tinh=c;
-      else if(h.includes('miền')||h.includes('mien'))cols.mien=c;
-    }
+    
+    if(!json.table){document.getElementById('timeCard').style.display='block';return;}
+    let dt=json.table;
+    let cols=dt.cols.map(c=>c.label||'');
+    
+    // Find column indices
+    let ci={ma:-1,ten:-1,gdv:-1,qlkv:-1,tinh:-1,mien:-1};
+    cols.forEach((h,i)=>{
+      let hl=h.toLowerCase();
+      if(hl.includes('mã')&&(hl.includes('sap')||hl.includes('ch')))ci.ma=i;
+      else if(hl.includes('tên')&&hl.includes('hàng'))ci.ten=i;
+      else if(hl.includes('gđv')||hl.includes('gdv'))ci.gdv=i;
+      else if(hl.includes('qlkv'))ci.qlkv=i;
+      else if(hl.includes('tỉnh')||hl.includes('tinh'))ci.tinh=i;
+      else if(hl.includes('miền')||hl.includes('mien'))ci.mien=i;
+    });
+    
+    // Fallback: if no QLKV column found, use GĐV for grouping
+    if(ci.qlkv<0&&ci.gdv>=0)ci.qlkv=ci.gdv;
     
     STORES=[];
-    for(let r=0;r<dt.getNumberOfRows();r++){
+    (dt.rows||[]).forEach(r=>{
+      let v=r.c||[];
       STORES.push({
-        ma:dt.getValue(r,cols.ma>=0?cols.ma:0)?.toString()||'',
-        ten:dt.getValue(r,cols.ten>=0?cols.ten:1)?.toString()||'',
-        gdv:dt.getValue(r,cols.gdv>=0?cols.gdv:2)?.toString()||'',
-        qlkv:dt.getValue(r,cols.qlkv>=0?cols.qlkv:3)?.toString()||'',
-        tinh:dt.getValue(r,cols.tinh>=0?cols.tinh:4)?.toString()||'',
-        mien:dt.getValue(r,cols.mien>=0?cols.mien:5)?.toString()||''
+        ma:(v[ci.ma>=0?ci.ma:0]?.v||'').toString(),
+        ten:(v[ci.ten>=0?ci.ten:1]?.v||'').toString(),
+        gdv:(v[ci.gdv>=0?ci.gdv:2]?.v||'').toString(),
+        qlkv:(v[ci.qlkv>=0?ci.qlkv:3]?.v||'').toString(),
+        tinh:(v[ci.tinh>=0?ci.tinh:4]?.v||'').toString(),
+        mien:(v[ci.mien>=0?ci.mien:5]?.v||'').toString()
       });
-    }
+    });
+    
     document.getElementById('timeCard').style.display='block';
-    // Populate Miền dropdown
     let miens=[...new Set(STORES.map(s=>s.mien).filter(Boolean))].sort();
     let msel=document.getElementById('smien');
     miens.forEach(m=>msel.innerHTML+=`<option value="${m}">${m}</option>`);
-    // Remove loading
-    if(STORES.length===0){
-      showToast('⚠️ Storelist rỗng, nhập tay Mã CH','err');
-    }
+    if(STORES.length===0){showToast('Storelist rỗng','err');}
+  }).catch(e=>{
+    document.getElementById('loading').style.display='none';
+    document.getElementById('formCard').style.display='block';
+    document.getElementById('timeCard').style.display='block';
   });
 }
 
