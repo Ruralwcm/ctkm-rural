@@ -218,7 +218,7 @@ function renderDashboard() {
       <div class="ms-wrap" id="msLoai">
         <button class="ms-btn" data-title="Loại CTKM" onclick="toggleMS('msLoai')">Loại CTKM ▾</button>
         <div class="ms-drop" id="msLoaiDrop">
-          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msLoai')">${v}</div>`).join('')}
+          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick=\"toggleMSItem(this,'msLoai',event)\">${v}</div>`).join('')}
         </div>
       </div>
       
@@ -235,9 +235,9 @@ function renderDashboard() {
               const found = items.filter(i=>nhomSet.includes(i));
               if(!found.length) continue;
               h += `<div class="ms-grp-hdr">${g}</div>`;
-              found.forEach(v=>{h+=`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhom')">${v}</div>`; used.add(v);});
+              found.forEach(v=>{h+=`<div class="ms-item" data-val="${v}" onclick=\"toggleMSItem(this,'msNhom',event)\">${v}</div>`; used.add(v);});
             }
-            nhomSet.filter(n=>!used.has(n)).forEach(v=>h+=`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msNhom')">${v}</div>`);
+            nhomSet.filter(n=>!used.has(n)).forEach(v=>h+=`<div class="ms-item" data-val="${v}" onclick=\"toggleMSItem(this,'msNhom',event)\">${v}</div>`);
             return h;
           })()}
         </div>
@@ -247,10 +247,10 @@ function renderDashboard() {
       <div class="ms-wrap" id="msMien">
         <button class="ms-btn" data-title="Miền AD" onclick="toggleMS('msMien')">Miền AD ▾</button>
         <div class="ms-drop" id="msMienDrop">
-          <div class="ms-item" data-val="bac" onclick="toggleMSItem(this,'msMien')">BẮC</div>
-          <div class="ms-item" data-val="trung" onclick="toggleMSItem(this,'msMien')">TRUNG</div>
-          <div class="ms-item" data-val="nam" onclick="toggleMSItem(this,'msMien')">NAM</div>
-          <div class="ms-item" data-val="tay" onclick="toggleMSItem(this,'msMien')">TÂY</div>
+          <div class="ms-item" data-val="bac" onclick=\"toggleMSItem(this,'msMien',event)\">BẮC</div>
+          <div class="ms-item" data-val="trung" onclick=\"toggleMSItem(this,'msMien',event)\">TRUNG</div>
+          <div class="ms-item" data-val="nam" onclick=\"toggleMSItem(this,'msMien',event)\">NAM</div>
+          <div class="ms-item" data-val="tay" onclick=\"toggleMSItem(this,'msMien',event)\">TÂY</div>
         </div>
       </div>
       
@@ -329,8 +329,26 @@ document.addEventListener('click', e => {
   }
 });
 
-function toggleMSItem(el, groupId) {
-  el.classList.toggle('selected');
+let msSelectAllDone = {}; // Track if ctrl+select-all has been done per group
+function toggleMSItem(el, groupId, event) {
+  var ctrl = event && event.ctrlKey;
+  if (ctrl) {
+    if (!msSelectAllDone[groupId]) {
+      // First ctrl+click: select ALL then deselect this one
+      var wrap = document.getElementById(groupId);
+      var allItems = wrap.querySelectorAll('.ms-item');
+      allItems.forEach(function(item) { item.classList.add('selected'); });
+      el.classList.remove('selected');
+      msSelectAllDone[groupId] = true;
+    } else {
+      // Subsequent ctrl+clicks: deselect
+      el.classList.remove('selected');
+    }
+  } else {
+    // Normal click: toggle
+    el.classList.toggle('selected');
+    msSelectAllDone[groupId] = false; // Reset on normal click
+  }
   updateMSBtn(groupId);
   refreshChipsBar();
   applyDashFilter();
