@@ -861,32 +861,32 @@ function renderDataTable() {
   var skuData = window._skuData || [];
   document.getElementById('mainContent').innerHTML = `
     <div class="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:150px;max-width:250px;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">
+      <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:120px;max-width:200px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px">
       
       <div class="ms-wrap" id="msLoaiD">
-        <button class="ms-btn" data-title="Phân loại" onclick="toggleMS('msLoaiD')" style="min-width:100px">Phân loại ▾</button>
+        <button class="ms-btn" data-title="Phân loại" onclick="toggleMS('msLoaiD')">Phân loại ▾</button>
         <div class="ms-drop" id="msLoaiDDrop">${[...new Set(skuData.map(r=>r[2]))].filter(Boolean).sort().map(v=>`<div class="ms-item" data-val="${v}" onclick="toggleMSItem(this,'msLoaiD',event);filterTable()">${v}</div>`).join('')}</div>
       </div>
       
       <div class="ms-wrap" id="msNhomD">
-        <button class="ms-btn" data-title="Ngành MCH3" onclick="toggleMS('msNhomD')" style="min-width:100px">Ngành MCH3 ▾</button>
+        <button class="ms-btn" data-title="Ngành MCH3" onclick="toggleMS('msNhomD')">Ngành MCH3 ▾</button>
         <div class="ms-drop" id="msNhomDDrop">${(()=>{
-    const m = {'Fresh & Chill':['Thịt','Thịt nguội, xúc xích, hàng chua','Rau củ','Trái cây','Thủy hải sản','Bơ, sữa, trứng','Đông lạnh','Thức ăn nấu sẵn','Bánh mỳ'],'Ambient':['Thực phẩm khô','Bánh kẹo','Đồ uống, thuốc lá','Hóa phẩm','Mỹ phẩm, chăm sóc cá nhân','Gia dụng','Giấy và bông','Đồ dùng Dân dụng/Trang trí','Đồ chơi/Giải trí thể thao','Văn phòng phẩm','Phụ kiện','Bông Vải Sợi']};
-    const nhomSet = [...new Set(skuData.map(r=>r[3]))].filter(Boolean);
+    const mg = {'Fresh & Chill':['Thịt','Thịt nguội, xúc xích, hàng chua','Rau củ','Trái cây','Thủy hải sản','Bơ, sữa, trứng','Đông lạnh','Thức ăn nấu sẵn','Bánh mỳ'],'Ambient':['Thực phẩm khô','Bánh kẹo','Đồ uống, thuốc lá','Hóa phẩm','Mỹ phẩm, chăm sóc cá nhân','Gia dụng','Giấy và bông','Đồ dùng Dân dụng/Trang trí','Đồ chơi/Giải trí thể thao','Văn phòng phẩm','Phụ kiện','Bông Vải Sợi']};
+    const ns = [...new Set(skuData.map(r=>r[3]))].filter(Boolean);
     const used = new Set(); let h = '';
-    for(const [g,items] of Object.entries(m)){
-      const found = items.filter(i=>nhomSet.includes(i));
+    for(const [g,items] of Object.entries(mg)){
+      const found = items.filter(i=>ns.includes(i));
       if(!found.length) continue;
       h += '<div class="ms-grp-hdr">'+g+'</div>';
       found.forEach(v=>{h+='<div class="ms-item" data-val="'+v+'" onclick="toggleMSItem(this,\'msNhomD\',event);filterTable()">'+v+'</div>'; used.add(v);});
     }
-    nhomSet.filter(n=>!used.has(n)).forEach(v=>h+='<div class="ms-item" data-val="'+v+'" onclick="toggleMSItem(this,\'msNhomD\',event);filterTable()">'+v+'</div>');
+    ns.filter(n=>!used.has(n)).forEach(v=>h+='<div class="ms-item" data-val="'+v+'" onclick="toggleMSItem(this,\'msNhomD\',event);filterTable()">'+v+'</div>');
     return h;
   })()}</div>
       </div>
       
       <div class="ms-wrap" id="msMienD">
-        <button class="ms-btn" data-title="Miền" onclick="toggleMS('msMienD')" style="min-width:90px">Miền ▾</button>
+        <button class="ms-btn" data-title="Miền" onclick="toggleMS('msMienD')">Miền ▾</button>
         <div class="ms-drop" id="msMienDDrop">
           <div class="ms-item" data-val="bac" onclick="toggleMSItem(this,'msMienD',event);filterTable()">BẮC</div>
           <div class="ms-item" data-val="trung" onclick="toggleMSItem(this,'msMienD',event);filterTable()">TRUNG</div>
@@ -895,7 +895,16 @@ function renderDataTable() {
         </div>
       </div>
       
-      <button class="btn" style="padding:6px 14px;background:#16a34a;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;flex-shrink:0" onclick="exportDataCSV()">📥 Export CSV</button>
+      <div class="ms-wrap" id="msSkuKeyD">
+        <button class="ms-btn" data-title="SKU Key" onclick="toggleMS('msSkuKeyD')">SKU Key ▾</button>
+        <div class="ms-drop" id="msSkuKeyDDrop">${(()=>{
+    const keys = [...new Set(skuData.map(r=>r.length>24 && r[24] ? r[24] : null).filter(Boolean))].sort();
+    if(!keys.length) return '<div class="ms-item" style="color:#999">Chưa có dữ liệu</div>';
+    return keys.map(v=>'<div class="ms-item" data-val="'+v+'" onclick="toggleMSItem(this,\'msSkuKeyD\',event);filterTable()">'+v+'</div>').join('');
+  })()}</div>
+      </div>
+      
+      <button class="btn" style="padding:5px 12px;background:#16a34a;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer;flex-shrink:0" onclick="exportDataCSV()">📥 Export CSV</button>
     </div>
     <div style="font-size:11px;color:#888;margin-bottom:8px" id="dataCount"></div>
     <div class="table-wrap" id="dataTable"></div>
@@ -943,10 +952,16 @@ function filterTable() {
   var selNhom = new Set(getMSValues('msNhomD'));
   var selMien = new Set(getMSValues('msMienD'));
   
+  var selSkuKey = new Set(getMSValues('msSkuKeyD'));
+  
   var filtered = skuData.filter(function(r) {
     var rowStr = Object.values(r).join(' ').toLowerCase();
     if (search && !rowStr.includes(search)) return false;
     if (selLoai.size > 0 && !selLoai.has(r[2])) return false;
+    if (selSkuKey.size > 0) {
+      var key = r.length > 24 ? (r[24]||'') : '';
+      if (!selSkuKey.has(key.toString())) return false;
+    }
     if (selNhom.size > 0 && !selNhom.has(r[3])) return false;
     if (selMien.size > 0) {
       var ok = false;
@@ -964,7 +979,10 @@ function filterTable() {
   if (countEl) countEl.textContent = filtered.length + ' / ' + skuData.length + ' dòng';
   
   // Render table
-  document.getElementById('dataTable').innerHTML = '<table style="width:100%"><tr>' +
+  document.getElementById('dataTable').innerHTML = '<table style="width:100%;table-layout:fixed"><colgroup>' +
+    '<col style="width:50px"><col style="width:auto"><col style="width:90px"><col style="width:120px"><col style="width:85px"><col style="width:auto"><col style="width:40px">' +
+    '<col style="width:100px"><col style="width:85px"><col style="width:85px"><col style="width:75px"><col style="width:75px"><col style="width:55px"></colgroup>' +
+    '<tr>' +
     '<th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Diễn giải</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>' +
     filtered.map(function(r) {
       var mien = [];
@@ -974,14 +992,14 @@ function filterTable() {
       if (r[20]) mien.push('Ty');
       if (mien.length===4) mien=['ALL'];
       return '<tr>' +
-        '<td style="font-size:11px">'+(r[0]||'')+'</td>' +
-        '<td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[1]||'')+'">'+(r[1]||'').substring(0,40)+'</td>' +
-        '<td style="font-size:11px">'+(r[2]||'')+'</td>' +
-        '<td style="font-size:11px">'+(r[3]||'')+'</td>' +
-        '<td style="font-size:11px">'+(r[4]||'')+'</td>' +
-        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[5]||'')+'">'+(r[5]||'').substring(0,35)+'</td>' +
+        '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[0]||'')+'</td>' +
+        '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[1]||'')+'">'+(r[1]||'')+'</td>' +
+        '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[2]||'')+'</td>' +
+        '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[3]||'')+'</td>' +
+        '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[4]||'')+'</td>' +
+        '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[5]||'')+'">'+(r[5]||'')+'</td>' +
         '<td style="font-size:11px">'+(r[6]||'')+'</td>' +
-        '<td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[7]||'')+'">'+(r[7]||'').substring(0,30)+'</td>' +
+        '<td style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[7]||'')+'">'+(r[7]||'')+'</td>' +
         '<td style="font-size:11px;text-align:right">'+Number(r[8]||0).toLocaleString()+'</td>' +
         '<td style="font-size:11px;text-align:right;color:#dc2626">'+Number(r[9]||0).toLocaleString()+'</td>' +
         '<td style="font-size:10px">'+fmtDate(r[12])+'</td>' +
@@ -999,10 +1017,16 @@ function exportDataCSV() {
   var selMien = new Set(getMSValues('msMienD'));
   var search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
   
+  var selSkuKey = new Set(getMSValues('msSkuKeyD'));
+  
   var filtered = skuData.filter(function(r) {
     var rowStr = Object.values(r).join(' ').toLowerCase();
     if (search && !rowStr.includes(search)) return false;
     if (selLoai.size > 0 && !selLoai.has(r[2])) return false;
+    if (selSkuKey.size > 0) {
+      var key = r.length > 24 ? (r[24]||'') : '';
+      if (!selSkuKey.has(key.toString())) return false;
+    }
     if (selNhom.size > 0 && !selNhom.has(r[3])) return false;
     if (selMien.size > 0) {
       var ok = false;
