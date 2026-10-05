@@ -47,6 +47,19 @@
     .filter-tag:hover { border-color: #1F4E79; background: #eef2ff; }
     .filter-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
     
+    /* Multi-select dropdown */
+    .ms-wrap { position: relative; display: inline-block; }
+    .ms-btn { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 110px; text-align: left; }
+    .ms-btn:hover { border-color: #1F4E79; }
+    .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 99; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 260px; overflow-y: auto; min-width: 200px; }
+    .ms-drop.open { display: block; }
+    .ms-item { display: flex; align-items: center; padding: 5px 10px; cursor: pointer; font-size: 11px; gap: 6px; }
+    .ms-item:hover { background: #f0f4ff; }
+    .ms-item input { margin: 0; }
+    .ms-chips { display: inline-flex; gap: 3px; flex-wrap: wrap; vertical-align: middle; }
+    .ms-chip { display: inline-flex; align-items: center; gap: 2px; background: #e8f0fe; color: #1F4E79; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
+    .ms-chip .x { cursor: pointer; font-weight: bold; margin-left: 2px; }
+    
     .toast { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 12px 20px; border-radius: 4px; display: none; }
     .loading { text-align: center; padding: 40px; color: #999; }
     
@@ -164,42 +177,52 @@ function renderDashboard() {
       <div class="stat-card"><div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div></div>
     </div>
     
-    <!-- BỘ LỌC DASHBOARD (multi-select bằng tag) -->
-    <div style="background:white;border-radius:8px;padding:10px 14px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+    <!-- BỘ LỌC DASHBOARD (dropdown multi-select + chip) -->
+    <div style="background:white;border-radius:8px;padding:10px 14px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap">🔍</span>
+      
       <!-- Loại CTKM -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;min-width:60px">Loại CTKM:</span>
-        <div id="dashFilterLoai" style="display:flex;gap:4px;flex-wrap:wrap">
-          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<span class="filter-tag" data-val="${v}" onclick="toggleFilterTag(this,'loai')">${v}</span>`).join('')}
+      <div class="ms-wrap" id="msLoai">
+        <button class="ms-btn" onclick="toggleMS('msLoai')">Loại CTKM ▾</button>
+        <div class="ms-drop" id="msLoaiDrop">
+          ${[...new Set(allCT.map(r=>r.loai))].filter(Boolean).sort().map(v=>`<label class="ms-item"><input type="checkbox" value="${v}" onchange="updateMSChips('msLoai')">${v}</label>`).join('')}
         </div>
       </div>
+      
       <!-- Ngành MCH3 -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;min-width:60px">Ngành:</span>
-        <div id="dashFilterNhom" style="display:flex;gap:4px;flex-wrap:wrap">
-          ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<span class="filter-tag" data-val="${v}" onclick="toggleFilterTag(this,'nhom')">${v}</span>`).join('')}
+      <div class="ms-wrap" id="msNhom">
+        <button class="ms-btn" onclick="toggleMS('msNhom')">Ngành MCH3 ▾</button>
+        <div class="ms-drop" id="msNhomDrop">
+          ${[...new Set(allCT.map(r=>r.nhom))].filter(Boolean).sort().map(v=>`<label class="ms-item"><input type="checkbox" value="${v}" onchange="updateMSChips('msNhom')">${v}</label>`).join('')}
         </div>
       </div>
-      <!-- Miền + Thời gian -->
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;min-width:60px">Miền AD:</span>
-        <div id="dashFilterMien" style="display:flex;gap:4px">
-          <span class="filter-tag" data-val="bac" onclick="toggleFilterTag(this,'mien')">BẮC</span>
-          <span class="filter-tag" data-val="trung" onclick="toggleFilterTag(this,'mien')">TRUNG</span>
-          <span class="filter-tag" data-val="nam" onclick="toggleFilterTag(this,'mien')">NAM</span>
-          <span class="filter-tag" data-val="tay" onclick="toggleFilterTag(this,'mien')">TÂY</span>
+      
+      <!-- Miền AD -->
+      <div class="ms-wrap" id="msMien">
+        <button class="ms-btn" onclick="toggleMS('msMien')">Miền AD ▾</button>
+        <div class="ms-drop" id="msMienDrop">
+          <label class="ms-item"><input type="checkbox" value="bac" onchange="updateMSChips('msMien')">BẮC</label>
+          <label class="ms-item"><input type="checkbox" value="trung" onchange="updateMSChips('msMien')">TRUNG</label>
+          <label class="ms-item"><input type="checkbox" value="nam" onchange="updateMSChips('msMien')">NAM</label>
+          <label class="ms-item"><input type="checkbox" value="tay" onchange="updateMSChips('msMien')">TÂY</label>
         </div>
-        <span style="font-weight:600;color:#1F4E79;font-size:11px;white-space:nowrap;margin-left:12px">Thời gian:</span>
-        <div id="dashFilterTime" style="display:flex;gap:4px">
-          <span class="filter-tag" data-val="homNay" onclick="toggleFilterTag(this,'time',true)">Hôm nay</span>
-          <span class="filter-tag" data-val="7ngay" onclick="toggleFilterTag(this,'time',true)">7 ngày</span>
-          <span class="filter-tag" data-val="30ngay" onclick="toggleFilterTag(this,'time',true)">30 ngày</span>
-          <span class="filter-tag" data-val="thangNay" onclick="toggleFilterTag(this,'time',true)">Tháng này</span>
-          <span class="filter-tag" data-val="quyNay" onclick="toggleFilterTag(this,'time',true)">Quý này</span>
-        </div>
-        <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto"></span>
       </div>
+      
+      <!-- Thời gian -->
+      <select id="dashFilterTime2" onchange="applyDashFilter()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px;min-width:130px">
+        <option value="">Thời gian hiệu lực</option>
+        <option value="homNay">Hôm nay</option>
+        <option value="7ngay">7 ngày tới</option>
+        <option value="30ngay">30 ngày tới</option>
+        <option value="thangNay">Tháng này</option>
+        <option value="quyNay">Quý này</option>
+      </select>
+      
+      <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto"></span>
     </div>
+    
+    <!-- Chip display for selected -->
+    <div id="msChipsBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:0"></div>
     
     <h3 style="margin:20px 0 8px;color:#28a745">🟢 CTKM ĐANG HIỆU LỰC (<span id="activeCount">${activeNow.length}</span>)</h3>
     <div class="table-wrap" id="activeCTTable">${renderCTTable(activeNow)}</div>
@@ -226,24 +249,81 @@ function renderDashboard() {
   window._upcoming = upcoming;
 }
 
-function toggleFilterTag(el, group, exclusive) {
-  if (exclusive) {
-    // Radio behavior: deselect all others in group
-    document.querySelectorAll(`#dashFilterTime .filter-tag`).forEach(t => t.classList.remove('active'));
+// Multi-select dropdown
+function toggleMS(id) {
+  const drop = document.getElementById(id + 'Drop');
+  drop.classList.toggle('open');
+  // Close other dropdowns
+  document.querySelectorAll('.ms-drop.open').forEach(d => {
+    if (d !== drop) d.classList.remove('open');
+  });
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-drop.open').forEach(d => d.classList.remove('open'));
   }
-  el.classList.toggle('active');
+});
+
+function updateMSChips(id) {
+  const wrap = document.getElementById(id);
+  const checks = wrap.querySelectorAll('input[type=checkbox]:checked');
+  const values = [...checks].map(c => c.value);
+  const labels = [...checks].map(c => c.parentElement.textContent.trim());
+  
+  // Update button text
+  const btn = wrap.querySelector('.ms-btn');
+  if (labels.length === 0) {
+    btn.textContent = btn.textContent.split('(')[0].trim() + ' ▾';
+  } else if (labels.length <= 2) {
+    btn.textContent = labels.join(', ') + ' ▾';
+  } else {
+    btn.textContent = labels.length + ' đã chọn ▾';
+  }
+  
+  refreshChipsBar();
   applyDashFilter();
 }
 
-function getActiveTags(groupId) {
-  return new Set([...document.querySelectorAll(`#${groupId} .filter-tag.active`)].map(t => t.dataset.val));
+function getMSValues(id) {
+  const wrap = document.getElementById(id);
+  return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
+}
+function getMSLabels(id) {
+  const wrap = document.getElementById(id);
+  return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(c => c.parentElement.textContent.trim());
+}
+
+function refreshChipsBar() {
+  const loaiLbls = getMSLabels('msLoai');
+  const nhomLbls = getMSLabels('msNhom');
+  const mienLbls = getMSLabels('msMien');
+  const all = [
+    ...loaiLbls.map(l => ({txt:l, group:'msLoai', color:'#dbeafe'})),
+    ...nhomLbls.map(l => ({txt:l, group:'msNhom', color:'#dcfce7'})),
+    ...mienLbls.map(l => ({txt:l, group:'msMien', color:'#fef3c7'}))
+  ];
+  const bar = document.getElementById('msChipsBar');
+  if (all.length === 0) { bar.innerHTML = ''; return; }
+  bar.innerHTML = all.map(c => 
+    `<span class="ms-chip" style="background:${c.color}">${c.txt}<span class="x" onclick="removeChip('${c.group}','${c.txt}')">×</span></span>`
+  ).join('');
+}
+
+function removeChip(groupId, label) {
+  const wrap = document.getElementById(groupId);
+  const checks = wrap.querySelectorAll('input[type=checkbox]');
+  checks.forEach(c => {
+    if (c.parentElement.textContent.trim() === label) c.checked = false;
+  });
+  updateMSChips(groupId);
 }
 
 function applyDashFilter() {
-  const selLoai = getActiveTags('dashFilterLoai');
-  const selNhom = getActiveTags('dashFilterNhom');
-  const selMien = getActiveTags('dashFilterMien');
-  const selTime = [...getActiveTags('dashFilterTime')][0] || '';
+  const selLoai = new Set(getMSValues('msLoai'));
+  const selNhom = new Set(getMSValues('msNhom'));
+  const selMien = new Set(getMSValues('msMien'));
+  const selTime = document.getElementById('dashFilterTime2')?.value || '';
   
   const now = new Date();
   const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
@@ -284,12 +364,7 @@ function applyDashFilter() {
   document.getElementById('upcomingCTTable').innerHTML = renderCTTable(filteredUpcoming);
   allCT_cts = filteredAll;
   document.getElementById('allCTTable').innerHTML = renderCTTable(filteredAll);
-  
-  const parts = [];
-  if (selLoai.size) parts.push(`${selLoai.size} loại`);
-  if (selNhom.size) parts.push(`${selNhom.size} ngành`);
-  if (selMien.size) parts.push(`${selMien.size} miền`);
-  document.getElementById('dashFilterCount').textContent = parts.length ? `Đã chọn: ${parts.join(', ')} (${filteredAll.length} CT)` : `${filteredAll.length} CT`;
+  document.getElementById('dashFilterCount').textContent = `${filteredAll.length} CT`;
 }
 
 function refreshAllCT() {
