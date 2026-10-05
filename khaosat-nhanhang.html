@@ -209,6 +209,7 @@ function renderDashboard(){
         <select id="fGdv" onchange="renderResultTable()"><option value="">Tất cả GĐV</option>${gdvs.map(g=>`<option>${g}</option>`).join('')}</select>
         <select id="fQlkv" onchange="renderResultTable()"><option value="">Tất cả QLKV</option>${qlkvs.map(q=>`<option>${q}</option>`).join('')}</select>
       </div>
+      <div class="tbl-wrap" id="barChart" style="margin-bottom:12px"></div>
       <div class="tbl-wrap" id="resultTable"></div>
     </div>
   `;
@@ -242,6 +243,31 @@ function renderResultTable(){
   // Group by store
   let grp={}; data.forEach(s=>{let k=s.ma;if(!grp[k])grp[k]={ma:s.ma,ten:s.ten,gdv:s.gdv,tinh:s.tinh,qlkv:s.qlkv,mien:s.mien,meat:0,veg:0,days:new Set()};grp[k].meat+=s.meat?1:0;grp[k].veg+=s.veg?1:0;grp[k].days.add(s.ngay)});
   let rows=Object.values(grp).sort((a,b)=>a.ten.localeCompare(b.ten,'vi'));
+  
+  // Build bar chart data
+  let meatSlots={}, vegSlots={};
+  data.forEach(s=>{
+    if(s.meat&&s.meat!=='Không có lịch giao'){let k=s.meat;if(!meatSlots[k])meatSlots[k]=0;meatSlots[k]++;}
+    if(s.veg&&s.veg!=='Không có lịch giao'){let k=s.veg;if(!vegSlots[k])vegSlots[k]=0;vegSlots[k]++;}
+  });
+  let allTimes=[...new Set([...Object.keys(meatSlots),...Object.keys(vegSlots)])].sort();
+  let maxCount=Math.max(1,...Object.values(meatSlots),...Object.values(vegSlots));
+  
+  let barHtml='<div style="font-size:12px;font-weight:600;padding:8px 0;color:#555">📊 Số CH xác nhận theo khung giờ</div>';
+  if(allTimes.length){
+    allTimes.forEach(t=>{
+      let mc=meatSlots[t]||0, vc=vegSlots[t]||0;
+      barHtml+=`<div style="display:flex;align-items:center;margin-bottom:4px;font-size:11px">
+        <div style="width:50px;text-align:right;padding-right:8px;font-weight:600;flex-shrink:0">${t}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:1px">
+          ${mc>0?`<div style="display:flex;align-items:center"><span style="width:28px;font-size:10px;color:#c62828">🥩${mc}</span><div style="height:14px;width:${mc/maxCount*100}%;background:#ef9a9a;border-radius:3px;min-width:4px"></div></div>`:''}
+          ${vc>0?`<div style="display:flex;align-items:center"><span style="width:28px;font-size:10px;color:#2e7d32">🥬${vc}</span><div style="height:14px;width:${vc/maxCount*100}%;background:#a5d6a7;border-radius:3px;min-width:4px"></div></div>`:''}
+        </div>
+      </div>`;
+    });
+  }else{barHtml+='<p style="padding:8px;color:#888;font-size:12px">Chưa có dữ liệu</p>';}
+  document.getElementById('barChart').innerHTML=barHtml;
+  
   document.getElementById('resultTable').innerHTML=`
     <table><tr><th>Mã CH</th><th>Tên CH</th><th>GĐV</th><th>QLKV</th><th>Miền</th><th>Tỉnh</th><th>🥩 Thịt</th><th>🥬 Rau</th><th>Số ngày</th></tr>
     ${rows.map(r=>`<tr><td>${r.ma}</td><td>${r.ten}</td><td>${r.gdv}</td><td>${r.qlkv}</td><td>${r.mien}</td><td>${r.tinh}</td><td class="red">${r.meat||'-'}</td><td class="green">${r.veg||'-'}</td><td>${r.days.size}/7</td></tr>`).join('')}
