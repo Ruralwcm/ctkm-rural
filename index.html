@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.31</title>
+  <title>CTKM RURAL v2.32</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -110,19 +110,28 @@
     @media (max-width: 480px) {
       .tabs { overflow-x: auto; white-space: nowrap; }
       .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
-      .header h1 { font-size: 14px; }
-      .filter-bar { flex-direction: column; gap: 4px; }
+      .header h1 { font-size: 13px; }
+      .header { padding: 8px 10px; }
+      .filter-bar { flex-direction: column; gap: 6px; }
       .filter-bar input, .filter-bar select { width: 100%; min-width: auto; }
-      .btn { width: 100%; }
-      .ms-btn { font-size: 10px !important; min-width: 60px !important; max-width: 90px !important; padding: 4px 5px !important; }
+      .btn { width: 100%; font-size: 12px; padding: 8px 12px; }
+      .ms-btn { font-size: 10px !important; min-width: 70px !important; max-width: 100px !important; padding: 5px 5px !important; }
       .view-btn { font-size: 10px !important; padding: 4px 6px !important; }
-      .ms-drop { min-width: 150px !important; max-width: 200px !important; font-size: 10px; }
+      .ms-drop { min-width: 140px !important; max-width: 180px !important; font-size: 10px; }
+      /* Data tab mobile: compact filter row */
+      .data-filters { display: flex; flex-wrap: wrap; gap: 4px; }
+      .data-filters .ms-btn { min-width: 60px !important; max-width: 80px !important; font-size: 9px !important; padding: 4px 4px !important; }
+      .data-filters input { font-size: 11px !important; padding: 5px 6px !important; }
+      /* Table smaller on mobile */
+      #dataTable table { font-size: 10px; }
+      #dataTable th, #dataTable td { padding: 4px 3px; font-size: 9px; }
+      #dataTable .ms-btn { font-size: 9px !important; min-width: 55px !important; max-width: 75px !important; }
     }
   </style>
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.31</span> <span style="font-size:11px;opacity:.6;font-weight:400;color:#ffd54f" id="dataDate">| Update: 06/10/2026</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.32</span> <span style="font-size:11px;opacity:.6;font-weight:400;color:#ffd54f" id="dataDate">| Update: 06/10/2026</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +148,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.31";
+const APP_VERSION = "2.32";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -980,7 +989,7 @@ function computeSKUCardCountsFiltered(skuData) {
 function renderDataTable() {
   var skuData = window._skuData || [];
   document.getElementById('mainContent').innerHTML = `
-    <div class="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <div class="filter-bar data-filters" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <input id="filterSearch" placeholder="🔍 Tìm kiếm..." oninput="filterTable()" style="flex:1;min-width:100px;max-width:200px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px">
       
       <div class="ms-wrap" id="msLoaiD">
