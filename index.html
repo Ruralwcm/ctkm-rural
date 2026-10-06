@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.17</title>
+  <title>CTKM RURAL v2.18</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.17</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.18</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.17";
+const APP_VERSION = "2.18";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -646,8 +646,8 @@ function quickFilter(status) {
   var cardMap = {all:'cardAll', active:'cardActive', upcoming:'cardUpcoming', ending:'cardEnding', expired:'cardExpired', mch3:'cardSKU'};
   var card = document.getElementById(cardMap[status]); if (card) card.classList.add('active-card');
   if (status === 'mch3') { switchView('MCH3'); return; }
-  if (window._currentView === 'MCH3') switchView('CTKM');
   window._cardFilter = status === 'all' ? null : status;
+  if (window._currentView === 'MCH3') { updateMCH3View(); updateCardNums(); return; }
   applyDashFilter();
   updateCardNums();
 }
@@ -756,7 +756,7 @@ function getFilteredSKU(skuData) {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
-  const selStatus = new Set(getMSValues('msStatus'));
+  const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   const now = new Date();
   const in7d = new Date(now); in7d.setDate(in7d.getDate()+7);
@@ -769,7 +769,7 @@ function getFilteredSKU(skuData) {
     const nhom = (sku[3]||'').toString();
     if (selLoai.size > 0 && !selLoai.has(loai)) return false;
     if (selNhom.size > 0 && !selNhom.has(nhom)) return false;
-    const selStatus = new Set(getMSValues('msStatus'));
+    const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
     const selSkuKey = new Set(getMSValues('msSkuKey'));
     if (selSkuKey.size > 0) {
       const skuData = window._skuData || [];
@@ -830,7 +830,7 @@ function getFilteredCT(data) {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
-  const selStatus = new Set(getMSValues('msStatus'));
+  const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   const now = new Date();
   
