@@ -1338,8 +1338,7 @@ function parseStoreInput() {
   var result = document.getElementById('storeParseResult');
   if (!raw.trim()) { result.style.display='none'; return; }
   // Parse store codes: split by comma, newline, semicolon, space
-  var codes = raw.split(/[,
-;s]+/).filter(function(s){ return s.trim().length>0; });
+  var codes = raw.split(/[^a-zA-Z0-9À-ỹ]+/).filter(function(s){ return s.trim().length>0; });
   // Remove duplicates
   var unique = []; var seen = new Set();
   codes.forEach(function(c){ c=c.trim(); if(!seen.has(c)){seen.add(c);unique.push(c);} });
