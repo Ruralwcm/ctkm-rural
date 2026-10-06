@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.20</title>
+  <title>CTKM RURAL v2.21</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.20</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.21</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.20";
+const APP_VERSION = "2.21";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -504,7 +504,7 @@ function applyDashFilter() {
   window._filteredAll = filteredAll; window._filteredActive = filteredActive; window._filteredUpcoming = filteredUpcoming; window._filteredEnding = (window._endingSoon||[]).filter(filterFn); window._filteredExpired = (window._expired||[]).filter(filterFn); document.getElementById('dashFilterCount').textContent = filteredAll.length + ' CT'; updateCardNums();
   
   if (window._currentView === 'MCH3') {
-    document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData||[]);
+    var fsku = getFilteredSKU(window._skuData||[]); window._filteredSKU = fsku; document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData||[]); updateCardNums();
   }
 }
 
