@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.27</title>
+  <title>CTKM RURAL v2.28</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.27</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.28</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.27";
+const APP_VERSION = "2.28";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -1241,12 +1241,7 @@ function renderAddForm() {
             <textarea id="nhomStore" rows="3" placeholder="Paste DS mã CH hoặc site code vào đây...&#10;VD: WCM001, WCM002, WCM003" onblur="parseStoreInput()"></textarea>
             <div id="storeParseResult" style="font-size:10px;color:#16a34a;margin-top:2px;display:none"></div>
           </div>
-          <div>
-            <label>🚫 Tỉnh/TP loại trừ <span style="color:#999;font-weight:400">(click để chọn)</span></label>
-            <div id="tinhLoaiTruBox" style="max-height:120px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px">
-              <span style="color:#999;font-size:11px">Đang tải...</span>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
@@ -1293,7 +1288,7 @@ function submitForm() {
     ngayKTKM: document.getElementById('ngayKTKM').value,
     tinhApDung: getProvinceCheckboxes('tinhApDungBox').join(', '),
     nhomStore: document.getElementById('nhomStore').value,
-    tinhLoaiTru: getProvinceCheckboxes('tinhLoaiTruBox').join(', '),
+    tinhLoaiTru: '',
     bac: [...regions].some(r=>r.textContent==='BẮC')?1:0,
     trung: [...regions].some(r=>r.textContent==='TRUNG')?1:0,
     nam: [...regions].some(r=>r.textContent==='NAM')?1:0,
@@ -1311,20 +1306,76 @@ function submitForm() {
 }
 
 
+var ALL_PROVINCES = [];
+var PROVINCE_BY_REGION = {bac:[], trung:[], nam:[], tay:[]};
+
 function loadProvinceList() {
   var url = 'https://docs.google.com/spreadsheets/d/1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A/gviz/tq?sheet=Store_list&tqx=out:json&headers=1';
   fetch(url).then(function(r){return r.text()}).then(function(txt){
     var json = JSON.parse(txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1));
     if (!json.table) return;
     var cols = json.table.cols.map(function(c){return (c.label||'').toLowerCase()});
-    var tinhIdx = -1; cols.forEach(function(h,i){ if(h.includes('tỉnh')||h.includes('tinh')) tinhIdx=i; });
-    var provinces = new Set();
-    (json.table.rows||[]).forEach(function(r){ var v = (r.c[tinhIdx>=0?tinhIdx:4]||{}).v; if(v) provinces.add(v.toString().trim()); });
-    var list = Array.from(provinces).sort();
-    renderProvinceCheckboxes('tinhApDungBox', list);
-    renderProvinceCheckboxes('tinhLoaiTruBox', list);
+    var tinhIdx = -1, mienIdx = -1;
+    cols.forEach(function(h,i){ 
+      if(h.includes('tỉnh')||h.includes('tinh')) tinhIdx=i;
+      if(h.includes('miền')||h.includes('mien')) mienIdx=i;
+    });
+    var seen = new Set();
+    (json.table.rows||[]).forEach(function(r){ 
+      var t = ((r.c[tinhIdx>=0?tinhIdx:4]||{}).v||'').toString().trim();
+      var m = mienIdx>=0 ? ((r.c[mienIdx]||{}).v||'').toString().toLowerCase() : '';
+      if(!t || seen.has(t)) return; seen.add(t);
+      ALL_PROVINCES.push({name:t, mien:m});
+      // Map to region
+      if(m.includes('bắc')||m.includes('north')) PROVINCE_BY_REGION.bac.push(t);
+      else if(m.includes('trung')||m.includes('central')) PROVINCE_BY_REGION.trung.push(t);
+      else if(m.includes('nam')||m.includes('south')) PROVINCE_BY_REGION.nam.push(t);
+      else if(m.includes('tây')||m.includes('west')) PROVINCE_BY_REGION.tay.push(t);
+    });
+    // If region column not available, use hardcoded mapping
+    if (PROVINCE_BY_REGION.bac.length === 0) {
+      ALL_PROVINCES.forEach(function(p){
+        var n = p.name;
+        if (/Hà Nội|Hải Phòng|Quảng Ninh|Bắc Ninh|Hưng Yên|Hải Dương|Vĩnh Phúc|Phú Thọ|Thái Nguyên|Bắc Giang|Lạng Sơn|Cao Bằng|Bắc Kạn|Tuyên Quang|Hà Giang|Lào Cai|Yên Bái|Sơn La|Điện Biên|Hòa Bình|Thái Bình|Nam Định|Hà Nam|Ninh Bình|Thanh Hóa|Nghệ An|Hà Tĩnh/.test(n)) PROVINCE_BY_REGION.bac.push(n);
+        else if (/Quảng Bình|Quảng Trị|Huế|Đà Nẵng|Quảng Nam|Quảng Ngãi|Bình Định|Phú Yên|Khánh Hòa|Ninh Thuận|Bình Thuận|Đắk Lắk|Đắk Nông|Gia Lai|Kon Tum|Lâm Đồng/.test(n)) PROVINCE_BY_REGION.trung.push(n);
+        else if (/Hồ Chí Minh|Bà Rịa|Bình Dương|Bình Phước|Đồng Nai|Tây Ninh/.test(n)) PROVINCE_BY_REGION.nam.push(n);
+        else if (/Long An|Tiền Giang|Bến Tre|Trà Vinh|Vĩnh Long|Đồng Tháp|An Giang|Kiên Giang|Cần Thơ|Hậu Giang|Sóc Trăng|Bạc Liêu|Cà Mau/.test(n)) PROVINCE_BY_REGION.tay.push(n);
+        else PROVINCE_BY_REGION.nam.push(n); // default to Nam
+      });
+    }
+    ALL_PROVINCES.sort(function(a,b){ return a.name.localeCompare(b.name,'vi'); });
+    renderFilteredProvinces();
   }).catch(function(){});
 }
+
+function renderFilteredProvinces() {
+  var regionTags = document.querySelectorAll('#regionTags .region-tag.active');
+  var selectedRegions = [];
+  regionTags.forEach(function(t){ 
+    if(t.textContent==='BẮC') selectedRegions.push('bac');
+    if(t.textContent==='TRUNG') selectedRegions.push('trung');
+    if(t.textContent==='NAM') selectedRegions.push('nam');
+    if(t.textContent==='TÂY') selectedRegions.push('tay');
+  });
+  
+  var filtered = [];
+  if (selectedRegions.length === 0) {
+    filtered = ALL_PROVINCES.map(function(p){ return p.name; });
+  } else {
+    var set = new Set();
+    selectedRegions.forEach(function(r){ (PROVINCE_BY_REGION[r]||[]).forEach(function(p){ set.add(p); }); });
+    filtered = Array.from(set).sort();
+  }
+  
+  renderProvinceCheckboxes('tinhApDungBox', filtered);
+}
+
+// Hook into region tag clicks to re-filter provinces
+document.addEventListener('click', function(e){
+  if (e.target.classList.contains('region-tag')) {
+    setTimeout(renderFilteredProvinces, 100);
+  }
+});
 
 function renderProvinceCheckboxes(boxId, list) {
   var box = document.getElementById(boxId);
