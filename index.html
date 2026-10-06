@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.18</title>
+  <title>CTKM RURAL v2.19</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.18</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.19</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.18";
+const APP_VERSION = "2.19";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -501,7 +501,7 @@ function applyDashFilter() {
   var ut = document.getElementById('ctkmUnifiedTable');
   if (ut) ut.innerHTML = renderUnifiedCTTable(filteredActive, filteredUpcoming, filteredAll);
   
-  document.getElementById('dashFilterCount').textContent = filteredAll.length + ' CT';
+  window._filteredAll = filteredAll; window._filteredActive = filteredActive; window._filteredUpcoming = filteredUpcoming; window._filteredEnding = (window._endingSoon||[]).filter(filterFn); window._filteredExpired = (window._expired||[]).filter(filterFn); document.getElementById('dashFilterCount').textContent = filteredAll.length + ' CT'; updateCardNums();
   
   if (window._currentView === 'MCH3') {
     document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData||[]);
@@ -655,15 +655,35 @@ function quickFilter(status) {
 
 function updateCardNums() {
   var ctView = window._currentView !== 'MCH3';
-  var nums = ctView ? (window._cardCounts || {}) : (window._skuCardCounts || {});
-  var all = nums.all || 0, active = nums.active || 0, upcoming = nums.upcoming || 0, ending = nums.ending || 0, expired = nums.expired || 0, totalSKU = nums.totalSKU || 0;
+  var all, active, upcoming, ending, expired, totalSKU;
+  if (ctView) {
+    // CTKM view: use filtered arrays if any filter is active, else global counts
+    var hasFilter = (window._filteredAll && window._filteredAll.length !== (window._allCT||[]).length);
+    if (hasFilter && window._filteredAll) {
+      all = window._filteredAll.length; active = (window._filteredActive||[]).length;
+      upcoming = (window._filteredUpcoming||[]).length; ending = (window._filteredEnding||[]).length;
+      expired = (window._filteredExpired||[]).length;
+    } else {
+      var nums = window._cardCounts || {};
+      all = nums.all||0; active = nums.active||0; upcoming = nums.upcoming||0;
+      ending = nums.ending||0; expired = nums.expired||0;
+    }
+    totalSKU = (window._cardCounts||{}).skuKeyCount || '0';
+  } else {
+    // MCH3 view: use filtered SKU if any filter active
+    var fsku = window._filteredSKU;
+    var skuNums = fsku ? computeSKUCardCountsFiltered(fsku) : (window._skuCardCounts || {});
+    all = skuNums.all||0; active = skuNums.active||0; upcoming = skuNums.upcoming||0;
+    ending = skuNums.ending||0; expired = skuNums.expired||0;
+    totalSKU = (window._cardCounts||{}).skuKeyCount || '0';
+  }
   var el;
   el = document.getElementById('cardAll'); if (el) el.querySelector('.num').textContent = all;
   el = document.getElementById('cardActive'); if (el) el.querySelector('.num').textContent = active;
   el = document.getElementById('cardUpcoming'); if (el) el.querySelector('.num').textContent = upcoming;
   el = document.getElementById('cardEnding'); if (el) el.querySelector('.num').textContent = ending;
   el = document.getElementById('cardExpired'); if (el) el.querySelector('.num').textContent = expired;
-  el = document.getElementById('cardSKU'); if (el) el.querySelector('.num').textContent = totalSKU.toLocaleString();
+  el = document.getElementById('cardSKU'); if (el) el.querySelector('.num').textContent = totalSKU;
 }
 
 function switchView(view) {
@@ -749,7 +769,7 @@ function toggleCTExpandMCH3(ctKey) {
   updateMCH3View();
 }
 function updateMCH3View() {
-  document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData || []); updateCardNums();
+  var filteredSKU = getFilteredSKU(window._skuData || []); window._filteredSKU = filteredSKU; document.getElementById('mch3CTTable').innerHTML = renderMCH3View(window._skuData || []); updateCardNums();
 }
 
 function getFilteredSKU(skuData) {
@@ -902,6 +922,20 @@ function computeSKUCardCounts() {
 }
 
 // ============ DATA TABLE ============
+function computeSKUCardCountsFiltered(skuData) {
+  var now = new Date(); var todayD = dayOnly(now);
+  var twoDaysLater = new Date(now); twoDaysLater.setDate(twoDaysLater.getDate()+2); var twoDD = dayOnly(twoDaysLater);
+  var next30d = new Date(now); next30d.setDate(next30d.getDate()+30); var d30D = dayOnly(next30d);
+  var active = 0, upcoming = 0, ending = 0, expired = 0;
+  (skuData||[]).forEach(function(sku) {
+    var bd = sku[12] ? new Date(sku[12]) : null; if (bd && isNaN(bd.getTime())) bd = null;
+    var kt = sku[13] ? new Date(sku[13]) : null; if (kt && isNaN(kt.getTime())) kt = null;
+    if (bd && kt) { var bDD=dayOnly(bd), kDD=dayOnly(kt); if (bDD<=todayD && kDD>=todayD) active++; if (kDD>=todayD && kDD<=twoDD) ending++; if (kDD<todayD) expired++; }
+    if (bd) { var bDD2=dayOnly(bd); if (bDD2>todayD && bDD2<=d30D) upcoming++; }
+  });
+  return {all:(skuData||[]).length, active:active, upcoming:upcoming, ending:ending, expired:expired};
+}
+
 function renderDataTable() {
   var skuData = window._skuData || [];
   document.getElementById('mainContent').innerHTML = `
