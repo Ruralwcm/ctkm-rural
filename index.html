@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.24</title>
+  <title>CTKM RURAL v2.25</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.24</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.25</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.24";
+const APP_VERSION = "2.25";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -151,7 +151,7 @@ function switchTab(tab) {
   });
   if (tab === 'dashboard') renderDashboard();
   else if (tab === 'data') renderDataTable();
-  else if (tab === 'add') renderAddForm();
+  else if (tab === 'add') renderAddForm(); setTimeout(function(){ loadProvinceList(); }, 200);
   else if (tab === 'import') renderImport();
 }
 
@@ -1232,16 +1232,21 @@ function renderAddForm() {
         
         <div style="display:grid;gap:10px">
           <div>
-            <label>🏙 Tỉnh/TP áp dụng <span style="color:#999;font-weight:400">(nếu có giới hạn)</span></label>
-            <textarea id="tinhApDung" rows="2" placeholder="VD: TP. Hà Nội, T. Bắc Ninh, H. Hưng Yên...&#10;Để trống nếu áp dụng toàn Miền đã chọn"></textarea>
+            <label>🏙 Tỉnh/TP áp dụng <span style="color:#999;font-weight:400">(click để chọn, để trống = toàn Miền)</span></label>
+            <div id="tinhApDungBox" style="max-height:120px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px">
+              <span style="color:#999;font-size:11px">Đang tải danh sách tỉnh...</span>
+            </div>
           </div>
           <div>
-            <label>🏪 Nhóm Store <span style="color:#999;font-weight:400">(nếu có giới hạn)</span></label>
-            <input id="nhomStore" placeholder="VD: DS CH ko áp dụng, hoặc mã nhóm store">
+            <label>🏪 Nhóm Store <span style="color:#999;font-weight:400">(paste mã CH, tự động parse)</span></label>
+            <textarea id="nhomStore" rows="3" placeholder="Paste DS mã CH hoặc site code vào đây...&#10;VD: WCM001, WCM002, WCM003" onblur="parseStoreInput()"></textarea>
+            <div id="storeParseResult" style="font-size:10px;color:#16a34a;margin-top:2px;display:none"></div>
           </div>
           <div>
-            <label>🚫 Tỉnh/TP loại trừ <span style="color:#999;font-weight:400">(nếu có)</span></label>
-            <input id="tinhLoaiTru" placeholder="VD: DS CH ko áp dụng">
+            <label>🚫 Tỉnh/TP loại trừ <span style="color:#999;font-weight:400">(click để chọn)</span></label>
+            <div id="tinhLoaiTruBox" style="max-height:120px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px">
+              <span style="color:#999;font-size:11px">Đang tải...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1287,9 +1292,9 @@ function submitForm() {
     ngayKTGiaMua: document.getElementById('ngayKTGiaMua').value,
     ngayBDKM: document.getElementById('ngayBDKM').value,
     ngayKTKM: document.getElementById('ngayKTKM').value,
-    tinhApDung: document.getElementById('tinhApDung').value,
+    tinhApDung: getProvinceCheckboxes('tinhApDungBox').join(', '),
     nhomStore: document.getElementById('nhomStore').value,
-    tinhLoaiTru: document.getElementById('tinhLoaiTru').value,
+    tinhLoaiTru: getProvinceCheckboxes('tinhLoaiTruBox').join(', '),
     bac: [...regions].some(r=>r.textContent==='BẮC')?1:0,
     trung: [...regions].some(r=>r.textContent==='TRUNG')?1:0,
     nam: [...regions].some(r=>r.textContent==='NAM')?1:0,
@@ -1304,6 +1309,50 @@ function submitForm() {
     .then(r => r.json())
     .then(resp => { showToast(resp.message || 'OK'); setTimeout(() => location.reload(), 1000); })
     .catch(err => showToast('Lỗi: ' + err, false));
+}
+
+
+function loadProvinceList() {
+  var url = 'https://docs.google.com/spreadsheets/d/1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A/gviz/tq?sheet=Store_list&tqx=out:json&headers=1';
+  fetch(url).then(function(r){return r.text()}).then(function(txt){
+    var json = JSON.parse(txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1));
+    if (!json.table) return;
+    var cols = json.table.cols.map(function(c){return (c.label||'').toLowerCase()});
+    var tinhIdx = -1; cols.forEach(function(h,i){ if(h.includes('tỉnh')||h.includes('tinh')) tinhIdx=i; });
+    var provinces = new Set();
+    (json.table.rows||[]).forEach(function(r){ var v = (r.c[tinhIdx>=0?tinhIdx:4]||{}).v; if(v) provinces.add(v.toString().trim()); });
+    var list = Array.from(provinces).sort();
+    renderProvinceCheckboxes('tinhApDungBox', list);
+    renderProvinceCheckboxes('tinhLoaiTruBox', list);
+  }).catch(function(){});
+}
+
+function renderProvinceCheckboxes(boxId, list) {
+  var box = document.getElementById(boxId);
+  if (!box) return;
+  box.innerHTML = list.map(function(p){ return '<label style="font-size:11px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:2px"><input type="checkbox" value="'+p+'" style="width:auto;margin:0">'+p+'</label>'; }).join('');
+}
+
+function parseStoreInput() {
+  var raw = document.getElementById('nhomStore').value;
+  var result = document.getElementById('storeParseResult');
+  if (!raw.trim()) { result.style.display='none'; return; }
+  // Parse store codes: split by comma, newline, semicolon, space
+  var codes = raw.split(/[,
+;s]+/).filter(function(s){ return s.trim().length>0; });
+  // Remove duplicates
+  var unique = []; var seen = new Set();
+  codes.forEach(function(c){ c=c.trim(); if(!seen.has(c)){seen.add(c);unique.push(c);} });
+  result.style.display='block';
+  result.textContent = '✅ Đã parse ' + unique.length + ' mã CH (đã lọc trùng)';
+  // Store parsed codes in a hidden field for submit
+  document.getElementById('nhomStore').dataset.parsed = JSON.stringify(unique);
+}
+
+function getProvinceCheckboxes(boxId) {
+  var box = document.getElementById(boxId);
+  if (!box) return [];
+  return Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(function(cb){ return cb.value; });
 }
 
 // ============ IMPORT ============
