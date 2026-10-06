@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.29</title>
+  <title>CTKM RURAL v2.30</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.29</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.30</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.29";
+const APP_VERSION = "2.30";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -151,7 +151,7 @@ function switchTab(tab) {
   });
   if (tab === 'dashboard') renderDashboard();
   else if (tab === 'data') renderDataTable();
-  else if (tab === 'add') { renderAddForm(); setTimeout(function(){ loadProvinceList(); }, 200); }
+  else if (tab === 'add') { renderAddForm(); setTimeout(function(){ loadProvinceList(); }, 200); setTimeout(function(){ document.querySelectorAll('#regionTags .region-tag').forEach(function(t){t.classList.add('active')}); renderFilteredProvinces(); }, 300); }
   else if (tab === 'import') renderImport();
 }
 
@@ -1297,7 +1297,7 @@ function submitForm() {
     ngayBDKM: document.getElementById('ngayBDKM').value,
     ngayKTKM: document.getElementById('ngayKTKM').value,
     tinhApDung: document.querySelector('input[name="tinhMode"]:checked').value === 'custom' ? getProvinceCheckboxes('tinhApDungBox').join(', ') : '',
-    nhomStore: document.querySelector('input[name="siteMode"]:checked').value === 'custom' ? document.getElementById('nhomStore').value : '',
+    nhomStore: document.querySelector('input[name="siteMode"]:checked').value === 'custom' ? (document.getElementById('nhomStore').dataset.parsed || document.getElementById('nhomStore').value) : '',
     tinhLoaiTru: '',
     bac: [...regions].some(r=>r.textContent==='BẮC')?1:0,
     trung: [...regions].some(r=>r.textContent==='TRUNG')?1:0,
@@ -1414,16 +1414,39 @@ function renderProvinceCheckboxes(boxId, list) {
 function parseStoreInput() {
   var raw = document.getElementById('nhomStore').value;
   var result = document.getElementById('storeParseResult');
-  if (!raw.trim()) { result.style.display='none'; return; }
-  // Parse store codes: split by comma, newline, semicolon, space
-  var codes = raw.split(/[^a-zA-Z0-9À-ỹ]+/).filter(function(s){ return s.trim().length>0; });
+  var box = document.getElementById('siteChips');
+  if (!box) {
+    // Create chips container after the textarea
+    var ta = document.getElementById('nhomStore');
+    box = document.createElement('div');
+    box.id = 'siteChips';
+    box.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;min-height:0';
+    ta.parentNode.insertBefore(box, ta.nextSibling);
+  }
+  if (!raw.trim()) { result.style.display='none'; box.innerHTML=''; return; }
+  // Parse store codes
+  var codes = raw.split(/[^a-zA-Z0-9]+/).filter(function(s){ return s.trim().length>0; });
   // Remove duplicates
   var unique = []; var seen = new Set();
-  codes.forEach(function(c){ c=c.trim(); if(!seen.has(c)){seen.add(c);unique.push(c);} });
+  codes.forEach(function(c){ c=c.trim().toUpperCase(); if(!seen.has(c)){seen.add(c);unique.push(c);} });
+  
   result.style.display='block';
-  result.textContent = '✅ Đã parse ' + unique.length + ' mã CH (đã lọc trùng)';
-  // Store parsed codes in a hidden field for submit
+  result.textContent = '✅ ' + unique.length + ' mã CH';
   document.getElementById('nhomStore').dataset.parsed = JSON.stringify(unique);
+  
+  // Render chips
+  box.innerHTML = unique.map(function(c, i){
+    return '<span style="display:inline-flex;align-items:center;gap:2px;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid #c8e6c9">'
+      + c + '<span onclick="removeSiteChip('+i+')" style="cursor:pointer;font-weight:bold;margin-left:2px;color:#c62828">&times;</span></span>';
+  }).join('');
+}
+
+function removeSiteChip(idx) {
+  var unique = JSON.parse(document.getElementById('nhomStore').dataset.parsed || '[]');
+  unique.splice(idx, 1);
+  document.getElementById('nhomStore').dataset.parsed = JSON.stringify(unique);
+  document.getElementById('nhomStore').value = unique.join(', ');
+  parseStoreInput();
 }
 
 function getProvinceCheckboxes(boxId) {
