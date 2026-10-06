@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.11</title>
+  <title>CTKM RURAL v2.12</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.11</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.12</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.11";
+const APP_VERSION = "2.12";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -206,16 +206,16 @@ function renderDashboard() {
         <div class="num">${allCT.length}</div><div class="label">🔢 Tổng SKU</div>
       </div>
       <div class="stat-card" id="cardActive" onclick="quickFilter('active')" style="cursor:pointer;transition:all .15s;border-left:3px solid #28a745" title="Lọc: CTKM đang hiệu lực">
-        <div class="num" style="color:#28a745">${activeSKU.toLocaleString()}</div><div class="label">🟢 Đang hiệu lực</div>
+        <div class="num" style="color:#28a745">${activeNow.length}</div><div class="label">🟢 Đang hiệu lực</div>
       </div>
       <div class="stat-card" id="cardUpcoming" onclick="quickFilter('upcoming')" style="cursor:pointer;transition:all .15s;border-left:3px solid #F9A825" title="Lọc: CTKM sắp diễn ra">
-        <div class="num" style="color:#F9A825">${upcomingSKU.toLocaleString()}</div><div class="label">🟡 Sắp diễn ra</div>
+        <div class="num" style="color:#F9A825">${upcoming.length}</div><div class="label">🟡 Sắp diễn ra</div>
       </div>
       <div class="stat-card" id="cardEnding" onclick="quickFilter('ending')" style="cursor:pointer;transition:all .15s;border-left:3px solid #dc2626" title="Lọc: CTKM sắp kết thúc (≤2 ngày)">
-        <div class="num" style="color:#dc2626">${endingSKU.toLocaleString()}</div><div class="label">🔴 Sắp kết thúc</div>
+        <div class="num" style="color:#dc2626">${endingSoon.length}</div><div class="label">🔴 Sắp kết thúc</div>
       </div>
       <div class="stat-card" id="cardExpired" onclick="quickFilter('expired')" style="cursor:pointer;transition:all .15s;border-left:3px solid #94a3b8" title="Lọc: CTKM đã hết hạn">
-        <div class="num" style="color:#94a3b8">${expiredSKU.toLocaleString()}</div><div class="label">⏹ Đã hết hạn</div>
+        <div class="num" style="color:#94a3b8">${expired.length}</div><div class="label">⏹ Đã hết hạn</div>
       </div>
       <div class="stat-card" id="cardSKU" onclick="quickFilter('mch3')" style="cursor:pointer;transition:all .15s" title="Xem theo MCH3">
         <div class="num">${totalSKU.toLocaleString()}</div><div class="label">Tổng SKU</div>
