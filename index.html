@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.28</title>
+  <title>CTKM RURAL v2.29</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.28</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.29</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.28";
+const APP_VERSION = "2.29";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -1215,33 +1215,43 @@ function renderAddForm() {
       
       <!-- PHẠM VI ÁP DỤNG -->
       <div style="background:#FFF8E1;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:4px solid #F9A825">
-        <h3 style="margin:0 0 12px;color:#E65100">📍 Phạm vi áp dụng</h3>
-        <p style="font-size:11px;color:#888;margin:-8px 0 12px">Khai báo đầy đủ nếu CTKM chỉ áp dụng theo site/tỉnh cụ thể</p>
+        <h3 style="margin:0 0 12px;color:#E65100">📍 Vùng cài đặt</h3>
         
+        <!-- Layer 1: Miền -->
         <div style="margin-bottom:12px">
           <label>🌍 Miền</label>
           <div class="region-tags" id="regionTags">
-            <span class="region-tag" onclick="this.classList.toggle('active')">BẮC</span>
-            <span class="region-tag" onclick="this.classList.toggle('active')">TRUNG</span>
-            <span class="region-tag" onclick="this.classList.toggle('active')">NAM</span>
-            <span class="region-tag" onclick="this.classList.toggle('active')">TÂY</span>
+            <span class="region-tag" onclick="this.classList.toggle('active');setTimeout(renderFilteredProvinces,50)">BẮC</span>
+            <span class="region-tag" onclick="this.classList.toggle('active');setTimeout(renderFilteredProvinces,50)">TRUNG</span>
+            <span class="region-tag" onclick="this.classList.toggle('active');setTimeout(renderFilteredProvinces,50)">NAM</span>
+            <span class="region-tag" onclick="this.classList.toggle('active');setTimeout(renderFilteredProvinces,50)">TÂY</span>
           </div>
-          <span style="font-size:10px;color:#999">(Nếu chọn hết 4 = Toàn Quốc)</span>
+          <span style="font-size:10px;color:#999">(Chọn hết 4 = Toàn Quốc)</span>
         </div>
         
-        <div style="display:grid;gap:10px">
-          <div>
-            <label>🏙 Tỉnh/TP áp dụng <span style="color:#999;font-weight:400">(click để chọn, để trống = toàn Miền)</span></label>
-            <div id="tinhApDungBox" style="max-height:120px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px">
-              <span style="color:#999;font-size:11px">Đang tải danh sách tỉnh...</span>
-            </div>
+        <!-- Layer 2: Tỉnh -->
+        <div style="margin-bottom:12px">
+          <label>🏙 Tỉnh/TP</label>
+          <div style="margin-bottom:6px">
+            <label style="font-weight:400;font-size:12px"><input type="radio" name="tinhMode" value="all" checked onchange="toggleTinhMode()"> Tất cả tỉnh trong Miền đã chọn</label>
+            <label style="font-weight:400;font-size:12px;margin-left:12px"><input type="radio" name="tinhMode" value="custom" onchange="toggleTinhMode()"> Chọn tỉnh cụ thể</label>
           </div>
-          <div>
-            <label>🏪 Nhóm Store <span style="color:#999;font-weight:400">(paste mã CH, tự động parse)</span></label>
-            <textarea id="nhomStore" rows="3" placeholder="Paste DS mã CH hoặc site code vào đây...&#10;VD: WCM001, WCM002, WCM003" onblur="parseStoreInput()"></textarea>
+          <div id="tinhApDungBox" style="max-height:140px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:6px 8px;display:none;flex-wrap:wrap;gap:4px">
+            <span style="color:#999;font-size:11px">Đang tải danh sách tỉnh...</span>
+          </div>
+        </div>
+        
+        <!-- Layer 3: Site -->
+        <div>
+          <label>🏪 Site / Cửa hàng</label>
+          <div style="margin-bottom:6px">
+            <label style="font-weight:400;font-size:12px"><input type="radio" name="siteMode" value="all" checked onchange="toggleSiteMode()"> Tất cả CH</label>
+            <label style="font-weight:400;font-size:12px;margin-left:12px"><input type="radio" name="siteMode" value="custom" onchange="toggleSiteMode()"> CH cụ thể</label>
+          </div>
+          <div id="siteBox" style="display:none">
+            <textarea id="nhomStore" rows="3" placeholder="Paste DS mã CH (cách nhau bởi dấu phẩy, xuống dòng)...&#10;VD: WCM001, WCM002, WCM003" onblur="parseStoreInput()" style="margin-bottom:0"></textarea>
             <div id="storeParseResult" style="font-size:10px;color:#16a34a;margin-top:2px;display:none"></div>
           </div>
-          
         </div>
       </div>
     </div>
@@ -1286,8 +1296,8 @@ function submitForm() {
     ngayKTGiaMua: document.getElementById('ngayKTGiaMua').value,
     ngayBDKM: document.getElementById('ngayBDKM').value,
     ngayKTKM: document.getElementById('ngayKTKM').value,
-    tinhApDung: getProvinceCheckboxes('tinhApDungBox').join(', '),
-    nhomStore: document.getElementById('nhomStore').value,
+    tinhApDung: document.querySelector('input[name="tinhMode"]:checked').value === 'custom' ? getProvinceCheckboxes('tinhApDungBox').join(', ') : '',
+    nhomStore: document.querySelector('input[name="siteMode"]:checked').value === 'custom' ? document.getElementById('nhomStore').value : '',
     tinhLoaiTru: '',
     bac: [...regions].some(r=>r.textContent==='BẮC')?1:0,
     trung: [...regions].some(r=>r.textContent==='TRUNG')?1:0,
@@ -1306,6 +1316,44 @@ function submitForm() {
 }
 
 
+
+
+
+function toggleTinhMode() {
+  var custom = document.querySelector('input[name="tinhMode"]:checked').value === 'custom';
+  var box = document.getElementById('tinhApDungBox');
+  box.style.display = custom ? 'flex' : 'none';
+}
+
+function toggleSiteMode() {
+  var custom = document.querySelector('input[name="siteMode"]:checked').value === 'custom';
+  var box = document.getElementById('siteBox');
+  box.style.display = custom ? 'block' : 'none';
+}
+
+function renderFilteredProvinces() {
+  var regionTags = document.querySelectorAll('#regionTags .region-tag.active');
+  var selectedRegions = [];
+  regionTags.forEach(function(t){ 
+    if(t.textContent==='BẮC') selectedRegions.push('bac');
+    if(t.textContent==='TRUNG') selectedRegions.push('trung');
+    if(t.textContent==='NAM') selectedRegions.push('nam');
+    if(t.textContent==='TÂY') selectedRegions.push('tay');
+  });
+  
+  var filtered = [];
+  if (selectedRegions.length === 0) {
+    filtered = ALL_PROVINCES.map(function(p){ return p.name; });
+  } else {
+    var set = new Set();
+    selectedRegions.forEach(function(r){ (PROVINCE_BY_REGION[r]||[]).forEach(function(p){ set.add(p); }); });
+    filtered = Array.from(set).sort();
+  }
+  
+  renderProvinceCheckboxes('tinhApDungBox', filtered);
+}
+
+// Override loadProvinceList to use simpler version
 var ALL_PROVINCES = [];
 var PROVINCE_BY_REGION = {bac:[], trung:[], nam:[], tay:[]};
 
@@ -1348,27 +1396,7 @@ function loadProvinceList() {
   }).catch(function(){});
 }
 
-function renderFilteredProvinces() {
-  var regionTags = document.querySelectorAll('#regionTags .region-tag.active');
-  var selectedRegions = [];
-  regionTags.forEach(function(t){ 
-    if(t.textContent==='BẮC') selectedRegions.push('bac');
-    if(t.textContent==='TRUNG') selectedRegions.push('trung');
-    if(t.textContent==='NAM') selectedRegions.push('nam');
-    if(t.textContent==='TÂY') selectedRegions.push('tay');
-  });
-  
-  var filtered = [];
-  if (selectedRegions.length === 0) {
-    filtered = ALL_PROVINCES.map(function(p){ return p.name; });
-  } else {
-    var set = new Set();
-    selectedRegions.forEach(function(r){ (PROVINCE_BY_REGION[r]||[]).forEach(function(p){ set.add(p); }); });
-    filtered = Array.from(set).sort();
-  }
-  
-  renderProvinceCheckboxes('tinhApDungBox', filtered);
-}
+// renderFilteredProvinces replaced below
 
 // Hook into region tag clicks to re-filter provinces
 document.addEventListener('click', function(e){
