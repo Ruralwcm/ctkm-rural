@@ -151,7 +151,7 @@ function switchTab(tab) {
   });
   if (tab === 'dashboard') renderDashboard();
   else if (tab === 'data') renderDataTable();
-  else if (tab === 'add') renderAddForm(); setTimeout(function(){ loadProvinceList(); }, 200);
+  else if (tab === 'add') { renderAddForm(); setTimeout(function(){ loadProvinceList(); }, 200); }
   else if (tab === 'import') renderImport();
 }
 
