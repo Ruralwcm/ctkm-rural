@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.23</title>
+  <title>CTKM RURAL v2.24</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.23</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.24</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.23";
+const APP_VERSION = "2.24";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -632,6 +632,37 @@ function renderUnifiedCTTable(active, upcoming, all) {
   return html;
 }
 
+
+
+function renderGroupedSKUs(skus, mienFn) {
+  var groups = {};
+  skus.forEach(function(sku) {
+    var nhom = (sku[3]||'Khac').toString();
+    if (!groups[nhom]) groups[nhom] = [];
+    groups[nhom].push(sku);
+  });
+  var keys = Object.keys(groups).sort();
+  var html = '';
+  keys.forEach(function(nhom) {
+    var rows = groups[nhom];
+    html += '<tr><td colspan="10" style="padding:3px 8px;background:#e8f0fe;font-weight:600;font-size:11px">📦 ' + nhom + ' (' + rows.length + ' SKU)</td></tr>';
+    rows.forEach(function(sku) {
+      html += '<tr>'
+        + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
+        + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
+        + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
+        + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
+        + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
+        + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
+        + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
+        + '<td style="padding:2px 4px">'+mienFn(sku)+'</td>'
+        + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
+        + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
+        + '</tr>';
+    });
+  });
+  return html;
+}
 
 function toggleCTExpand2(idx) {
   var ctKey = _ctKeys[idx];
