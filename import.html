@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Import CTKM Data</title>
+<style>body{font-family:Arial;max-width:600px;margin:40px auto;padding:20px}
+.btn{padding:12px 24px;margin:10px;font-size:14px;cursor:pointer;border:none;border-radius:4px;color:#fff}
+.btn-go{background:#1F4E79}.btn-ok{background:#28a745}.log{background:#f5f5f5;padding:12px;margin-top:16px;font-size:12px;white-space:pre-wrap;max-height:300px;overflow:auto}</style></head>
+<body>
+<h2>📥 Import CTKM Data vào GSheet</h2>
+<p><b>B1:</b> Setup Sheets trong GSheet (CTKM RURAL → Setup Sheets)</p>
+<p><b>B2:</b> Nhấn nút dưới để push data</p>
+<button class="btn btn-go" onclick="importGrouped()">Push 88 CTKM Grouped</button>
+<button class="btn btn-go" onclick="importSKU()">Push 4,939 SKU</button>
+<button class="btn btn-ok" onclick="importAll()">🚀 Push ALL (88 + 4,939)</button>
+<div class="log" id="log">Sẵn sàng...</div>
+<script>
+const GAS = 'https://script.google.com/macros/s/AKfycbykaFmh6e3pUuWATtd3ZoMWssoy_lFgvaH7nEW-cZ1e0K_W1Wyes5DZpkzZRwoK8D04/exec';
+const GH = 'https://raw.githubusercontent.com/Ruralwcm/ctkm-rural/main';
+
+function log(msg){document.getElementById('log').textContent+=msg+'\n'}
+
+async function postJSON(action,data){
+  log('POST '+action+'...');
+  const r=await fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})});
+  const j=await r.json();
+  log('✅ '+JSON.stringify(j));return j;
+}
+
+async function importGrouped(){
+  log('Loading grouped data...');
+  const d=await (await fetch(GH+'/ctkm_grouped.json')).json();
+  log('Got '+d.length+' CTKMs');
+  // Map to grouped format (14 cols)
+  const rows=d.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11],r[12],r[13]].map(v=>v===null?'':v));
+  await postJSON('batchImport',rows);
+  // Trigger rebuild
+  log('Grouped data imported!');
+}
+
+async function importSKU(){
+  log('Loading SKU data...');
+  const d=await (await fetch(GH+'/ctkm_sku.json')).json();
+  log('Got '+d.length+' SKUs');
+  await postJSON('batchImport',d);
+}
+
+async function importAll(){
+  await importGrouped();
+  await importSKU();
+  log('🎉 Done! Check GSheet.');
+}
+</script></body></html>
