@@ -118,22 +118,35 @@ let selectedStore = null;
 let SURVEYS = JSON.parse(localStorage.getItem('ks_nhanhang')||'[]');
 
 // ===== TIME SLOTS =====
-function genTimes(){
+function genMeatTimes(){
+  let s=[];
+  for(let h=6;h<22;h++)for(let m of[0,30]){
+    let start=h+'h'+String(m).padStart(2,'0');
+    let endH=m===30?h+1:h;
+    let endM=m===30?'00':'30';
+    s.push({label:start+' - '+endH+'h'+endM, value:String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')});
+  }
+  return s;
+}
+function genVegTimes(){
   let s=[];
   for(let h=0;h<24;h++)for(let m of[0,30]){
     let start=h+'h'+String(m).padStart(2,'0');
     let endH=m===30?h+1:h;
     let endM=m===30?'00':'30';
-    if(endH===24)continue; // skip 23:30-24:00
+    if(endH===24)continue;
     s.push({label:start+' - '+endH+'h'+endM, value:String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')});
   }
   return s;
 }
-const TIMES=genTimes();
+const MEAT_TIMES=genMeatTimes();
+const VEG_TIMES=genVegTimes();
 
 // ===== INIT =====
-TIMES.forEach(t=>{
+MEAT_TIMES.forEach(t=>{
   document.getElementById('smeat').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
+});
+VEG_TIMES.forEach(t=>{
   document.getElementById('sveg').innerHTML+=`<option value="${t.value}">${t.label}</option>`;
 });
 // "Không có lịch giao" đã có sẵn trong HTML
