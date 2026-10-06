@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.25</title>
+  <title>CTKM RURAL v2.26</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.25</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.26</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.25";
+const APP_VERSION = "2.26";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -603,7 +603,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
           + '<col style="width:55px"><col style="width:auto"><col style="width:30px"><col style="width:65px"><col style="width:65px">'
           + '<col style="width:95px"><col style="width:85px"><col style="width:38px"><col style="width:60px"><col style="width:60px"></colgroup>'
-          + skus.map(function(sku){return '<tr>'
+          + (skus.length > 10 ? renderGroupedSKUs(skus, mienAD2) : skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
             + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
@@ -614,8 +614,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
             + '<td style="padding:2px 4px">'+mienAD2(sku)+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
-            + '</tr>';}).join('')
-          + '</table></td></tr>';
+            + '</tr>';}).join('')) + '</table></td></tr>';
       }
     });
     return html;
@@ -645,7 +644,7 @@ function renderGroupedSKUs(skus, mienFn) {
   var html = '';
   keys.forEach(function(nhom) {
     var rows = groups[nhom];
-    html += '<tr><td colspan="10" style="padding:3px 8px;background:#e8f0fe;font-weight:600;font-size:11px">📦 ' + nhom + ' (' + rows.length + ' SKU)</td></tr>';
+    html += '<tr><td colspan="10" style="padding:3px 8px;background:#e8f0fe;font-weight:600;font-size:13px">📦 ' + nhom + ' (' + rows.length + ' SKU)</td></tr>';
     rows.forEach(function(sku) {
       html += '<tr>'
         + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
