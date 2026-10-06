@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.26</title>
+  <title>CTKM RURAL v2.27</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.26</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.27</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.26";
+const APP_VERSION = "2.27";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -1357,32 +1357,171 @@ function getProvinceCheckboxes(boxId) {
 function renderImport() {
   document.getElementById('mainContent').innerHTML = `
     <div style="background:white;border-radius:8px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-      <h3>📥 Import dữ liệu từ file</h3>
-      <p style="color:#666;margin:8px 0 20px">Upload file Excel (.xlsx) đã parse từ MsT để import vào Sheet.</p>
-      <input type="file" id="importFile" accept=".xlsx,.xls" style="margin-bottom:12px">
-      <br>
-      <button class="btn btn-primary" onclick="doImport()">Import File</button>
+      <h3>📥 Import dữ liệu CTKM</h3>
+      
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="downloadTemplate()" style="flex-shrink:0">📥 Tải Template CSV</button>
+        <span style="color:#888;font-size:12px;align-self:center">→ Điền data → Upload lại bên dưới</span>
+      </div>
+      
+      <hr style="margin:16px 0;border-color:#eee">
+      
+      <label style="font-weight:600;margin-bottom:8px;display:block">📎 Chọn file CSV/Excel (.csv, .xlsx)</label>
+      <input type="file" id="importFile" accept=".csv,.xlsx,.xls" onchange="previewImport()" style="margin-bottom:12px">
+      
+      <div id="importPreview" style="display:none;margin:12px 0">
+        <div style="background:#f0fdf4;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:13px" id="importSummary"></div>
+        <div style="max-height:300px;overflow:auto;border:1px solid #eee;border-radius:4px" id="importTable"></div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn btn-success" onclick="confirmImport()">✅ Xác nhận Import</button>
+          <button class="btn btn-secondary" onclick="cancelImport()">Hủy</button>
+        </div>
+      </div>
+      
       <div id="importStatus" style="margin-top:12px"></div>
     </div>
   `;
 }
 
-function doImport() {
-  document.getElementById('importStatus').innerHTML = '⏳ Đang xử lý...';
-  const file = document.getElementById('importFile').files[0];
-  if (!file) { document.getElementById('importStatus').innerHTML = '❌ Chưa chọn file'; return; }
+function downloadTemplate() {
+  var cols = ['Mã CT','Tên CTKM','Phân loại MH','Nhóm hàng (MCH3)','Mã hàng','Tên hàng','ĐVT','Diễn giải KM','Giá thường','Giá KM','Ngày HL Giá mua','Ngày KT Giá mua','Ngày BĐ KM','Ngày KT KM','Tỉnh áp dụng','Nhóm Store','Tỉnh loại trừ','BẮC','TRUNG','NAM','TÂY','Miền gốc'];
+  var bom = '\uFEFF';
+  var csv = bom + cols.join(',') + '\n';
+  // Add 2 sample rows
+  csv += '731,ADHOC09_ViDu,10-ADHOC,Thực phẩm khô,10172025,Sản phẩm mẫu,G1,Mua 1 tặng 1,50000,35000,01/01/2026,31/12/2026,16/01/2026,31/12/2026,,,1,1,1,1,1-TOÀN QUỐC\n';
+  csv += '732,KM_TangKem_ViDu,13-GIẢM TỒN,Bánh kẹo,10144161,Bánh quy mẫu,CAI,Giảm 30%,25000,17500,01/03/2026,30/06/2026,01/03/2026,30/06/2026,TP. Hà Nội,WCM001,,1,0,0,0,BẮC\n';
   
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    // Note: Full XLSX parsing in browser requires SheetJS library
-    // For now, use the server-side GAS import
-    google.script.run
-      .withSuccessHandler(msg => document.getElementById('importStatus').innerHTML = msg)
-      .processUploadedFile(file.name);
-    document.getElementById('importStatus').innerHTML = '✅ File đã nhận. Đang import... kiểm tra Sheet sau vài giây.';
-  };
-  reader.readAsArrayBuffer(file);
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'CTKM_Template.csv';
+  a.click();
+  showToast('✅ Đã tải template CSV');
 }
+
+// Expected columns for validation
+var IMPORT_COLS = ['Mã CT','Tên CTKM','Phân loại MH','Nhóm hàng (MCH3)','Mã hàng','Tên hàng','ĐVT','Diễn giải KM','Giá thường','Giá KM','Ngày HL Giá mua','Ngày KT Giá mua','Ngày BĐ KM','Ngày KT KM','Tỉnh áp dụng','Nhóm Store','Tỉnh loại trừ','BẮC','TRUNG','NAM','TÂY','Miền gốc'];
+var importData = null;
+
+function previewImport() {
+  var file = document.getElementById('importFile').files[0];
+  if (!file) return;
+  
+  document.getElementById('importStatus').innerHTML = '⏳ Đang đọc file...';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    // Remove BOM
+    if (text.charCodeAt(0) === 0xFEFF) text = text.substring(1);
+    
+    // Parse CSV
+    var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+    if (lines.length < 2) {
+      document.getElementById('importStatus').innerHTML = '❌ File rỗng hoặc chỉ có header';
+      return;
+    }
+    
+    // Parse header
+    var headers = parseCSVLine(lines[0]);
+    
+    // Validate headers
+    var missing = [];
+    IMPORT_COLS.forEach(function(c, i) {
+      if (!headers[i] || headers[i].trim().toLowerCase() !== c.toLowerCase()) {
+        missing.push('Cột '+(i+1)+': mong đợi "'+c+'" nhưng nhận "'+(headers[i]||'')+'"');
+      }
+    });
+    
+    if (missing.length > 0) {
+      document.getElementById('importStatus').innerHTML = '❌ <b>Header không khớp:</b><br>' + missing.slice(0,5).join('<br>') + (missing.length>5?'<br>...và '+(missing.length-5)+' lỗi khác':'');
+      return;
+    }
+    
+    // Parse data rows
+    importData = [];
+    for (var i = 1; i < lines.length; i++) {
+      var row = parseCSVLine(lines[i]);
+      if (row.length >= IMPORT_COLS.length) {
+        importData.push(row.slice(0, IMPORT_COLS.length));
+      }
+    }
+    
+    if (importData.length === 0) {
+      document.getElementById('importStatus').innerHTML = '❌ Không có dòng dữ liệu nào';
+      return;
+    }
+    
+    // Show preview
+    document.getElementById('importStatus').innerHTML = '';
+    document.getElementById('importPreview').style.display = 'block';
+    document.getElementById('importSummary').innerHTML = '✅ <b>' + importData.length + ' dòng</b> hợp lệ. ' + IMPORT_COLS.length + ' cột khớp template.<br>📋 Xem trước 5 dòng đầu:';
+    
+    // Render preview table
+    var tblHtml = '<table style="width:100%;font-size:11px"><tr style="background:#f0f0f0">';
+    IMPORT_COLS.forEach(function(c){ tblHtml += '<th style="padding:4px 6px;font-size:10px">'+c+'</th>'; });
+    tblHtml += '</tr>';
+    var preview = importData.slice(0, 5);
+    preview.forEach(function(row){
+      tblHtml += '<tr>';
+      row.forEach(function(cell){ tblHtml += '<td style="padding:3px 6px;font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(cell||'').substring(0,40)+'</td>'; });
+      tblHtml += '</tr>';
+    });
+    if (importData.length > 5) tblHtml += '<tr><td colspan="'+IMPORT_COLS.length+'" style="text-align:center;color:#888;padding:6px">... và '+(importData.length-5)+' dòng nữa</td></tr>';
+    tblHtml += '</table>';
+    document.getElementById('importTable').innerHTML = tblHtml;
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  var result = [];
+  var current = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"' && !inQuotes) { inQuotes = true; }
+    else if (ch === '"' && inQuotes && i+1 < line.length && line[i+1] === '"') { current += '"'; i++; }
+    else if (ch === '"' && inQuotes) { inQuotes = false; }
+    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+    else { current += ch; }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function confirmImport() {
+  if (!importData || !importData.length) return showToast('Chưa có dữ liệu để import', false);
+  
+  document.getElementById('importStatus').innerHTML = '⏳ Đang gửi ' + importData.length + ' dòng lên GSheet...';
+  
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({action:'batchImport', data:importData})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(resp){
+    if (resp.success || resp.ok) {
+      document.getElementById('importStatus').innerHTML = '✅ <b>Import thành công!</b> ' + importData.length + ' dòng đã được đẩy lên GSheet.<br>🔄 Web app sẽ tự load data mới sau khi F5.';
+      document.getElementById('importPreview').style.display = 'none';
+      importData = null;
+    } else {
+      document.getElementById('importStatus').innerHTML = '❌ Lỗi: ' + (resp.message || JSON.stringify(resp));
+    }
+  })
+  .catch(function(err){
+    document.getElementById('importStatus').innerHTML = '❌ Lỗi kết nối GAS: ' + err.message + '<br><small>Thử lại hoặc kiểm tra GAS deployment</small>';
+  });
+}
+
+function cancelImport() {
+  importData = null;
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importFile').value = '';
+  document.getElementById('importStatus').innerHTML = '';
+}
+
+// doImport replaced by previewImport + confirmImport
 
 function fmtDate(v) { if (!v) return ""; const d = new Date(v); if (isNaN(d.getTime())) return v; return d.toLocaleDateString("vi-VN"); }
 
