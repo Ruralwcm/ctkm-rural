@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.12</title>
+  <title>CTKM RURAL v2.13</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.12</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.13</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.12";
+const APP_VERSION = "2.13";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -426,7 +426,7 @@ function applyDashFilter() {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
-  const selStatus = new Set(getMSValues('msStatus'));
+  const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   
   const now = new Date();
@@ -634,6 +634,16 @@ function toggleCTExpand2(idx) {
   if (!ctKey) return;
   if (expandedCT.has(ctKey)) expandedCT.delete(ctKey);
   else expandedCT.add(ctKey);
+  applyDashFilter();
+}
+
+function quickFilter(status) {
+  document.querySelectorAll('.stat-card').forEach(function(c) { c.classList.remove('active-card'); });
+  var cardMap = {all:'cardAll', active:'cardActive', upcoming:'cardUpcoming', ending:'cardEnding', expired:'cardExpired', mch3:'cardSKU'};
+  var card = document.getElementById(cardMap[status]); if (card) card.classList.add('active-card');
+  if (status === 'mch3') { switchView('MCH3'); return; }
+  if (window._currentView === 'MCH3') switchView('CTKM');
+  window._cardFilter = status === 'all' ? null : status;
   applyDashFilter();
 }
 
