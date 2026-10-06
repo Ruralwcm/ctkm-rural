@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.30</title>
+  <title>CTKM RURAL v2.31</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.30</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.31</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -139,7 +139,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.30";
+const APP_VERSION = "2.31";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -604,7 +604,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
           + '<col style="width:55px"><col style="width:auto"><col style="width:30px"><col style="width:65px"><col style="width:65px">'
           + '<col style="width:95px"><col style="width:85px"><col style="width:38px"><col style="width:60px"><col style="width:60px"></colgroup>'
           + (skus.length > 10 ? renderGroupedSKUs(skus, mienAD2) : skus.map(function(sku){return '<tr>'
-            + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
+            + '<td style="padding:2px 4px;font-size:11px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
             + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
             + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
@@ -644,23 +644,34 @@ function renderGroupedSKUs(skus, mienFn) {
   var html = '';
   keys.forEach(function(nhom) {
     var rows = groups[nhom];
-    html += '<tr><td colspan="10" style="padding:3px 8px;background:#e8f0fe;font-weight:600;font-size:13px">📦 ' + nhom + ' (' + rows.length + ' SKU)</td></tr>';
-    rows.forEach(function(sku) {
-      html += '<tr>'
-        + '<td style="padding:2px 4px">'+(sku[4]||'')+'</td>'
-        + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
-        + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
-        + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
-        + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
-        + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
-        + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
-        + '<td style="padding:2px 4px">'+mienFn(sku)+'</td>'
-        + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
-        + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
-        + '</tr>';
-    });
+    var subGrpId = 'sub_' + nhom.replace(/[^a-zA-Z0-9]/g,'_');
+    var subCollapsed = window._collapsedMCH3 && window._collapsedMCH3.has(subGrpId);
+    html += '<tr onclick="toggleSubMCH3(\''+subGrpId+'\')" style="cursor:pointer;background:#e8f0fe"><td colspan="10" style="padding:3px 8px;font-weight:600;font-size:13px">'+(subCollapsed?'▶':'▼')+' 📦 ' + nhom + ' (' + rows.length + ' SKU)</td></tr>';
+    if (!subCollapsed) {
+      rows.forEach(function(sku) {
+        html += '<tr>'
+          + '<td style="padding:2px 4px;font-size:11px">'+(sku[4]||'')+'</td>'
+          + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
+          + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
+          + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
+          + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
+          + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
+          + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
+          + '<td style="padding:2px 4px">'+mienFn(sku)+'</td>'
+          + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
+          + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
+          + '</tr>';
+      });
+    }
   });
   return html;
+}
+
+function toggleSubMCH3(id) {
+  if (!window._collapsedMCH3) window._collapsedMCH3 = new Set();
+  if (window._collapsedMCH3.has(id)) window._collapsedMCH3.delete(id);
+  else window._collapsedMCH3.add(id);
+  applyDashFilter();
 }
 
 function toggleCTExpand2(idx) {
