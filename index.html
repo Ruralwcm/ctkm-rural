@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.33</title>
+  <title>CTKM RURAL v2.34</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -131,7 +131,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.33</span> <span style="font-size:11px;opacity:.6;font-weight:400;color:#ffd54f" id="dataDate">| Update: 06/10/2026</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.34</span> <span style="font-size:11px;opacity:.6;font-weight:400;color:#ffd54f" id="dataDate">| Update: 06/10/2026</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -148,7 +148,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.33";
+const APP_VERSION = "2.34";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -251,6 +251,16 @@ function renderDashboard() {
           <div class="ms-item" data-val="trung" onclick=\"toggleMSItem(this,'msMien',event)\">TRUNG</div>
           <div class="ms-item" data-val="nam" onclick=\"toggleMSItem(this,'msMien',event)\">NAM</div>
           <div class="ms-item" data-val="tay" onclick=\"toggleMSItem(this,'msMien',event)\">TÂY</div>
+        </div>
+      </div>
+      
+      <!-- Phạm vi -->
+      <div class="ms-wrap" id="msPhamVi">
+        <button class="ms-btn" data-title="Phạm vi" onclick="toggleMS('msPhamVi')" style="min-width:95px">Phạm vi ▾</button>
+        <div class="ms-drop" id="msPhamViDrop">
+          <div class="ms-item" data-val="all" onclick="toggleMSItem(this,'msPhamVi',event)">🟢 All</div>
+          <div class="ms-item" data-val="tinh" onclick="toggleMSItem(this,'msPhamVi',event)">🟠 Tỉnh</div>
+          <div class="ms-item" data-val="store" onclick="toggleMSItem(this,'msPhamVi',event)">🔴 Store</div>
         </div>
       </div>
       
@@ -407,8 +417,8 @@ function getMSLabels(id) {
 }
 
 function refreshChipsBar() {
-  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien'), status = getMSLabels('msStatus'), skukey = getMSLabels('msSkuKey');
-  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'})), ...status.map(l=>({t:l,g:'msStatus',c:'#fce4ec'})), ...skukey.map(l=>({t:l,g:'msSkuKey',c:'#e8f5e9'}))];
+  const loai = getMSLabels('msLoai'), nhom = getMSLabels('msNhom'), mien = getMSLabels('msMien'), status = getMSLabels('msStatus'), skukey = getMSLabels('msSkuKey'), phamvi = getMSLabels('msPhamVi');
+  const all = [...loai.map(l=>({t:l,g:'msLoai',c:'#dbeafe'})), ...nhom.map(l=>({t:l,g:'msNhom',c:'#dcfce7'})), ...mien.map(l=>({t:l,g:'msMien',c:'#fef3c7'})), ...status.map(l=>({t:l,g:'msStatus',c:'#fce4ec'})), ...skukey.map(l=>({t:l,g:'msSkuKey',c:'#e8f5e9'})), ...phamvi.map(l=>({t:l,g:'msPhamVi',c:'#fce4ec'}))];
   const bar = document.getElementById('msChipsBar');
   if (!bar) return;
   bar.innerHTML = all.map(x => `<span class="ms-chip" style="background:${x.c}">${x.t}<span class="x" onclick="event.stopPropagation();removeChip('${x.g}','${x.t}')">×</span></span>`).join('');
@@ -457,6 +467,10 @@ function applyDashFilter() {
       if (selMien.has('nam') && r.nam) ok = true;
       if (selMien.has('tay') && r.tay) ok = true;
       if (!ok) return false;
+    }
+    if (selPhamVi.size > 0) {
+      var pv = window._phamVi && window._phamVi[(r.ma||'').toString()] ? window._phamVi[(r.ma||'').toString()] : 'all';
+      if (!selPhamVi.has(pv)) return false;
     }
     const selSkuKey = new Set(getMSValues('msSkuKey'));
     if (selSkuKey.size > 0) {
