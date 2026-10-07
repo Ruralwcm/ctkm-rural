@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTKM RURAL v2.32</title>
+  <title>CTKM RURAL v2.33</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -131,7 +131,7 @@
 </head>
 <body>
 <div class="header">
-  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.32</span> <span style="font-size:11px;opacity:.6;font-weight:400;color:#ffd54f" id="dataDate">| Update: 06/10/2026</span></h1>
+  <h1>🏷 CTKM RURAL <span style="font-size:11px;opacity:.7;font-weight:400" id="appVer">v2.33</span> <span style="font-size:11px;opacity:.6;font-weight:400;color:#ffd54f" id="dataDate">| Update: 06/10/2026</span></h1>
   <span id="userInfo"></span>
 </div>
 
@@ -148,7 +148,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION = "2.32";
+const APP_VERSION = "2.33";
 let allData = [];
 let groupedData = [];
 let expandedCT = new Set();
@@ -439,6 +439,7 @@ function applyDashFilter() {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
+  const selPhamVi = new Set(getMSValues('msPhamVi'));
   const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   
@@ -590,7 +591,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
   }
   
   function renderCTGroup2(items, title, color) {
-    if (!items.length) return ''; var html = ''; if (title) html += '<tr style="background:'+color+'"><td colspan="11" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
+    if (!items.length) return ''; var html = ''; if (title) html += '<tr style="background:'+color+'"><td colspan="10" style="padding:6px 10px;font-weight:700;font-size:13px">'+title+' ('+items.length+' CT)</td></tr>';
     items.forEach(function(r) {
       var ctKey = r.ten||'';
       _ctKeys.push(ctKey);
@@ -604,11 +605,12 @@ function renderUnifiedCTTable(active, upcoming, all) {
       
       html += '<tr onclick="toggleCTExpand2(' + ctIdx + ')" style="cursor:pointer;' + (isExpired?'opacity:.5;background:#f8f9fa':'')+'font-weight:600">'
         + '<td style="text-align:center;width:26px">'+(isExp?'▼':'▶')+'</td>'
-        + '<td colspan="10" style="font-size:13px">' + summary + '</td>'
+        + '<td style="width:65px">'+getPhamViBadge(window._phamVi&&window._phamVi[r.ma]?window._phamVi[r.ma]:'all')+'</td>'
+        + '<td colspan="9" style="font-size:13px">' + summary + '</td>'
         + '</tr>';
       
       if (isExp && skus.length > 0) {
-        html += '<tr style="background:#f8faff"><td></td><td colspan="10" style="padding:4px 8px">'
+        html += '<tr style="background:#f8faff"><td></td><td></td><td colspan="9" style="padding:4px 8px">'
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
           + '<col style="width:55px"><col style="width:auto"><col style="width:30px"><col style="width:65px"><col style="width:65px">'
           + '<col style="width:95px"><col style="width:85px"><col style="width:38px"><col style="width:60px"><col style="width:60px"></colgroup>'
@@ -826,6 +828,7 @@ function getFilteredSKU(skuData) {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
+  const selPhamVi = new Set(getMSValues('msPhamVi'));
   const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   const now = new Date();
@@ -900,6 +903,7 @@ function getFilteredCT(data) {
   const selLoai = new Set(getMSValues('msLoai'));
   const selNhom = new Set(getMSValues('msNhom'));
   const selMien = new Set(getMSValues('msMien'));
+  const selPhamVi = new Set(getMSValues('msPhamVi'));
   const selStatus = new Set(getMSValues('msStatus')); if (!selStatus.size && window._cardFilter) selStatus.add(window._cardFilter);
   const selTime = document.getElementById('dashFilterTime2')?.value || '';
   const now = new Date();
@@ -1024,6 +1028,15 @@ function renderDataTable() {
         </div>
       </div>
       
+      <div class="ms-wrap" id="msPhamViD">
+        <button class="ms-btn" data-title="Phạm vi" onclick="toggleMS('msPhamViD')" style="min-width:90px">Phạm vi ▾</button>
+        <div class="ms-drop" id="msPhamViDDrop">
+          <div class="ms-item" data-val="all" onclick="toggleMSItem(this,'msPhamViD',event);filterTable()">🟢 All</div>
+          <div class="ms-item" data-val="tinh" onclick="toggleMSItem(this,'msPhamViD',event);filterTable()">🟠 Tỉnh</div>
+          <div class="ms-item" data-val="store" onclick="toggleMSItem(this,'msPhamViD',event);filterTable()">🔴 Store</div>
+        </div>
+      </div>
+      
       <div class="ms-wrap" id="msSkuKeyD">
         <button class="ms-btn" data-title="SKU Key" onclick="toggleMS('msSkuKeyD')">SKU Key ▾</button>
         <div class="ms-drop" id="msSkuKeyDDrop">${(()=>{
@@ -1080,6 +1093,7 @@ function filterTable() {
   var selLoai = new Set(getMSValues('msLoaiD'));
   var selNhom = new Set(getMSValues('msNhomD'));
   var selMien = new Set(getMSValues('msMienD'));
+  var selPhamVi = new Set(getMSValues('msPhamViD'));
   
   var selSkuKey = new Set(getMSValues('msSkuKeyD'));
   
@@ -1100,6 +1114,11 @@ function filterTable() {
       if (selMien.has('tay') && r[20]) ok = true;
       if (!ok) return false;
     }
+    // Phạm vi filter
+    if (selPhamVi.size > 0) {
+      var pv = window._phamVi && window._phamVi[(r[0]||'').toString()] ? window._phamVi[(r[0]||'').toString()] : 'all';
+      if (!selPhamVi.has(pv)) return false;
+    }
     return true;
   });
   
@@ -1108,9 +1127,9 @@ function filterTable() {
   if (countEl) countEl.textContent = filtered.length + ' / ' + skuData.length + ' dòng';
   
   // Render table
-  document.getElementById('dataTable').innerHTML = '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:50px"><col style="width:auto"><col style="width:95px"><col style="width:95px"><col style="width:80px"><col style="width:auto"><col style="width:38px"><col style="width:110px"><col style="width:78px"><col style="width:78px"><col style="width:65px"><col style="width:65px"><col style="width:55px"></colgroup>' +
+  document.getElementById('dataTable').innerHTML = '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:50px"><col style="width:auto"><col style="width:70px"><col style="width:95px"><col style="width:95px"><col style="width:80px"><col style="width:auto"><col style="width:38px"><col style="width:110px"><col style="width:78px"><col style="width:78px"><col style="width:65px"><col style="width:65px"><col style="width:55px"></colgroup>' +
     '<tr>' +
-    '<th>Mã CT</th><th>Tên CTKM</th><th>Loại</th><th>Nhóm hàng</th><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Diễn giải</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>' +
+    '<th>Mã CT</th><th>Tên CTKM</th><th>Phạm vi</th><th>Loại</th><th>Nhóm hàng</th><th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th><th>Diễn giải</th><th>Giá thường</th><th>Giá KM</th><th>Ngày BĐ</th><th>Ngày KT</th><th>Miền</th></tr>' +
     filtered.map(function(r) {
       var mien = [];
       if (r[17]) mien.push('B');
@@ -1121,6 +1140,7 @@ function filterTable() {
       return '<tr>' +
         '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[0]||'')+'</td>' +
         '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r[1]||'')+'">'+(r[1]||'')+'</td>' +
+        '<td>'+getPhamViBadge(window._phamVi&&window._phamVi[(r[0]||'').toString()]?window._phamVi[(r[0]||'').toString()]:'all')+'</td>' +
         '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[2]||'')+'</td>' +
         '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[3]||'')+'</td>' +
         '<td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r[4]||'')+'</td>' +
@@ -1142,6 +1162,7 @@ function exportDataCSV() {
   var selLoai = new Set(getMSValues('msLoaiD'));
   var selNhom = new Set(getMSValues('msNhomD'));
   var selMien = new Set(getMSValues('msMienD'));
+  var selPhamVi = new Set(getMSValues('msPhamViD'));
   var search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
   
   var selSkuKey = new Set(getMSValues('msSkuKeyD'));
@@ -1163,6 +1184,11 @@ function exportDataCSV() {
       if (selMien.has('tay') && r[20]) ok = true;
       if (!ok) return false;
     }
+    // Phạm vi filter
+    if (selPhamVi.size > 0) {
+      var pv = window._phamVi && window._phamVi[(r[0]||'').toString()] ? window._phamVi[(r[0]||'').toString()] : 'all';
+      if (!selPhamVi.has(pv)) return false;
+    }
     return true;
   });
   
@@ -1173,7 +1199,8 @@ function exportDataCSV() {
     if (r[18]) mien.push('TRUNG');
     if (r[19]) mien.push('NAM');
     if (r[20]) mien.push('TÂY');
-    csv += '"'+(r[0]||'')+'","'+(r[1]||'')+'","'+(r[2]||'')+'","'+(r[3]||'')+'","'+(r[4]||'')+'","'+(r[5]||'')+'","'+(r[6]||'')+'","'+(r[7]||'').replace(/"/g,'""')+'","'+(r[8]||'')+'","'+(r[9]||'')+'","'+fmtDate(r[12])+'","'+fmtDate(r[13])+'","'+mien.join('; ')+'"\n';
+    var pvLabel = window._phamVi&&window._phamVi[(r[0]||'').toString()]?window._phamVi[(r[0]||'').toString()]:'all';
+  csv += '"'+(r[0]||'')+'","'+(r[1]||'')+'","'+pvLabel+'","'+(r[2]||'')+'","'+(r[3]||'')+'","'+(r[4]||'')+'","'+(r[5]||'')+'","'+(r[6]||'')+'","'+(r[7]||'').replace(/"/g,'""')+'","'+(r[8]||'')+'","'+(r[9]||'')+'","'+fmtDate(r[12])+'","'+fmtDate(r[13])+'","'+mien.join('; ')+'"\n';
   });
   
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
@@ -1686,6 +1713,12 @@ async function loadData() {
 loadData().then(({grouped, sku}) => {
   groupedData = grouped;
   window._skuData = sku;
+  // Compute Phạm vi for each CTKM from SKU data
+  window._phamVi = computePhamVi(sku);
+  // Attach phamVi to each grouped CT
+  groupedData.forEach(function(ct) {
+    ct[14] = window._phamVi[(ct[0]||'').toString()] || 'all';
+  });
   try {
     renderDashboard();
     // Default view: MCH3
@@ -1700,6 +1733,45 @@ loadData().then(({grouped, sku}) => {
   // Save GAS_URL to localStorage for next time
   if (GAS_URL) localStorage.setItem('ctkm_gas_url', GAS_URL);
 });
+
+// ============ PHẠM VI (All / Tỉnh / Store) ============
+function computePhamVi(skuData) {
+  // For each CTKM ID, determine scope category:
+  //   "all"   = Full miền, NO tỉnh áp dụng cụ thể, NO loại trừ, NO nhóm store
+  //   "tinh"  = Có tỉnh áp dụng cụ thể hoặc có loại trừ (nhưng ko có Nhóm Store)
+  //   "store" = Có Nhóm Store / DS CH riêng (Adhoc)
+  var map = {}; // { ctId: { phamVi, tinhApDung: [], tinhLoaiTru: [], nhomStore: [] } }
+  skuData.forEach(function(r) {
+    var ctId = (r[0]||'').toString();
+    if (!map[ctId]) {
+      map[ctId] = { tinhApDung: new Set(), tinhLoaiTru: new Set(), nhomStore: new Set() };
+    }
+    var ta = r[14]; if (ta && ta.toString().trim() && ta.toString().trim().toLowerCase() !== 'none') map[ctId].tinhApDung.add(ta.toString().trim());
+    var ns = r[15]; if (ns && ns.toString().trim() && ns.toString().trim().toLowerCase() !== 'none') map[ctId].nhomStore.add(ns.toString().trim());
+    var lt = r[16]; if (lt && lt.toString().trim() && lt.toString().trim().toLowerCase() !== 'none') map[ctId].tinhLoaiTru.add(lt.toString().trim());
+  });
+  
+  var result = {};
+  Object.keys(map).forEach(function(ctId) {
+    var f = map[ctId];
+    if (f.nhomStore.size > 0) {
+      result[ctId] = 'store';
+    } else if (f.tinhApDung.size > 0 || f.tinhLoaiTru.size > 0) {
+      result[ctId] = 'tinh';
+    } else {
+      result[ctId] = 'all';
+    }
+  });
+  return result;
+}
+
+function getPhamViBadge(phamVi) {
+  if (phamVi === 'all') return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#dcfce7;color:#16a34a;white-space:nowrap">🟢 All</span>';
+  if (phamVi === 'tinh') return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#fef3c7;color:#d97706;white-space:nowrap">🟠 Tỉnh</span>';
+  if (phamVi === 'store') return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#fce4ec;color:#dc2626;white-space:nowrap">🔴 Store</span>';
+  return '';
+}
+
 </script>
 <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#1F4E79;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
 <script>
