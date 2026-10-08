@@ -1723,7 +1723,14 @@ async function loadData() {
 }
 
 loadData().then(({grouped, sku}) => {
-  groupedData = grouped;
+  // Deduplicate grouped CTKM data by Mã CT (column 0)
+  const seen = new Set();
+  const deduped = grouped.filter(ct => {
+    const key = (ct[0]||'').toString();
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+  groupedData = deduped;
   window._skuData = sku;
   // Compute Phạm vi for each CTKM from SKU data
   window._phamVi = computePhamVi(sku);
