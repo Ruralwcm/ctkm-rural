@@ -626,7 +626,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
         html += '<tr style="background:#f8faff"><td></td><td colspan="10" style="padding:4px 8px">'
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
           + '<col style="width:55px"><col style="width:auto"><col style="width:30px"><col style="width:65px"><col style="width:65px">'
-          + '<col style="width:95px"><col style="width:85px"><col style="width:50px"><col style="width:60px"><col style="width:60px"></colgroup>'
+          + '<col style="width:95px"><col style="width:auto"><col style="width:50px"><col style="width:60px"><col style="width:60px"></colgroup>'
           + (skus.length > 10 ? renderGroupedSKUs(skus, mienAD2) : skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px;font-size:11px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
@@ -634,7 +634,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
             + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
             + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
             + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
-            + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
+            + '<td style="padding:2px 4px;white-space:normal;word-break:break-word" title="'+(sku[7]||'')+'">'+(sku[7]||'')+'</td>'
             + '<td style="padding:2px 4px">'+mienAD2(sku)+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
@@ -647,7 +647,7 @@ function renderUnifiedCTTable(active, upcoming, all) {
   var minW = window.innerWidth < 600 ? '700px' : '900px';
   var html = '<table style="table-layout:fixed;width:100%;min-width:'+minW+';font-size:12px"><colgroup>'
     + '<col style="width:24px"><col style="width:55px"><col style="width:auto"><col style="width:30px"><col style="width:65px"><col style="width:65px">'
-    + '<col style="width:95px"><col style="width:85px"><col style="width:50px"><col style="width:60px"><col style="width:60px"></colgroup>'
+    + '<col style="width:95px"><col style="width:auto"><col style="width:50px"><col style="width:60px"><col style="width:60px"></colgroup>'
     + '<tr><th></th><th>Mã SP</th><th>Tên SP / CTKM</th><th>ĐVT</th><th style="text-align:right">Giá thường</th><th style="text-align:right">Giá KM</th><th>Loại CTKM</th><th>Diễn giải</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>';
   
   all.sort(function(a,b){ return (a.loai||'').localeCompare(b.loai||''); }); html += renderCTGroup2(all, '', '');
@@ -680,7 +680,7 @@ function renderGroupedSKUs(skus, mienFn) {
           + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
           + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
           + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
-          + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'').substring(0,30)+'</td>'
+          + '<td style="padding:2px 4px;white-space:normal;word-break:break-word" title="'+(sku[7]||'')+'">'+(sku[7]||'')+'</td>'
           + '<td style="padding:2px 4px">'+mienFn(sku)+'</td>'
           + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
           + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
@@ -790,7 +790,7 @@ function renderMCH3View(data) {
   return `<table style="table-layout:fixed;width:100%;min-width:800px">
     <colgroup>
       <col style="width:24px"><col style="width:55px"><col style="width:auto"><col style="width:30px">
-      <col style="width:65px"><col style="width:65px"><col style="width:95px"><col style="width:85px"><col style="width:50px"><col style="width:60px"><col style="width:60px">
+      <col style="width:65px"><col style="width:65px"><col style="width:95px"><col style="width:auto"><col style="width:50px"><col style="width:60px"><col style="width:60px">
     </colgroup>
     <tr><th></th><th>Mã SP</th><th>Tên SP</th><th>ĐVT</th><th style="text-align:right">Giá thường</th><th style="text-align:right">Giá KM</th><th>Loại CTKM</th><th>Diễn giải</th><th>Miền AD</th><th>Ngày BĐ</th><th>Ngày KT</th></tr>
     ${sortedGroups.map(nhom => {
