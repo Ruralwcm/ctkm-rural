@@ -627,18 +627,18 @@ function renderUnifiedCTTable(active, upcoming, all) {
           + '<table style="width:100%;font-size:11px;border-collapse:collapse;table-layout:fixed"><colgroup>'
           + '<col style="width:55px"><col style="width:auto"><col style="width:30px"><col style="width:65px"><col style="width:65px">'
           + '<col style="width:95px"><col style="width:auto"><col style="width:50px"><col style="width:60px"><col style="width:60px"></colgroup>'
-          + skus.map(function(sku){return '<tr>'
+          + (skus.length > 10 ? renderGroupedSKUs(skus, mienAD2) : skus.map(function(sku){return '<tr>'
             + '<td style="padding:2px 4px;font-size:11px">'+(sku[4]||'')+'</td>'
             + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[5]||'')+'">'+(sku[5]||'').substring(0,50)+'</td>'
             + '<td style="padding:2px 4px">'+(sku[6]||'')+'</td>'
             + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
             + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
             + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
-            + '<td style="padding:2px 4px;white-space:normal;word-break:break-word" title="'+(sku[7]||'')+'">'+(sku[7]||'')+'</td>'
+            + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'')+'</td>'
             + '<td style="padding:2px 4px">'+mienAD2(sku)+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
             + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
-            + '</tr>';}).join('') + '</table></td></tr>';
+            + '</tr>';}).join('')) + '</table></td></tr>';
       }
     });
     return html;
@@ -680,7 +680,7 @@ function renderGroupedSKUs(skus, mienFn) {
           + '<td style="padding:2px 4px;text-align:right">'+Number(sku[8]||0).toLocaleString()+'</td>'
           + '<td style="padding:2px 4px;text-align:right;color:#dc2626">'+Number(sku[9]||0).toLocaleString()+'</td>'
           + '<td style="padding:2px 4px">'+(sku[2]||'')+'</td>'
-          + '<td style="padding:2px 4px;white-space:normal;word-break:break-word" title="'+(sku[7]||'')+'">'+(sku[7]||'')+'</td>'
+          + '<td style="padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(sku[7]||'')+'">'+(sku[7]||'')+'</td>'
           + '<td style="padding:2px 4px">'+mienFn(sku)+'</td>'
           + '<td style="padding:2px 4px">'+fmtDate(sku[12])+'</td>'
           + '<td style="padding:2px 4px">'+fmtDate(sku[13])+'</td>'
