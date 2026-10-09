@@ -216,7 +216,7 @@ function renderDashboard() {
   document.getElementById('mainContent').innerHTML = `
     <div class="stats">
       <div class="stat-card" id="cardAll" onclick="quickFilter('all')" style="cursor:pointer;transition:all .15s" title="Lọc: Tất cả CTKM">
-        <div class="num">${allCT.length}</div><div class="label">🔢 Tổng SKU</div>
+        <div class="num">${allCT.length}</div><div class="label" id="cardAllLabel">🔢 Tổng SKU</div>
       </div>
       <div class="stat-card" id="cardActive" onclick="quickFilter('active')" style="cursor:pointer;transition:all .15s;border-left:3px solid #28a745" title="Lọc: CTKM đang hiệu lực">
         <div class="num" style="color:#28a745">${activeNow.length}</div><div class="label">🟢 Đang hiệu lực</div>
@@ -757,6 +757,8 @@ function switchView(view) {
   document.getElementById('btnViewMCH3').classList.toggle('active', view==='MCH3');
   document.getElementById('viewCTKM').style.display = view==='CTKM' ? '' : 'none';
   document.getElementById('viewMCH3').style.display = view==='MCH3' ? '' : 'none';
+  var lbl = document.getElementById('cardAllLabel');
+  if (lbl) lbl.textContent = view==='MCH3' ? '🔢 Tổng SKUs' : '🔢 Tổng CTKM';
   if (view === 'MCH3') updateMCH3View();
 }
 
