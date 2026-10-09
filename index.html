@@ -146,6 +146,17 @@
     .btn-outline{background:transparent;border:1px solid rgba(255,255,255,.5);color:white}
     .tab-locked{opacity:.5;pointer-events:none}
 
+
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:none;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal-box{background:white;border-radius:12px;padding:24px;width:700px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+    .modal-box h3{margin:0 0 16px;color:#1F4E79}
+    .modal-box table{width:100%;border-collapse:collapse;font-size:12px}
+    .modal-box th{background:#f8f9fa;padding:8px;text-align:left;border-bottom:2px solid #dee2e6}
+    .modal-box td{padding:8px;border-bottom:1px solid #eee}
+    .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#999}
+    .btn-danger{background:#dc3545;color:white}
+
 </style>
 </head>
 <body>
@@ -171,6 +182,7 @@
   <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
   <div class="tab" onclick="switchTab('data')">📋 Dữ liệu</div>
   <div class="tab" id="tabAdd" onclick="switchTab('add')">➕ Thêm CTKM</div>
+  <div class="tab" id="tabUsers" onclick="switchTab('users')">👥 Users</div>
   <div class="tab" id="tabImport" onclick="switchTab('import')">📥 Import</div>
 </div>
 
@@ -196,7 +208,7 @@ async function doLogin(){
     if(d.success){AUTH.set({token:d.token,user:d.user});ok=true;}
     else{var f=OFFUSERS[u.toLowerCase()];if(f&&f.pw===p){AUTH.set({token:"off_"+Date.now(),user:{role:f.role,name:f.name,regions:f.regions,tinhs:f.tinhs}});ok=true;}else showLoginError(d.message||"Sai tên đăng nhập hoặc mật khẩu");}
   }catch(e){var f2=OFFUSERS[u.toLowerCase()];if(f2&&f2.pw===p){AUTH.set({token:"off_"+Date.now(),user:{role:f2.role,name:f2.name,regions:f2.regions,tinhs:f2.tinhs}});ok=true;}else showLoginError("Sai tên đăng nhập hoặc mật khẩu");}
-  if(ok){document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();renderApp();}
+  if(ok){document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();_syncOffusers();renderApp();}
   btn.textContent="Đăng nhập";btn.disabled=false;
 }
 function doLogout(){var t=(AUTH.get()||{}).token;if(t&&t.indexOf("off_")!==0)fetch(getGAS(),{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"logout",token:t})}).catch(function(){});AUTH.clear();sessionStorage.clear();document.getElementById("loginOverlay").style.display="flex";document.getElementById("appMain").style.display="none";document.getElementById("loginUser").value="";document.getElementById("loginPass").value="";}
@@ -215,9 +227,78 @@ function filterByUserRole(data,isGrouped){
     else{var ok=false;if(regions.indexOf("bac")>=0&&row[17])ok=true;if(regions.indexOf("trung")>=0&&row[18])ok=true;if(regions.indexOf("nam")>=0&&row[19])ok=true;if(regions.indexOf("tay")>=0&&row[20])ok=true;return ok;}
   });
 }
-function renderApp(){if(AUTH.user()){showUserInfo();renderDashboard();}}
+function renderApp(){if(AUTH.user()){showUserInfo();_syncOffusers();renderDashboard();}}
 (function(){if(AUTH.loggedIn()){document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();}else{document.getElementById("loginOverlay").style.display="flex";document.getElementById("appMain").style.display="none";}})();
 document.addEventListener("keydown",function(e){if(e.key==="Enter"&&document.getElementById("loginOverlay").style.display!=="none")doLogin();});
+
+// ═══════════ USER MANAGEMENT (localStorage) ═══════════
+function _loadUsers(){
+  try{var s=localStorage.getItem("ctkm_users");return s?JSON.parse(s):[
+    {username:"admin",pw:"admin123",name:"Admin",role:"admin",regions:"BẮC,TRUNG,NAM,TÂY",tinhs:""},
+    {username:"honbpb",pw:"babypink",name:"Phạm Bích Hồng",role:"admin",regions:"BẮC,TRUNG,NAM,TÂY",tinhs:""}
+  ];}catch(e){return[];}
+}
+function _saveUsers(users){localStorage.setItem("ctkm_users",JSON.stringify(users));}
+function openUserModal(){if(!AUTH.isAdmin())return;document.getElementById("userModal").classList.add("open");renderUserTable(_loadUsers());}
+function closeUserModal(){document.getElementById("userModal").classList.remove("open");}
+function renderUserTable(users){
+  var h='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="showAddUserForm()">➕ Thêm User</button><button class="btn btn-sm" style="background:#f0ad4e;color:#fff" onclick="showImportUsers()">📥 Import DS User</button></div><div class="table-wrap"><table><tr><th>Username</th><th>Tên</th><th>Role</th><th>Vùng</th><th>Tỉnh</th><th style="width:120px">Thao tác</th></tr>';
+  users.forEach(function(u){var rl={"admin":"🔑 Admin","gdv":"📊 GĐV","qlkv":"🏪 QLKV"}[u.role]||u.role;h+='<tr><td><b>'+(u.username||"")+'</b></td><td>'+(u.name||"")+'</td><td>'+rl+'</td><td style="font-size:10px">'+(u.regions||"")+'</td><td style="font-size:10px">'+(u.tinhs||"")+'</td><td><button class="btn-sm" style="background:#1F4E79;color:#fff;margin-right:4px" onclick="showEditUserForm(\''+(u.username||"")+'\')">✏️</button>'+(u.username==="admin"?"":'<button class="btn-sm btn-danger" onclick="deleteUser(\''+(u.username||"")+'\')">🗑</button>')+'</td></tr>';});
+  h+='</table></div>';document.getElementById("userModalContent").innerHTML=h;
+}
+function showAddUserForm(){
+  document.getElementById("userModalContent").innerHTML='<h4>➕ Thêm User mới</h4><div class="form-grid"><div><label>Username *</label><input id="newUsername" placeholder="vd: sonnm"></div><div><label>Tên hiển thị</label><input id="newName" placeholder="vd: Nguyễn Mạnh Sơn"></div><div><label>Mật khẩu *</label><input id="newPassword" type="password" placeholder="Ít nhất 4 ký tự"></div><div><label>Role</label><select id="newRole"><option value="qlkv">QLKV</option><option value="gdv">GĐV</option><option value="admin">Admin</option></select></div><div class="full"><label>Vùng phụ trách</label><div style="display:flex;gap:8px;margin-top:4px">'+["BẮC","TRUNG","NAM","TÂY"].map(function(r){return '<label style="font-weight:400;font-size:12px"><input type="checkbox" value="'+r+'" class="cbRegion"> '+r+'</label>';}).join("")+'</div></div><div class="full"><label>Tỉnh phụ trách (cách nhau dấu phẩy)</label><input id="newTinhs" placeholder="vd: Hà Nội, Bắc Ninh"></div></div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveNewUser()">✅ Lưu</button><button class="btn btn-secondary btn-sm" onclick="renderUserTable(_loadUsers())">Hủy</button></div>';
+}
+function saveNewUser(){
+  var u=document.getElementById("newUsername").value.trim(),p=document.getElementById("newPassword").value.trim();
+  if(!u||!p){showToast("Vui lòng nhập username và password",false);return;}
+  if(p.length<4){showToast("Mật khẩu tối thiểu 4 ký tự",false);return;}
+  var regions=[];document.querySelectorAll(".cbRegion:checked").forEach(function(cb){regions.push(cb.value);});
+  var users=_loadUsers();
+  if(users.find(function(x){return x.username.toLowerCase()===u.toLowerCase();})){showToast("Username đã tồn tại",false);return;}
+  users.push({username:u,pw:p,name:document.getElementById("newName").value.trim(),role:document.getElementById("newRole").value,regions:regions.join(","),tinhs:document.getElementById("newTinhs").value.trim()});
+  _saveUsers(users);showToast("✅ Đã thêm: "+u);renderUserTable(users);
+}
+function showEditUserForm(un){
+  var users=_loadUsers(),u=users.find(function(x){return x.username===un;});if(!u)return;
+  var rs=(u.regions||"").split(",").map(function(s){return s.trim();}).filter(Boolean);
+  document.getElementById("userModalContent").innerHTML='<h4>✏️ Sửa User: <b>'+un+'</b></h4><div class="form-grid"><div><label>Tên hiển thị</label><input id="editName" value="'+(u.name||"")+'"></div><div><label>Mật khẩu mới (để trống = giữ nguyên)</label><input id="editPassword" type="password" placeholder="Nhập mật khẩu mới"></div><div><label>Role</label><select id="editRole"><option value="qlkv" '+(u.role==="qlkv"?"selected":"")+'>QLKV</option><option value="gdv" '+(u.role==="gdv"?"selected":"")+'>GĐV</option><option value="admin" '+(u.role==="admin"?"selected":"")+'>Admin</option></select></div><div></div><div class="full"><label>Vùng phụ trách</label><div style="display:flex;gap:8px;margin-top:4px">'+["BẮC","TRUNG","NAM","TÂY"].map(function(r){return '<label style="font-weight:400;font-size:12px"><input type="checkbox" value="'+r+'" class="cbEditRegion" '+(rs.indexOf(r)>=0?"checked":"")+'> '+r+"</label>";}).join("")+'</div></div><div class="full"><label>Tỉnh phụ trách</label><input id="editTinhs" value="'+(u.tinhs||"")+'"></div></div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveEditUser(\''+un+'\')">✅ Lưu</button><button class="btn btn-secondary btn-sm" onclick="renderUserTable(_loadUsers())">Hủy</button></div>';
+}
+function saveEditUser(un){
+  var users=_loadUsers(),u=users.find(function(x){return x.username===un;});if(!u)return;
+  var regions=[];document.querySelectorAll(".cbEditRegion:checked").forEach(function(cb){regions.push(cb.value);});
+  u.name=document.getElementById("editName").value.trim();u.role=document.getElementById("editRole").value;
+  u.regions=regions.join(",");u.tinhs=document.getElementById("editTinhs").value.trim();
+  var pw=document.getElementById("editPassword").value.trim();if(pw)u.pw=pw;
+  _saveUsers(users);showToast("✅ Đã cập nhật: "+un);renderUserTable(users);
+}
+function deleteUser(un){
+  if(!confirm("Xác nhận xóa user: "+un+"?"))return;
+  var users=_loadUsers().filter(function(x){return x.username!==un;});
+  _saveUsers(users);showToast("✅ Đã xóa: "+un);renderUserTable(users);
+}
+function showImportUsers(){
+  document.getElementById("userModalContent").innerHTML='<h4>📥 Import DS User (paste text hoặc CSV)</h4><p style="font-size:11px;color:#888;margin-bottom:8px">Format: <b>Username, Password, Tên, Role, Vùng, Tỉnh</b><br>Mỗi dòng 1 user. Role: admin/gdv/qlkv. Vùng: BẮC,TRUNG,NAM,TÂY</p><textarea id="importUserData" rows="12" placeholder="admin, admin123, Admin, admin, BẮC,TRUNG,NAM,TÂY,&#10;honbpb, babypink, Phạm Bích Hồng, admin, BẮC,TRUNG,NAM,TÂY," style="width:100%;font-family:monospace;font-size:12px"></textarea><div style="margin-top:8px;display:flex;gap:8px"><button class="btn btn-success btn-sm" onclick="doImportUsers()">✅ Import</button><button class="btn btn-secondary btn-sm" onclick="renderUserTable(_loadUsers())">Hủy</button></div>';
+}
+function doImportUsers(){
+  var raw=document.getElementById("importUserData").value.trim();if(!raw){showToast("Chưa có dữ liệu",false);return;}
+  var lines=raw.split("\n").filter(function(l){return l.trim();});
+  var users=_loadUsers();var added=0,skipped=0;
+  lines.forEach(function(line){
+    var parts=line.split(",").map(function(s){return s.trim();});
+    if(parts.length<4)return;
+    var un=parts[0],pw=parts[1],name=parts[2],role=parts[3],regions=parts[4]||"",tinhs=parts[5]||"";
+    if(!un||!pw){skipped++;return;}
+    if(users.find(function(x){return x.username.toLowerCase()===un.toLowerCase();})){skipped++;return;}
+    users.push({username:un,pw:pw,name:name,role:role||"qlkv",regions:regions,tinhs:tinhs});
+    added++;
+  });
+  _saveUsers(users);showToast("✅ Import: "+added+" user mới, bỏ qua "+skipped+" trùng");renderUserTable(users);
+}
+// Sync OFFUSERS from localStorage
+function _syncOffusers(){var users=_loadUsers();users.forEach(function(u){var k=u.username.toLowerCase();if(!OFFUSERS[k])OFFUSERS[k]={pw:u.pw,role:u.role,name:u.name,regions:(u.regions||"").split(",").map(function(s){return s.trim();}).filter(Boolean),tinhs:(u.tinhs||"").split(",").map(function(s){return s.trim();}).filter(Boolean)};});}
+_syncOffusers();
+
 // Update switchTab to check admin
 var _origSwitchTab = switchTab;
 switchTab = function(tab) {
@@ -238,6 +319,7 @@ function switchTab(tab) {
   if (tab === 'dashboard') renderDashboard();
   else if (tab === 'data') renderDataTable();
   else if (tab === 'add') { renderAddForm(); setTimeout(function(){ loadProvinceList(); }, 200); setTimeout(function(){ document.querySelectorAll('#regionTags .region-tag').forEach(function(t){t.classList.add('active')}); renderFilteredProvinces(); }, 300); }
+  else if (tab === 'users') openUserModal();
   else if (tab === 'import') renderImport();
 }
 
@@ -1876,5 +1958,14 @@ window.onscroll = function() {
 };
 </script>
 </div><!-- /appMain -->
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeUserModal()">&times;</button>
+    <h3>👥 Quản lý Người dùng</h3>
+    <div id="userModalContent"></div>
+  </div>
+</div>
+
 </body>
 </html>
