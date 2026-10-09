@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CTKM RURAL v3.0</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -443,6 +444,7 @@ function renderDashboard() {
       </span>
       
       <span id="dashFilterCount" style="font-size:10px;color:#888;white-space:nowrap;margin-left:auto;flex-shrink:0"></span>
+      <button onclick="exportDashExcel()" style="padding:4px 10px;background:#217346;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:6px" title="Export Excel với bộ lọc hiện tại">📥 Excel</button>
       </div>
     </div>
     
@@ -815,6 +817,47 @@ function toggleSubMCH3(id) {
   if (window._collapsedMCH3.has(id)) window._collapsedMCH3.delete(id);
   else window._collapsedMCH3.add(id);
   applyDashFilter();
+}
+
+// ═══════════ EXPORT EXCEL (Dashboard filter) ═══════════
+function exportDashExcel() {
+  var isMCH3 = window._currentView === 'MCH3';
+  var rows = [];
+  var filename = 'CTKM_Rural_';
+  
+  if (isMCH3) {
+    var fsku = window._filteredSKU || getFilteredSKU(window._skuData || []);
+    rows = fsku.map(function(r) {
+      return {
+        'Ma CT': r[0]||'', 'Ten CTKM': r[1]||'', 'Loai CTKM': r[2]||'',
+        'Nhom hang': r[3]||'', 'Ma SP': r[4]||'', 'Ten SP': r[5]||'', 'DVT': r[6]||'',
+        'Dien giai': r[7]||'', 'Gia thuong': Number(r[8]||0), 'Gia KM': Number(r[9]||0),
+        'Ngay BD': fmtDate(r[12]), 'Ngay KT': fmtDate(r[13]),
+        'Mien': (r[17]?'B ':'')+(r[18]?'T ':'')+(r[19]?'N ':'')+(r[20]?'Ty':'')||'ALL'
+      };
+    });
+    filename += 'MCH3_';
+  } else {
+    var fct = window._filteredAll || window._allCT || [];
+    rows = fct.map(function(r) {
+      return {
+        'Ma CT': r.ma||'', 'Ten CTKM': r.ten||'', 'Loai CTKM': r.loai||'',
+        'Nhom hang': r.nhom||'', 'So SKU': r.sku||0,
+        'Ngay BD': fmtDate(r.ngayBD), 'Ngay KT': fmtDate(r.ngayKT),
+        'BAC': r.bac||0, 'TRUNG': r.trung||0, 'NAM': r.nam||0, 'TAY': r.tay||0
+      };
+    });
+    filename += 'CTKM_';
+  }
+  
+  if (!rows.length) { showToast('Khong co du lieu de export', false); return; }
+  
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'CTKM');
+  filename += new Date().toISOString().slice(0,10) + '.xlsx';
+  XLSX.writeFile(wb, filename);
+  showToast('✅ Da export ' + rows.length + ' dong ra Excel');
 }
 
 function toggleCTExpand2(idx) {
