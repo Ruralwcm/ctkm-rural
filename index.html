@@ -216,26 +216,17 @@ const AUTH = {
 function showLoginError(msg) { var e=document.getElementById("loginErr"); e.textContent=msg; e.style.display="block"; setTimeout(function(){e.style.display="none";},4000); }
 async function doLogin() {
   var u=document.getElementById("loginUser").value.trim(), p=document.getElementById("loginPass").value.trim();
-  if(!u||!p){showLoginError("Vui lòng nhập đầy đủ username và password");return;}
-  var btn=document.querySelector(".btn-login"); btn.textContent="⏳ Đang đăng nhập..."; btn.disabled=true;
-  
-  // Try GAS first, fallback to offline
-  var loggedIn = false;
+  if(!u||!p){showLoginError("Vui long nhap day du");return;}
+  var btn=document.querySelector(".btn-login"); btn.textContent="⏳ Dang dang nhap..."; btn.disabled=true;
+  var OFF={admin:{pw:"admin123",role:"admin",name:"Admin",regions:["BẮC","TRUNG","NAM","TAY"],tinhs:[]},honbpb:{pw:"babypink",role:"admin",name:"Pham Bich Hong",regions:["BẮC","TRUNG","NAM","TAY"],tinhs:[]}};
+  var ok=false;
   try{
     var r=await fetch(getGAS(),{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"login",username:u,password:p})});
     var d=await r.json();
-    if(d.success){AUTH.set({token:d.token,user:d.user});loggedIn=true;}
-    else {showLoginError(d.message||"Sai tên đăng nhập hoặc mật khẩu");}
-  }catch(e){
-    // GAS offline — fallback to hardcoded users
-    var USERS={admin:{pw:"admin123",role:"admin",name:"Admin",regions:["BẮC","TRUNG","NAM","TÂY"],tinhs:[]},honbpb:{pw:"babypink",role:"admin",name:"Phạm Bích Hồng",regions:["BẮC","TRUNG","NAM","TÂY"],tinhs:[]}};
-    var found=USERS[u.toLowerCase()];
-    if(found&&found.pw===p){AUTH.set({token:"offline_"+Date.now(),user:{role:found.role,name:found.name,regions:found.regions,tinhs:found.tinhs}});loggedIn=true;}
-    else if(!found){showLoginError("Sai tên đăng nhập hoặc mật khẩu");}
-    else{showLoginError("Sai tên đăng nhập hoặc mật khẩu");}
-  }
-  
-  if(loggedIn){document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();renderApp();}
+    if(d.success){AUTH.set({token:d.token,user:d.user});ok=true;}
+    else{var f=OFF[u.toLowerCase()];if(f&&f.pw===p){AUTH.set({token:"off_"+Date.now(),user:{role:f.role,name:f.name,regions:f.regions,tinhs:f.tinhs}});ok=true;}else showLoginError(d.message||"Sai");}
+  }catch(e){var f2=OFF[u.toLowerCase()];if(f2&&f2.pw===p){AUTH.set({token:"off_"+Date.now(),user:{role:f2.role,name:f2.name,regions:f2.regions,tinhs:f2.tinhs}});ok=true;}else showLoginError("Sai ten dang nhap hoac mat khau");}
+  if(ok){document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();renderApp();}
   btn.textContent="Đăng nhập"; btn.disabled=false;
 }
 function doLogout() {
