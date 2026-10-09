@@ -218,12 +218,24 @@ async function doLogin() {
   var u=document.getElementById("loginUser").value.trim(), p=document.getElementById("loginPass").value.trim();
   if(!u||!p){showLoginError("Vui lòng nhập đầy đủ username và password");return;}
   var btn=document.querySelector(".btn-login"); btn.textContent="⏳ Đang đăng nhập..."; btn.disabled=true;
+  
+  // Try GAS first, fallback to offline
+  var loggedIn = false;
   try{
     var r=await fetch(getGAS(),{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"login",username:u,password:p})});
     var d=await r.json();
-    if(d.success){AUTH.set({token:d.token,user:d.user});document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();renderApp();}
-    else showLoginError(d.message||"Đăng nhập thất bại");
-  }catch(e){showLoginError("Không kết nối được server");}
+    if(d.success){AUTH.set({token:d.token,user:d.user});loggedIn=true;}
+    else {showLoginError(d.message||"Sai tên đăng nhập hoặc mật khẩu");}
+  }catch(e){
+    // GAS offline — fallback to hardcoded users
+    var USERS={admin:{pw:"admin123",role:"admin",name:"Admin",regions:["BẮC","TRUNG","NAM","TÂY"],tinhs:[]},honbpb:{pw:"babypink",role:"admin",name:"Phạm Bích Hồng",regions:["BẮC","TRUNG","NAM","TÂY"],tinhs:[]}};
+    var found=USERS[u.toLowerCase()];
+    if(found&&found.pw===p){AUTH.set({token:"offline_"+Date.now(),user:{role:found.role,name:found.name,regions:found.regions,tinhs:found.tinhs}});loggedIn=true;}
+    else if(!found){showLoginError("Sai tên đăng nhập hoặc mật khẩu");}
+    else{showLoginError("Sai tên đăng nhập hoặc mật khẩu");}
+  }
+  
+  if(loggedIn){document.getElementById("loginOverlay").style.display="none";document.getElementById("appMain").style.display="block";showUserInfo();renderApp();}
   btn.textContent="Đăng nhập"; btn.disabled=false;
 }
 function doLogout() {
