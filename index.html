@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CTKM RURAL v3.0</title>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js" onerror="console.warn('SheetJS CDN failed, continue');window._sheetjsOK=false"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -863,6 +863,7 @@ function exportDashExcel() {
   }
   
   if (!rows.length) { showToast('Khong co du lieu de export', false); return; }
+  if (typeof XLSX === 'undefined') { showToast('Thu vien Excel chua load xong, F5 thu lai', false); return; }
   
   var ws = XLSX.utils.json_to_sheet(rows);
   var wb = XLSX.utils.book_new();
