@@ -509,9 +509,10 @@ function deleteWrongDates(){
   showToast('Da xoa '+removed+' khao sat sai ngay. Con lai '+SURVEYS.length);
   render(2);
 }
+function csvEscape(v){v=(v||'').toString();return v.indexOf(',')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0?'"'+v.replace(/"/g,'""')+'"':v;}
 function exportCSV(){
   let csv='GDV,Tinh,Ma CH,Ten CH,Ngay nhan hang,Thoi gian nhan Thit MDL,Thoi gian nhan Rau-Trai cay,QLKV,Mien\n';
-  SURVEYS.forEach(s=>csv+=`${s.gdv},${s.tinh},${s.ma},${s.ten||''},${s.ngay},${s.meat||''},${s.veg||''},${s.qlkv},${s.mien}\n`);
+  SURVEYS.forEach(s=>csv+=[csvEscape(s.gdv),csvEscape(s.tinh),csvEscape(s.ma),csvEscape(s.ten||''),csvEscape(s.ngay),csvEscape(s.meat||''),csvEscape(s.veg||''),csvEscape(s.qlkv),csvEscape(s.mien)].join(',')+'\n');
   let b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='KhaoSat_NhanHang_0510_1110.csv';a.click();
 }
