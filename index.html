@@ -5,21 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CTKM RURAL v2.38</title>
   <style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
-    .header { background: #1F4E79; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; color: #333; }
+    .header { background: #0f5f57; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 18px; }
     .tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; }
     .tab { padding: 12px 24px; cursor: pointer; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-    .tab.active { color: #1F4E79; border-bottom-color: #1F4E79; }
+    .tab.active { color: #0f5f57; border-bottom-color: #0f5f57; }
     .content { padding: 20px; max-width: 1400px; margin: 0 auto; }
     
     /* Stats */
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .stat-card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-    .stat-card .num { font-size: 28px; font-weight: 700; color: #1F4E79; }
+    .stat-card .num { font-size: 28px; font-weight: 700; color: #0f5f57; }
     .stat-card .label { font-size: 12px; color: #666; margin-top: 4px; }
-    .stat-card.active-card { box-shadow: 0 0 0 2px #1F4E79; transform: translateY(-1px); }
+    .stat-card.active-card { box-shadow: 0 0 0 2px #0f5f57; transform: translateY(-1px); }
     
     /* Table */
     .table-wrap { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); overflow: auto; }
@@ -28,7 +29,7 @@
     td { padding: 8px; border-bottom: 1px solid #eee; }
     tr:hover { background: #f8f9ff; }
     .ct-row:hover { background: #eef2ff !important; }
-    .ct-detail td { border-top: 2px solid #1F4E79; }
+    .ct-detail td { border-top: 2px solid #0f5f57; }
     
     /* Form */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -38,22 +39,22 @@
     textarea { resize: vertical; min-height: 60px; }
     
     .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
-    .btn-primary { background: #1F4E79; color: white; }
+    .btn-primary { background: #0f5f57; color: white; }
     .btn-success { background: #28a745; color: white; }
     .btn-secondary { background: #6c757d; color: white; }
     
     .region-tags { display: flex; gap: 8px; }
     .region-tag { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; font-size: 12px; }
-    .region-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+    .region-tag.active { background: #0f5f57; color: white; border-color: #0f5f57; }
     
     .filter-tag { padding: 3px 10px; border: 1px solid #ddd; border-radius: 14px; cursor: pointer; font-size: 11px; white-space: nowrap; user-select: none; transition: all .15s; }
-    .filter-tag:hover { border-color: #1F4E79; background: #eef2ff; }
-    .filter-tag.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+    .filter-tag:hover { border-color: #0f5f57; background: #eef2ff; }
+    .filter-tag.active { background: #0f5f57; color: white; border-color: #0f5f57; }
     
     /* Multi-select dropdown */
     .ms-wrap { position: relative; display: inline-block; flex-shrink: 0; }
     .ms-btn { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: white; white-space: nowrap; min-width: 110px; max-width: 160px; text-align: left; overflow: hidden; text-overflow: ellipsis; width: auto; }
-    .ms-btn:hover { border-color: #1F4E79; }
+    .ms-btn:hover { border-color: #0f5f57; }
     .ms-drop { display: none; position: absolute; top: 100%; left: 0; z-index: 9999; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 300px; overflow-y: auto; min-width: 200px; max-width: 320px; white-space: nowrap; }
     .ms-wrap.right .ms-drop { left: auto; right: 0; }
     .ms-drop.open { display: block; }
@@ -71,14 +72,14 @@
       .ms-btn { font-size: 10px; min-width: 60px; max-width: 100px; padding: 5px 4px; }
     }
     .ms-item:hover { background: #f0f4ff; }
-    .ms-item.selected { background: #dbeafe; color: #1F4E79; font-weight: 600; border-left-color: #1F4E79; }
+    .ms-item.selected { background: #dbeafe; color: #0f5f57; font-weight: 600; border-left-color: #0f5f57; }
     .ms-grp-hdr { padding: 4px 12px; font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; background: #f8f9fa; border-top: 1px solid #eee; }
     .ms-chips { display: inline-flex; gap: 3px; flex-wrap: wrap; vertical-align: middle; }
-    .ms-chip { display: inline-flex; align-items: center; gap: 2px; background: #e8f0fe; color: #1F4E79; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
+    .ms-chip { display: inline-flex; align-items: center; gap: 2px; background: #e8f0fe; color: #0f5f57; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
     .ms-chip .x { cursor: pointer; font-weight: bold; margin-left: 2px; }
     
     .view-btn { padding: 5px 10px; border: 1px solid #ddd; border-radius: 14px; cursor: pointer; font-size: 11px; background: white; transition: all .15s; }
-    .view-btn.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+    .view-btn.active { background: #0f5f57; color: white; border-color: #0f5f57; }
     
     .toast { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 12px 20px; border-radius: 4px; display: none; }
     .loading { text-align: center; padding: 40px; color: #999; }
@@ -127,7 +128,17 @@
       #dataTable th, #dataTable td { padding: 4px 3px; font-size: 9px; }
       #dataTable .ms-btn { font-size: 9px !important; min-width: 55px !important; max-width: 75px !important; }
     }
-  </style>
+  
+@media (prefers-color-scheme: dark) {
+  body{background:#0f1724;color:#e8ecf1}
+  .card,.stat-card,.app-card,.modal,.confirm-box,.login-box{background:#1a2332;border-color:#2a3646}
+  thead th{background:#1a2332;color:#cbd5e1;border-bottom-color:#2a3646}
+  td{border-bottom-color:#2a3646}
+  .sidebar{background:#0a2a24}
+  .topbar{background:#b3121b}
+  input,select,textarea{background:#1a2332;color:#e8ecf1;border-color:#2a3646}
+}
+</style>
 </head>
 <body>
 <div class="header">
@@ -240,7 +251,7 @@ function renderDashboard() {
       <button id="btnViewCTKM" class="view-btn active" onclick="switchView('CTKM')" style="flex-shrink:0">📋 CTKM</button>
       <button id="btnViewMCH3" class="view-btn" onclick="switchView('MCH3')" style="flex-shrink:0">🏷 MCH3</button>
       <span style="color:#cbd5e1;flex-shrink:0">|</span>
-      <span style="font-weight:600;color:#1F4E79;font-size:12px;white-space:nowrap;flex-shrink:0">🔍</span>
+      <span style="font-weight:600;color:#0f5f57;font-size:12px;white-space:nowrap;flex-shrink:0">🔍</span>
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       
       <!-- Miền AD -->
@@ -401,8 +412,8 @@ function updateMSBtn(id) {
   const labels = [...wrap.querySelectorAll('.ms-item.selected')].map(s => s.textContent.trim());
   const btn = wrap.querySelector('.ms-btn');
   if (labels.length === 0) { btn.innerHTML = btn.getAttribute('data-title') + ' ▾'; btn.style.color = ''; }
-  else if (labels.length <= 2) { btn.innerHTML = labels.join(', ') + ' ▾'; btn.style.color = '#1F4E79'; }
-  else { btn.innerHTML = `<b>${labels.length}</b> đã chọn ▾`; btn.style.color = '#1F4E79'; }
+  else if (labels.length <= 2) { btn.innerHTML = labels.join(', ') + ' ▾'; btn.style.color = '#0f5f57'; }
+  else { btn.innerHTML = `<b>${labels.length}</b> đã chọn ▾`; btn.style.color = '#0f5f57'; }
 }
 
 function getMSValues(id) {
@@ -1240,7 +1251,7 @@ function renderAddForm() {
     <div style="display:flex;gap:20px;flex-wrap:wrap">
     <!-- CỘT TRÁI: Thông tin chung -->
     <div style="flex:1;min-width:350px;background:white;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-      <h3 style="margin:0 0 16px;color:#1F4E79">📋 Thông tin CTKM</h3>
+      <h3 style="margin:0 0 16px;color:#0f5f57">📋 Thông tin CTKM</h3>
       <div style="display:grid;gap:10px">
         <div><label>Mã CT</label><input id="maCT" placeholder="VD: 731"></div>
         <div><label>Tên CTKM</label><input id="tenCTKM" placeholder="VD: ADHOC09_0126..."></div>
@@ -1257,7 +1268,7 @@ function renderAddForm() {
     <div style="flex:1;min-width:350px;display:flex;flex-direction:column;gap:16px">
       <!-- Giá & Thời gian -->
       <div style="background:white;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-        <h3 style="margin:0 0 16px;color:#1F4E79">💰 Giá & Thời gian</h3>
+        <h3 style="margin:0 0 16px;color:#0f5f57">💰 Giá & Thời gian</h3>
         <div style="display:grid;gap:10px">
           <div style="display:flex;gap:10px">
             <div style="flex:1"><label>Giá thường</label><input id="giaThuong" type="number" step="0.01"></div>
@@ -1693,7 +1704,7 @@ const GAS_URL = localStorage.getItem('ctkm_gas_url') || 'https://script.google.c
 
 async function loadData() {
   const ts = Date.now();
-  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#1F4E79">⏳ Đang tải dữ liệu...</p>';
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#0f5f57">⏳ Đang tải dữ liệu...</p>';
   
   // Step 1: Try GitHub Pages static JSON
   try {
@@ -1750,7 +1761,7 @@ loadData().then(({grouped, sku}) => {
   }
 }).catch(e => {
   console.error(e);
-  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#dc3545;font-size:14px">❌ Không tải được dữ liệu<br><small style="color:#888">Thử: (1) F5 cứng Ctrl+Shift+R (2) Mở Console F12 xem lỗi<br>Nếu vẫn lỗi → kiểm tra GAS URL trong localStorage: ctkm_gas_url</small><br><br><button onclick="location.reload(true)" style="padding:8px 20px;background:#1F4E79;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px">🔄 Thử lại</button></p>';
+  document.getElementById('mainContent').innerHTML = '<p style="padding:40px;text-align:center;color:#dc3545;font-size:14px">❌ Không tải được dữ liệu<br><small style="color:#888">Thử: (1) F5 cứng Ctrl+Shift+R (2) Mở Console F12 xem lỗi<br>Nếu vẫn lỗi → kiểm tra GAS URL trong localStorage: ctkm_gas_url</small><br><br><button onclick="location.reload(true)" style="padding:8px 20px;background:#0f5f57;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px">🔄 Thử lại</button></p>';
   // Save GAS_URL to localStorage for next time
   if (GAS_URL) localStorage.setItem('ctkm_gas_url', GAS_URL);
 });
@@ -1794,7 +1805,7 @@ function getPhamViBadge(phamVi) {
 }
 
 </script>
-<button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#1F4E79;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
+<button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:#0f5f57;color:white;border:none;font-size:20px;cursor:pointer;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:99">↑</button>
 <script>
 window.onscroll = function() {
   document.getElementById('scrollTopBtn').style.display = window.scrollY > 300 ? 'block' : 'none';
